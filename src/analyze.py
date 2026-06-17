@@ -137,13 +137,17 @@ def calc_weather_pattern(historical: list[CircuitHistoricalData]) -> dict:
 
 def calc_quali_stats(historical: list[CircuitHistoricalData]) -> dict:
     quali_sessions = []
-    for h in historical:
-        for s in h.sessions:
+    for hist in historical:
+        for s in hist.sessions:
             if s.session_type == "Qualifying":
                 quali_sessions.append(s)
     improvements = []
+    laps_by_session = {}
+    for hist in historical:
+        for l in hist.laps:
+            laps_by_session.setdefault(l.session_key, []).append(l)
     for qs in quali_sessions:
-        laps = [l for l in h.laps for h in historical if l.session_key == qs.session_key]
+        laps = laps_by_session.get(qs.session_key, [])
         laps_df = pd.DataFrame([l.__dict__ for l in laps])
         if laps_df.empty:
             continue
