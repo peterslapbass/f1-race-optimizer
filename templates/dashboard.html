@@ -135,8 +135,15 @@
 
 {% if consistency_data and consistency_chart_json != 'null' %}
 <div class="card">
-  <h2><span data-i18n="consistency_title">{% if lang == 'es' %}Consistencia en Carrera{% else %}Race Consistency{% endif %}</span></h2>
+  <h2><span data-i18n="consistency_title">{% if lang == 'es' %}Consistencia (Circuito){% else %}Race Consistency (Circuit){% endif %}</span></h2>
   <div class="chart-container" id="consistency-chart"></div>
+</div>
+{% endif %}
+
+{% if season_consistency_chart_json and season_consistency_chart_json != 'null' %}
+<div class="card">
+  <h2><span data-i18n="season_consistency_title">{% if lang == 'es' %}Consistencia (Temp. 2026){% else %}Race Consistency (2026 Season){% endif %}</span></h2>
+  <div class="chart-container" id="season-consistency-chart"></div>
 </div>
 {% endif %}
 
@@ -166,6 +173,10 @@ if (overtakesChart && overtakesChart.data) Plotly.newPlot('overtakes-chart', ove
 {% if consistency_chart_json and consistency_chart_json != 'null' %}
 const consistencyChart = {{ consistency_chart_json|safe }};
 if (consistencyChart && consistencyChart.data) Plotly.newPlot('consistency-chart', consistencyChart.data, consistencyChart.layout || {}, {responsive: true});
+{% endif %}
+{% if season_consistency_chart_json and season_consistency_chart_json != 'null' %}
+const seasonConsistencyChart = {{ season_consistency_chart_json|safe }};
+if (seasonConsistencyChart && seasonConsistencyChart.data) Plotly.newPlot('season-consistency-chart', seasonConsistencyChart.data, seasonConsistencyChart.layout || {}, {responsive: true});
 {% endif %}
 </script>
 {% else %}

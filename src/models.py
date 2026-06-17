@@ -196,6 +196,7 @@ class CircuitPrediction:
     grid_finish_data: list = field(default_factory=list)
     overtake_data: list = field(default_factory=list)
     consistency_data: list = field(default_factory=list)
+    season_consistency_data: list = field(default_factory=list)
     pit_data: list = field(default_factory=list)
     generated_at: str = ""
 

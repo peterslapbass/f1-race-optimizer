@@ -60,12 +60,14 @@ class OpenF1Client:
             params["country_name"] = country_name
         return self._get("meetings", params)
 
-    def get_sessions(self, meeting_key: Optional[int] = None, session_type: Optional[str] = None) -> list:
+    def get_sessions(self, meeting_key: Optional[int] = None, session_type: Optional[str] = None, year: Optional[int] = None) -> list:
         params = {}
         if meeting_key:
             params["meeting_key"] = meeting_key
         if session_type:
             params["session_type"] = session_type
+        if year:
+            params["year"] = year
         return self._get("sessions", params)
 
     def get_drivers(self, session_key: Optional[int] = None) -> list:

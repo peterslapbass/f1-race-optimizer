@@ -45,7 +45,8 @@ I18N_DATA = {
         "no_weather": "No weather data",
         "grid_finish_title": "Grid vs Finish",
         "overtakes_title": "Overtakes by Driver",
-        "consistency_title": "Race Consistency",
+        "consistency_title": "Race Consistency (Circuit)",
+        "season_consistency_title": "Race Consistency (2026 Season)",
         "tire_stats_title": "Tire Statistics",
         "compound": "Compound",
         "avg_stint": "Avg Stint",
@@ -117,7 +118,8 @@ I18N_DATA = {
         "no_weather": "Sin datos climáticos",
         "grid_finish_title": "Parrilla vs Resultado",
         "overtakes_title": "Adelantamientos por Piloto",
-        "consistency_title": "Consistencia en Carrera",
+        "consistency_title": "Consistencia (Circuito)",
+        "season_consistency_title": "Consistencia (Temp. 2026)",
         "tire_stats_title": "Estadísticas de Neumáticos",
         "compound": "Compuesto",
         "avg_stint": "Stint Promedio",
@@ -329,6 +331,41 @@ def build_overtakes_chart(overtake_data: list, driver_lookup: dict) -> Optional[
     return json.loads(fig.to_json())
 
 
+def build_season_consistency_chart(consistency_data: list) -> Optional[dict]:
+    if not consistency_data:
+        return None
+    top = consistency_data[:10]
+    names = [d.get("full_name", f"#{d['driver_number']}") for d in top]
+    stds = [d["std_lap_time"] for d in top]
+    avgs = [d["avg_lap_time"] for d in top]
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        name="Lap Time Std Dev", x=names, y=stds,
+        marker_color="#e10600",
+        yaxis="y",
+        hovertemplate="<b>%{x}</b><br>Std Dev: %{y:.3f}s<extra></extra>",
+    ))
+    fig.add_trace(go.Scatter(
+        name="Avg Lap Time", x=names, y=avgs,
+        mode="markers+lines",
+        marker=dict(size=10, color="#ffd700"),
+        yaxis="y2",
+        hovertemplate="<b>%{x}</b><br>Avg: %{y:.3f}s<extra></extra>",
+    ))
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font_color="#888",
+        yaxis=dict(title="Lap Time Std Dev (s)", side="left"),
+        yaxis2=dict(title="Avg Lap Time (s)", overlaying="y", side="right"),
+        showlegend=True,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        margin=dict(l=40, r=40, t=20, b=80),
+    )
+    return json.loads(fig.to_json())
+
+
 def build_consistency_chart(consistency_data: list, driver_lookup: dict) -> Optional[dict]:
     if not consistency_data:
         return None
@@ -422,6 +459,7 @@ def build_dashboard(
     grid_chart = build_grid_finish_chart(prediction.grid_finish_data if prediction else [], driver_lookup) if prediction else None
     overtakes_chart = build_overtakes_chart(prediction.overtake_data if prediction else [], driver_lookup) if prediction else None
     consistency_chart = build_consistency_chart(prediction.consistency_data if prediction else [], driver_lookup) if prediction else None
+    season_consistency_chart = build_season_consistency_chart(prediction.season_consistency_data if prediction else []) if prediction else None
 
     pages = {
         "index.html": ("dashboard.html", {
@@ -430,6 +468,7 @@ def build_dashboard(
             "grid_chart_json": json.dumps(grid_chart) if grid_chart else "null",
             "overtakes_chart_json": json.dumps(overtakes_chart) if overtakes_chart else "null",
             "consistency_chart_json": json.dumps(consistency_chart) if consistency_chart else "null",
+            "season_consistency_chart_json": json.dumps(season_consistency_chart) if season_consistency_chart else "null",
             "overtake_data": prediction.overtake_data if prediction else [],
             "grid_finish_data": prediction.grid_finish_data if prediction else [],
             "consistency_data": prediction.consistency_data if prediction else [],

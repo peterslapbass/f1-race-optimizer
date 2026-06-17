@@ -1,4 +1,6 @@
 import logging
+import statistics
+from collections import defaultdict
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -92,8 +94,57 @@ def generate_prediction(
     prediction.grid_finish_data = calc_grid_finish_stats(historical)
     # Overtakes by driver
     prediction.overtake_data = calc_driver_overtakes(historical)
-    # Consistency
+    # Consistency (historical)
     prediction.consistency_data = calc_consistency(historical)
+    # Season consistency (2026 current season)
+    try:
+        logger.info("Fetching 2026 season data for consistency")
+        all_sessions = client.get_sessions(year=2026, session_type="Race")
+        laps_by_driver = defaultdict(list)
+        season_driver_map = {}
+        for s in all_sessions:
+            sk = s.get("session_key")
+            if not sk:
+                continue
+            laps_raw = client.get_laps(session_key=sk)
+            if not laps_raw:
+                continue
+            if not season_driver_map:
+                drivers_raw = client.get_drivers(session_key=sk)
+                for d in drivers_raw:
+                    dn = d.get("driver_number")
+                    if dn:
+                        season_driver_map[dn] = {
+                            "full_name": d.get("full_name", f"Driver {dn}"),
+                            "team_name": d.get("team_name", ""),
+                        }
+            for lap in laps_raw:
+                dn = lap.get("driver_number")
+                dur = lap.get("lap_duration")
+                if dn is None or not dur:
+                    continue
+                if lap.get("is_pit_in_lap") or lap.get("is_pit_out_lap"):
+                    continue
+                laps_by_driver[dn].append(dur)
+        season_consistency = []
+        for dn, laps in laps_by_driver.items():
+            if len(laps) < 10:
+                continue
+            info = season_driver_map.get(dn, {})
+            season_consistency.append({
+                "driver_number": dn,
+                "full_name": info.get("full_name", f"#{dn}"),
+                "team_name": info.get("team_name", ""),
+                "avg_lap_time": statistics.mean(laps),
+                "std_lap_time": statistics.stdev(laps),
+                "count": len(laps),
+            })
+        season_consistency.sort(key=lambda x: x["std_lap_time"])
+        prediction.season_consistency_data = season_consistency
+        logger.info(f"Season consistency: {len(season_consistency)} drivers from {len(laps_by_driver)} total")
+    except Exception as e:
+        logger.warning(f"Failed to compute season consistency: {e}")
+        prediction.season_consistency_data = []
     return prediction
 
 
