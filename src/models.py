@@ -192,6 +192,11 @@ class CircuitPrediction:
     avg_overtakes: Optional[float] = None
     quali_improvement_rate: Optional[float] = None
     weather_pattern: Optional[dict] = None
+    driver_map: dict = field(default_factory=dict)
+    grid_finish_data: list = field(default_factory=list)
+    overtake_data: list = field(default_factory=list)
+    consistency_data: list = field(default_factory=list)
+    pit_data: list = field(default_factory=list)
     generated_at: str = ""
 
 

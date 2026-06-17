@@ -80,6 +80,14 @@
         <td data-i18n="avg_track_temp">{% if lang == 'es' %}Temp. pista promedio{% else %}Avg Track Temp{% endif %}</td>
         <td>{{ "%.1f"|format(prediction.weather_pattern.avg_track_temp or 0) }}°C</td>
       </tr>
+      <tr>
+        <td data-i18n="avg_humidity">{% if lang == 'es' %}Humedad promedio{% else %}Avg Humidity{% endif %}</td>
+        <td>{{ "%.0f"|format(prediction.weather_pattern.avg_humidity or 0) }}%</td>
+      </tr>
+      <tr>
+        <td data-i18n="avg_wind">{% if lang == 'es' %}Viento promedio{% else %}Avg Wind{% endif %}</td>
+        <td>{{ "%.1f"|format(prediction.weather_pattern.avg_wind_speed or 0) }} m/s</td>
+      </tr>
     </table>
     {% else %}
     <p data-i18n="no_weather">{% if lang == 'es' %}Sin datos climáticos{% else %}No weather data{% endif %}</p>
@@ -111,6 +119,27 @@
   {% endif %}
 </div>
 
+{% if grid_finish_data and grid_chart_json != 'null' %}
+<div class="card">
+  <h2><span data-i18n="grid_finish_title">{% if lang == 'es' %}Parrilla vs Resultado{% else %}Grid vs Finish{% endif %}</span></h2>
+  <div class="chart-container" id="grid-finish-chart"></div>
+</div>
+{% endif %}
+
+{% if overtake_data and overtakes_chart_json != 'null' %}
+<div class="card">
+  <h2><span data-i18n="overtakes_title">{% if lang == 'es' %}Adelantamientos por Piloto{% else %}Overtakes by Driver{% endif %}</span></h2>
+  <div class="chart-container" id="overtakes-chart"></div>
+</div>
+{% endif %}
+
+{% if consistency_data and consistency_chart_json != 'null' %}
+<div class="card">
+  <h2><span data-i18n="consistency_title">{% if lang == 'es' %}Consistencia en Carrera{% else %}Race Consistency{% endif %}</span></h2>
+  <div class="chart-container" id="consistency-chart"></div>
+</div>
+{% endif %}
+
 <div class="card">
   <h2><span data-i18n="strategy_chart_title">{% if lang == 'es' %}Comparación de Estrategias{% else %}Strategy Comparison{% endif %}</span></h2>
   <div class="chart-container" id="strategy-chart"></div>
@@ -126,6 +155,18 @@ const strategyChart = {{ strategy_chart_json|safe }};
 if (strategyChart && strategyChart.data) {
   Plotly.newPlot('strategy-chart', strategyChart.data, strategyChart.layout || {}, {responsive: true});
 }
+{% if grid_chart_json and grid_chart_json != 'null' %}
+const gridChart = {{ grid_chart_json|safe }};
+if (gridChart && gridChart.data) Plotly.newPlot('grid-finish-chart', gridChart.data, gridChart.layout || {}, {responsive: true});
+{% endif %}
+{% if overtakes_chart_json and overtakes_chart_json != 'null' %}
+const overtakesChart = {{ overtakes_chart_json|safe }};
+if (overtakesChart && overtakesChart.data) Plotly.newPlot('overtakes-chart', overtakesChart.data, overtakesChart.layout || {}, {responsive: true});
+{% endif %}
+{% if consistency_chart_json and consistency_chart_json != 'null' %}
+const consistencyChart = {{ consistency_chart_json|safe }};
+if (consistencyChart && consistencyChart.data) Plotly.newPlot('consistency-chart', consistencyChart.data, consistencyChart.layout || {}, {responsive: true});
+{% endif %}
 </script>
 {% else %}
 <div class="card" style="text-align:center; padding:60px 20px;">

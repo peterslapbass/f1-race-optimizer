@@ -40,7 +40,12 @@ I18N_DATA = {
         "rain_prob": "Rain Probability",
         "avg_temp": "Avg Air Temp",
         "avg_track_temp": "Avg Track Temp",
+        "avg_humidity": "Avg Humidity",
+        "avg_wind": "Avg Wind",
         "no_weather": "No weather data",
+        "grid_finish_title": "Grid vs Finish",
+        "overtakes_title": "Overtakes by Driver",
+        "consistency_title": "Race Consistency",
         "tire_stats_title": "Tire Statistics",
         "compound": "Compound",
         "avg_stint": "Avg Stint",
@@ -107,7 +112,12 @@ I18N_DATA = {
         "rain_prob": "Probabilidad de lluvia",
         "avg_temp": "Temp. ambiente promedio",
         "avg_track_temp": "Temp. pista promedio",
+        "avg_humidity": "Humedad promedio",
+        "avg_wind": "Viento promedio",
         "no_weather": "Sin datos climáticos",
+        "grid_finish_title": "Parrilla vs Resultado",
+        "overtakes_title": "Adelantamientos por Piloto",
+        "consistency_title": "Consistencia en Carrera",
         "tire_stats_title": "Estadísticas de Neumáticos",
         "compound": "Compuesto",
         "avg_stint": "Stint Promedio",
@@ -254,21 +264,123 @@ def build_tire_chart(prediction: CircuitPrediction) -> Optional[dict]:
     return json.loads(fig.to_json())
 
 
+def build_grid_finish_chart(grid_data: list, driver_lookup: dict) -> Optional[dict]:
+    if not grid_data:
+        return None
+    top = [d for d in grid_data if d["count"] >= 2][:10]
+    if not top:
+        return None
+    names = [driver_lookup.get(d["driver_number"], {}).get("full_name", f"#{d['driver_number']}") for d in top]
+    deltas = [d["avg_delta"] for d in top]
+    colors = ["#4caf50" if d >= 0 else "#e10600" for d in deltas]
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=names, y=deltas,
+        marker_color=colors,
+        text=[f"{d:+.1f}" for d in deltas],
+        textposition="outside",
+        hovertemplate="<b>%{x}</b><br>Grid→Finish: %{text}<br>Avg Grid: %{customdata[0]:.1f}<br>Avg Finish: %{customdata[1]:.1f}<extra></extra>",
+        customdata=[[d["avg_grid"], d["avg_finish"]] for d in top],
+    ))
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font_color="#888",
+        yaxis_title="Avg Positions Gained (+) / Lost (-)",
+        showlegend=False,
+        margin=dict(l=40, r=20, t=20, b=80),
+    )
+    return json.loads(fig.to_json())
+
+
+def build_overtakes_chart(overtake_data: list, driver_lookup: dict) -> Optional[dict]:
+    if not overtake_data:
+        return None
+    top = overtake_data[:10]
+    names = [driver_lookup.get(d["driver_number"], {}).get("full_name", f"#{d['driver_number']}") for d in top]
+    totals = [d["total"] for d in top]
+    avgs = [d["avg"] for d in top]
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        name="Total Overtakes", x=names, y=totals,
+        marker_color="#ff6b35",
+        yaxis="y",
+        hovertemplate="<b>%{x}</b><br>Total: %{y}<extra></extra>",
+    ))
+    fig.add_trace(go.Scatter(
+        name="Avg per Race", x=names, y=avgs,
+        mode="markers+lines",
+        marker=dict(size=10, color="#e10600"),
+        yaxis="y2",
+        hovertemplate="<b>%{x}</b><br>Avg: %{y:.1f}<extra></extra>",
+    ))
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font_color="#888",
+        yaxis=dict(title="Total Overtakes", side="left"),
+        yaxis2=dict(title="Avg per Race", overlaying="y", side="right"),
+        showlegend=True,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        margin=dict(l=40, r=40, t=20, b=80),
+    )
+    return json.loads(fig.to_json())
+
+
+def build_consistency_chart(consistency_data: list, driver_lookup: dict) -> Optional[dict]:
+    if not consistency_data:
+        return None
+    top = consistency_data[:10]
+    names = [driver_lookup.get(d["driver_number"], {}).get("full_name", f"#{d['driver_number']}") for d in top]
+    stds = [d["std_lap_time"] for d in top]
+    avgs = [d["avg_lap_time"] for d in top]
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        name="Lap Time Std Dev", x=names, y=stds,
+        marker_color="#2196f3",
+        yaxis="y",
+        hovertemplate="<b>%{x}</b><br>Std Dev: %{y:.3f}s<extra></extra>",
+    ))
+    fig.add_trace(go.Scatter(
+        name="Avg Lap Time", x=names, y=avgs,
+        mode="markers+lines",
+        marker=dict(size=10, color="#e10600"),
+        yaxis="y2",
+        hovertemplate="<b>%{x}</b><br>Avg: %{y:.3f}s<extra></extra>",
+    ))
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font_color="#888",
+        yaxis=dict(title="Lap Time Std Dev (s)", side="left"),
+        yaxis2=dict(title="Avg Lap Time (s)", overlaying="y", side="right"),
+        showlegend=True,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        margin=dict(l=40, r=40, t=20, b=80),
+    )
+    return json.loads(fig.to_json())
+
+
 def build_weather_chart(prediction: CircuitPrediction) -> Optional[dict]:
     wp = prediction.weather_pattern
     if not wp:
         return None
     fig = go.Figure()
-    categories = ["Rain Prob (%)", "Air Temp (C)", "Track Temp (C)"]
+    categories = ["Rain Prob (%)", "Air Temp (C)", "Track Temp (C)", "Humidity (%)", "Wind Speed (m/s)"]
     values = [
         (wp.get("rain_probability", 0) or 0) * 100,
         wp.get("avg_air_temp", 0) or 0,
         wp.get("avg_track_temp", 0) or 0,
+        wp.get("avg_humidity", 0) or 0,
+        wp.get("avg_wind_speed", 0) or 0,
     ]
     fig.add_trace(go.Bar(
         x=categories,
         y=values,
-        marker_color=["#2196f3", "#ff6b35", "#ffd700"],
+        marker_color=["#2196f3", "#ff6b35", "#ffd700", "#4caf50", "#9c27b0"],
         text=[f"{v:.1f}" for v in values],
         textposition="outside",
     ))
@@ -306,10 +418,22 @@ def build_dashboard(
     tire_chart = build_tire_chart(prediction) if prediction else None
     weather_chart = build_weather_chart(prediction) if prediction else None
 
+    driver_lookup = prediction.driver_map if prediction else {}
+    grid_chart = build_grid_finish_chart(prediction.grid_finish_data if prediction else [], driver_lookup) if prediction else None
+    overtakes_chart = build_overtakes_chart(prediction.overtake_data if prediction else [], driver_lookup) if prediction else None
+    consistency_chart = build_consistency_chart(prediction.consistency_data if prediction else [], driver_lookup) if prediction else None
+
     pages = {
         "index.html": ("dashboard.html", {
             "prediction": prediction,
             "strategy_chart_json": json.dumps(strategy_chart) if strategy_chart else "null",
+            "grid_chart_json": json.dumps(grid_chart) if grid_chart else "null",
+            "overtakes_chart_json": json.dumps(overtakes_chart) if overtakes_chart else "null",
+            "consistency_chart_json": json.dumps(consistency_chart) if consistency_chart else "null",
+            "overtake_data": prediction.overtake_data if prediction else [],
+            "grid_finish_data": prediction.grid_finish_data if prediction else [],
+            "consistency_data": prediction.consistency_data if prediction else [],
+            "driver_map": driver_lookup,
         }),
         "strategy.html": ("strategy.html", {
             "prediction": prediction,
@@ -375,7 +499,7 @@ def _build_driver_map(client: OpenF1Client, session_keys: list) -> dict:
             drivers_raw = client.get_drivers(session_key=sk)
             for d in drivers_raw:
                 dn = d.get("driver_number")
-                if dn and dn not in result:
+                if dn:
                     result[dn] = d
         except Exception:
             continue

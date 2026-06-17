@@ -119,6 +119,8 @@ def calc_weather_pattern(historical: list[CircuitHistoricalData]) -> dict:
     total_sessions = 0
     temp_readings = []
     track_temp_readings = []
+    humidity_readings = []
+    wind_speed_readings = []
     for h in historical:
         for w in h.weather:
             total_sessions += 1
@@ -128,11 +130,105 @@ def calc_weather_pattern(historical: list[CircuitHistoricalData]) -> dict:
                 temp_readings.append(w.air_temperature)
             if w.track_temperature:
                 track_temp_readings.append(w.track_temperature)
+            if w.humidity is not None:
+                humidity_readings.append(w.humidity)
+            if w.wind_speed is not None:
+                wind_speed_readings.append(w.wind_speed)
     return {
         "rain_probability": rain_count / total_sessions if total_sessions > 0 else 0,
         "avg_air_temp": statistics.mean(temp_readings) if temp_readings else None,
         "avg_track_temp": statistics.mean(track_temp_readings) if track_temp_readings else None,
+        "avg_humidity": statistics.mean(humidity_readings) if humidity_readings else None,
+        "avg_wind_speed": statistics.mean(wind_speed_readings) if wind_speed_readings else None,
     }
+
+
+def calc_grid_finish_stats(historical: list[CircuitHistoricalData]) -> list[dict]:
+    results_by_driver = defaultdict(list)
+    for h in historical:
+        for s in h.sessions:
+            if s.session_type != "Race":
+                continue
+            sk = s.session_key
+            positions_sk = [p for p in h.positions if p.session_key == sk]
+            positions_sorted = sorted(positions_sk, key=lambda p: p.date if p.date else "")
+            positions_by_driver = {}
+            for p in positions_sorted:
+                if p.driver_number not in positions_by_driver:
+                    positions_by_driver[p.driver_number] = p.position
+            for r in h.results:
+                if r.session_key != sk:
+                    continue
+                grid = positions_by_driver.get(r.driver_number, 0)
+                finish = r.position
+                if grid and finish and grid > 0 and finish > 0:
+                    results_by_driver[r.driver_number].append({
+                        "grid": grid,
+                        "finish": finish,
+                        "delta": grid - finish,
+                    })
+    stats = []
+    for dn, entries in results_by_driver.items():
+        avg_grid = statistics.mean(e["grid"] for e in entries)
+        avg_finish = statistics.mean(e["finish"] for e in entries)
+        avg_delta = statistics.mean(e["delta"] for e in entries)
+        stats.append({
+            "driver_number": dn,
+            "avg_grid": avg_grid,
+            "avg_finish": avg_finish,
+            "avg_delta": avg_delta,
+            "count": len(entries),
+        })
+    stats.sort(key=lambda x: x["avg_delta"], reverse=True)
+    return stats
+
+
+def calc_driver_overtakes(historical: list[CircuitHistoricalData]) -> list[dict]:
+    overtakes_by_driver = defaultdict(list)
+    for h in historical:
+        for ov in h.overtakes:
+            dn = ov.driver_number
+            if dn:
+                overtakes_by_driver[dn].append(ov.overtake_count)
+    stats = []
+    for dn, counts in overtakes_by_driver.items():
+        stats.append({
+            "driver_number": dn,
+            "avg": statistics.mean(counts),
+            "max": max(counts),
+            "total": sum(counts),
+            "count": len(counts),
+        })
+    stats.sort(key=lambda x: x["total"], reverse=True)
+    return stats
+
+
+def calc_consistency(historical: list[CircuitHistoricalData]) -> list[dict]:
+    by_driver = defaultdict(list)
+    for h in historical:
+        for s in h.sessions:
+            if s.session_type != "Race":
+                continue
+            for lap in h.laps:
+                if lap.session_key != s.session_key:
+                    continue
+                if not lap.lap_duration:
+                    continue
+                if lap.is_pit_in_lap or lap.is_pit_out_lap:
+                    continue
+                by_driver[lap.driver_number].append(lap.lap_duration)
+    stats = []
+    for dn, laps in by_driver.items():
+        if len(laps) < 5:
+            continue
+        stats.append({
+            "driver_number": dn,
+            "avg_lap_time": statistics.mean(laps),
+            "std_lap_time": statistics.stdev(laps),
+            "count": len(laps),
+        })
+    stats.sort(key=lambda x: x["std_lap_time"])
+    return stats
 
 
 def calc_quali_stats(historical: list[CircuitHistoricalData]) -> dict:

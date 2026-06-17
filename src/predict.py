@@ -9,6 +9,7 @@ from src.models import (
 from src.fetch import fetch_circuit_history, build_historical_data
 from src.analyze import (
     calc_tire_stats, calc_race_stats, calc_weather_pattern, calc_quali_stats,
+    calc_grid_finish_stats, calc_driver_overtakes, calc_consistency,
 )
 from src.strategy import recommend_strategy
 
@@ -65,6 +66,32 @@ def generate_prediction(
     recommended, top_strategies = recommend_strategy(historical, tire_stats, total_laps)
     prediction.recommended_strategy = recommended
     prediction.strategies = top_strategies
+    # Driver map
+    try:
+        race_sks = []
+        for h in historical:
+            for s in h.sessions:
+                if s.session_type == "Race":
+                    race_sks.append(s.session_key)
+        if race_sks:
+            latest_sk = max(race_sks)
+            drivers_raw = client.get_drivers(session_key=latest_sk)
+            for d in drivers_raw:
+                dn = d.get("driver_number")
+                if dn:
+                    prediction.driver_map[dn] = {
+                        "full_name": d.get("full_name", f"Driver {dn}"),
+                        "team_name": d.get("team_name", "Unknown"),
+                        "name_acronym": d.get("name_acronym", ""),
+                    }
+    except Exception as e:
+        logger.warning(f"Failed to fetch driver map: {e}")
+    # Grid vs finish
+    prediction.grid_finish_data = calc_grid_finish_stats(historical)
+    # Overtakes by driver
+    prediction.overtake_data = calc_driver_overtakes(historical)
+    # Consistency
+    prediction.consistency_data = calc_consistency(historical)
     return prediction
 
 
