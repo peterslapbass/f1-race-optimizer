@@ -41,8 +41,8 @@ class OpenF1Client:
         self.req_count += 1
 
     @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=2, max=30),
+        stop=stop_after_attempt(4),
+        wait=wait_exponential(multiplier=2, min=2, max=60),
         retry=retry_if_exception_type((requests.exceptions.RequestException,)),
     )
     def _get(self, endpoint: str, params: dict = None) -> list:

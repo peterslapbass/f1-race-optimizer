@@ -369,25 +369,37 @@ def build_dashboard(
 def fetch_standings(client: OpenF1Client) -> dict:
     import requests as _requests
     try:
-        drivers = client.get_championship_drivers()
-        teams = client.get_championship_teams()
+        cd = client.get_championship_drivers()
+        ct = client.get_championship_teams()
         result = {"drivers": [], "teams": []}
-        if drivers:
-            sorted_drivers = sorted(drivers, key=lambda d: d.get("position", 999))
+        if cd:
+            session_keys = list(set(d.get("session_key") for d in cd if d.get("session_key")))
+            sk = session_keys[0] if session_keys else None
+            driver_info = {}
+            if sk:
+                try:
+                    from src.client import OpenF1Client as _OF
+                    drivers_raw = client.get_drivers(session_key=sk)
+                    driver_info = {d["driver_number"]: d for d in drivers_raw if d.get("driver_number")}
+                except Exception:
+                    pass
+            sorted_drivers = sorted(cd, key=lambda d: d.get("position_current", 999))
             for d in sorted_drivers[:25]:
+                dn = d.get("driver_number")
+                info = driver_info.get(dn, {})
                 result["drivers"].append({
-                    "position": d.get("position", 0),
-                    "full_name": d.get("full_name", ""),
-                    "team_name": d.get("team_name", ""),
-                    "points": d.get("points", 0),
+                    "position": d.get("position_current", d.get("position", 0)),
+                    "full_name": info.get("full_name", f"Driver {dn}"),
+                    "team_name": info.get("team_name", "Unknown"),
+                    "points": d.get("points_current", d.get("points", 0)),
                 })
-        if teams:
-            sorted_teams = sorted(teams, key=lambda t: t.get("position", 999))
+        if ct:
+            sorted_teams = sorted(ct, key=lambda t: t.get("position_current", 999))
             for t in sorted_teams[:15]:
                 result["teams"].append({
-                    "position": t.get("position", 0),
-                    "team_name": t.get("team_name", ""),
-                    "points": t.get("points", 0),
+                    "position": t.get("position_current", t.get("position", 0)),
+                    "team_name": t.get("team_name", "Unknown"),
+                    "points": t.get("points_current", t.get("points", 0)),
                 })
         return result
     except Exception as e:
