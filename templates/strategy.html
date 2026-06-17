@@ -1,15 +1,25 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="card">
-  <h2><span data-i18n="strategy_detail_title">{% if lang == 'es' %}Optimizador de Estrategia{% else %}Strategy Optimizer{% endif %}</span></h2>
-  <p data-i18n="strategy_detail_desc" style="color:var(--text-muted);">
+  <div class="card-header">
+    <span class="card-title">
+      <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span data-i18n="strategy_detail_title">{% if lang == 'es' %}Optimizador de Estrategia{% else %}Strategy Optimizer{% endif %}</span>
+    </span>
+  </div>
+  <p class="text-muted" data-i18n="strategy_detail_desc" style="font-size:0.9rem;">
     {% if lang == 'es' %}Simulación de estrategias de carrera basada en datos históricos de neumáticos, degradación y tiempos de vuelta.{% else %}Race strategy simulation based on historical tire data, degradation, and lap times.{% endif %}
   </p>
 </div>
 
 {% if prediction and prediction.strategies %}
 <div class="card">
-  <h2><span data-i18n="strategy_comparison">{% if lang == 'es' %}Top Estrategias{% else %}Top Strategies{% endif %}</span></h2>
+  <div class="card-header">
+    <span class="card-title">
+      <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      <span data-i18n="strategy_comparison">{% if lang == 'es' %}Top Estrategias{% else %}Top Strategies{% endif %}</span>
+    </span>
+  </div>
   <table>
     <tr>
       <th>#</th>
@@ -21,18 +31,18 @@
     <tr>
       <td>
         {% if loop.index == 1 %}
-        <span style="color:gold; font-weight:700;">★</span>
+        <span style="color:var(--yellow);font-weight:700;">&#9733;</span>
         {% else %}
         {{ loop.index }}
         {% endif %}
       </td>
       <td>
-        <div class="steps" style="gap:4px;">
+        <div class="strategy-steps" style="gap:4px;margin:0;">
           {% set parts = strategy.description.split(' → ') %}
           {% for part in parts %}
           {% set compound = part.split('(')[0] %}
-          <span class="step badge-{{ compound.lower() }}" style="font-size:0.75rem; padding:3px 10px;">{{ part }}</span>
-          {% if not loop.last %}<span class="arrow" style="font-size:0.9rem;">→</span>{% endif %}
+          <span class="strategy-step compound-{{ compound.lower() if compound.lower() in ('soft','medium','hard','intermediate','wet') else 'unknown' }}" style="font-size:0.7rem;padding:2px 8px;">{{ part }}</span>
+          {% if not loop.last %}<span class="strategy-arrow" style="font-size:0.8rem;">→</span>{% endif %}
           {% endfor %}
         </div>
       </td>
@@ -43,8 +53,11 @@
   </table>
 </div>
 
-<div class="card">
-  <h2><span data-i18n="strategy_chart_title">{% if lang == 'es' %}Gráfico Comparativo{% else %}Comparison Chart{% endif %}</span></h2>
+<div class="card chart-card">
+  <div class="chart-header">
+    <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <span class="chart-title" data-i18n="strategy_chart_title">{% if lang == 'es' %}Gráfico Comparativo{% else %}Comparison Chart{% endif %}</span>
+  </div>
   <div class="chart-container" id="strategy-compare-chart"></div>
 </div>
 
@@ -55,11 +68,9 @@ if (stratChart && stratChart.data) {
 }
 </script>
 {% else %}
-<div class="card" style="text-align:center; padding:60px 20px;">
-  <h2 data-i18n="no_strategy_data">{% if lang == 'es' %}Sin datos de estrategia{% else %}No strategy data{% endif %}</h2>
-  <p data-i18n="no_strategy_desc" style="color:var(--text-muted); margin-top:10px;">
-    {% if lang == 'es' %}No hay datos históricos suficientes para generar estrategias.{% else %}Not enough historical data to generate strategies.{% endif %}
-  </p>
+<div class="card text-center" style="padding:60px 20px;">
+  <div class="card-title justify-center" data-i18n="no_strategy_data">{% if lang == 'es' %}Sin datos de estrategia{% else %}No strategy data{% endif %}</div>
+  <p class="text-muted" style="margin-top:10px;" data-i18n="no_strategy_desc">{% if lang == 'es' %}No hay datos históricos suficientes para generar estrategias.{% else %}Not enough historical data to generate strategies.{% endif %}</p>
 </div>
 {% endif %}
 {% endblock %}

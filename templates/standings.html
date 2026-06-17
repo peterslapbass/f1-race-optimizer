@@ -1,28 +1,38 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="card">
-  <h2><span data-i18n="standings_title">{% if lang == 'es' %}Campeonato{% else %}Championship Standings{% endif %}</span></h2>
-  <p data-i18n="standings_desc" style="color:var(--text-muted);">
+  <div class="card-header">
+    <span class="card-title">
+      <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span data-i18n="standings_title">{% if lang == 'es' %}Campeonato{% else %}Championship Standings{% endif %}</span>
+    </span>
+  </div>
+  <p class="text-muted" data-i18n="standings_desc" style="font-size:0.9rem;">
     {% if lang == 'es' %}Posiciones actuales del campeonato de pilotos y constructores.{% else %}Current driver and constructor championship standings.{% endif %}
   </p>
 </div>
 
 {% if drivers_championship %}
 <div class="card">
-  <h2><span data-i18n="drivers_title">{% if lang == 'es' %}Campeonato de Pilotos{% else %}Drivers Championship{% endif %}</span></h2>
+  <div class="card-header">
+    <span class="card-title">
+      <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      <span data-i18n="drivers_title">{% if lang == 'es' %}Campeonato de Pilotos{% else %}Drivers Championship{% endif %}</span>
+    </span>
+  </div>
   <table>
     <tr>
       <th>#</th>
       <th data-i18n="driver_col">{% if lang == 'es' %}Piloto{% else %}Driver{% endif %}</th>
       <th data-i18n="team_col">{% if lang == 'es' %}Equipo{% else %}Team{% endif %}</th>
-      <th data-i18n="points_col">{% if lang == 'es' %}Puntos{% else %}Points{% endif %}</th>
+      <th data-i18n="points_col" style="text-align:right;">{% if lang == 'es' %}Puntos{% else %}Points{% endif %}</th>
     </tr>
     {% for driver in drivers_championship %}
     <tr>
-      <td>{{ driver.position }}</td>
+      <td style="font-weight:700;">{{ driver.position }}</td>
       <td><strong>{{ driver.full_name }}</strong></td>
-      <td>{{ driver.team_name }}</td>
-      <td>{{ driver.points }}</td>
+      <td class="text-muted">{{ driver.team_name }}</td>
+      <td style="text-align:right;font-weight:700;">{{ driver.points }}</td>
     </tr>
     {% endfor %}
   </table>
@@ -31,18 +41,23 @@
 
 {% if teams_championship %}
 <div class="card">
-  <h2><span data-i18n="teams_title">{% if lang == 'es' %}Campeonato de Constructores{% else %}Constructors Championship{% endif %}</span></h2>
+  <div class="card-header">
+    <span class="card-title">
+      <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <span data-i18n="teams_title">{% if lang == 'es' %}Campeonato de Constructores{% else %}Constructors Championship{% endif %}</span>
+    </span>
+  </div>
   <table>
     <tr>
       <th>#</th>
       <th data-i18n="team_col">{% if lang == 'es' %}Equipo{% else %}Team{% endif %}</th>
-      <th data-i18n="points_col">{% if lang == 'es' %}Puntos{% else %}Points{% endif %}</th>
+      <th data-i18n="points_col" style="text-align:right;">{% if lang == 'es' %}Puntos{% else %}Points{% endif %}</th>
     </tr>
     {% for team in teams_championship %}
     <tr>
-      <td>{{ team.position }}</td>
+      <td style="font-weight:700;">{{ team.position }}</td>
       <td><strong>{{ team.team_name }}</strong></td>
-      <td>{{ team.points }}</td>
+      <td style="text-align:right;font-weight:700;">{{ team.points }}</td>
     </tr>
     {% endfor %}
   </table>
@@ -50,8 +65,8 @@
 {% endif %}
 
 {% if not drivers_championship and not teams_championship %}
-<div class="card" style="text-align:center; padding:60px 20px;">
-  <p data-i18n="no_standings">{% if lang == 'es' %}Sin datos de campeonato disponibles{% else %}No championship data available{% endif %}</p>
+<div class="card text-center" style="padding:60px 20px;">
+  <p class="text-muted" data-i18n="no_standings">{% if lang == 'es' %}Sin datos de campeonato disponibles{% else %}No championship data available{% endif %}</p>
 </div>
 {% endif %}
 {% endblock %}

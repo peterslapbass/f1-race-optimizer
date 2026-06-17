@@ -6,321 +6,430 @@
 <title>F1 Race Optimizer</title>
 <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
 <style>
-  :root {
-    --bg: #0a0a0f; --card: #12121e; --accent: #e10600;
-    --text: #e8e8e8; --text-muted: #6b7280; --border: rgba(255,255,255,0.06);
-    --f1-red: #e10600; --f1-dark: #0a0a0f;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: var(--bg); color: var(--text); line-height: 1.6;
-  }
-  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+:root {
+  --bg: #020617; --card: #0f172a; --card-hover: #1e293b;
+  --border: #1e293b; --text: #f8fafc; --text-muted: #94a3b8;
+  --accent: #e10600; --accent-hover: #b80500;
+  --green: #22c55e; --red: #ef4444; --yellow: #eab308;
+  --radius: 0.5rem;
+}
 
-  /* F1 flag stripe header */
-  .flag-stripe { height: 4px; background: repeating-linear-gradient(90deg, var(--f1-red) 0px, var(--f1-red) 20px, #fff 20px, #fff 40px); }
-  header {
-    background: linear-gradient(180deg, #0d0d1a 0%, var(--card) 100%);
-    padding: 18px 0 14px; border-bottom: 1px solid var(--border);
-  }
-  header .container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-  .header-left { display: flex; align-items: center; gap: 14px; }
-  .header-logo {
-    width: 36px; height: 36px; background: var(--f1-red); border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 900; font-size: 1.1rem; color: #fff; letter-spacing: -1px;
-  }
-  header h1 { font-size: 1.3rem; color: #fff; font-weight: 700; }
-  header h1 span { color: var(--f1-red); }
-  .header-right { display: flex; align-items: center; gap: 16px; }
-  .lang-toggle { display: flex; gap: 4px; background: rgba(255,255,255,0.05); border-radius: 6px; padding: 3px; }
-  .lang-btn {
-    background: transparent; border: none; color: var(--text-muted);
-    padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;
-    font-weight: 600; transition: all 0.2s;
-  }
-  .lang-btn.active { background: var(--f1-red); color: #fff; }
-  .nav {
-    display: flex; gap: 4px; margin-top: 12px; flex-wrap: wrap;
-  }
-  .nav a {
-    color: var(--text-muted); text-decoration: none; font-size: 0.85rem; font-weight: 500;
-    padding: 6px 14px; border-radius: 6px; transition: all 0.2s;
-  }
-  .nav a:hover, .nav a.active { background: rgba(225,6,0,0.1); color: #fff; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg); color: var(--text); line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+.container { max-width: 1280px; margin: 0 auto; padding: 16px 20px; }
 
-  /* Hero card for next race */
-  .hero-card {
-    background: linear-gradient(135deg, #1a1a2e 0%, #0d0d1a 100%);
-    border-radius: 14px; padding: 32px; margin-bottom: 24px;
-    border: 1px solid var(--border); position: relative; overflow: hidden;
-  }
-  .hero-card::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, var(--f1-red), #ff6b35, var(--f1-red));
-  }
-  .hero-grid { display: grid; grid-template-columns: auto 1fr; gap: 24px; align-items: start; }
-  .hero-flag {
-    width: 72px; height: 48px; border-radius: 6px; background-size: cover;
-    background-position: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    flex-shrink: 0;
-  }
-  .hero-info h2 { font-size: 1.6rem; color: #fff; margin-bottom: 4px; }
-  .hero-info .subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px; }
-  .hero-stats { display: flex; gap: 24px; flex-wrap: wrap; }
-  .hero-stat { text-align: center; }
-  .hero-stat .value { font-size: 1.5rem; font-weight: 700; color: #fff; }
-  .hero-stat .label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
 
-  /* Cards */
-  .card {
-    background: var(--card); border-radius: 12px; padding: 24px; margin-bottom: 20px;
-    border: 1px solid var(--border); transition: border-color 0.3s;
-  }
-  .card:hover { border-color: rgba(255,255,255,0.1); }
-  .card h2 {
-    font-size: 1.1rem; margin-bottom: 16px; color: #fff; font-weight: 600;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .card h2 .icon { color: var(--f1-red); font-size: 1.2rem; }
-  .card h2 span:not(.icon) { color: var(--f1-red); }
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-  .stat {
-    text-align: center; padding: 20px 16px; background: rgba(255,255,255,0.02);
-    border-radius: 10px; border: 1px solid rgba(255,255,255,0.04);
-  }
-  .stat .value { font-size: 1.8rem; font-weight: 700; color: #fff; }
-  .stat .label { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+/* F1 stripe */
+.flag-stripe {
+  height: 4px;
+  background: repeating-linear-gradient(90deg, var(--accent) 0px, var(--accent) 20px, #fff 20px, #fff 40px);
+}
 
-  /* Strategy */
-  .strategy-box {
-    background: linear-gradient(135deg, rgba(225,6,0,0.08), rgba(225,6,0,0.02));
-    border: 1px solid rgba(225,6,0,0.2); border-radius: 10px; padding: 20px;
-    margin-top: 8px;
-  }
-  .strategy-box .steps {
-    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 12px 0;
-  }
-  .strategy-box .step {
-    background: var(--f1-red); color: #fff; padding: 7px 18px; border-radius: 20px;
-    font-size: 0.85rem; font-weight: 700; letter-spacing: 0.3px;
-  }
-  .strategy-box .arrow { color: var(--text-muted); font-size: 1.3rem; }
+/* Header */
+header {
+  background: var(--card); border-bottom: 1px solid var(--border);
+  padding: 0; position: sticky; top: 0; z-index: 50;
+}
+.header-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  max-width: 1280px; margin: 0 auto; padding: 0 20px; height: 56px;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.logo {
+  width: 32px; height: 32px; background: var(--accent); border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 1rem; color: #fff; flex-shrink: 0;
+}
+header h1 { font-size: 1.1rem; font-weight: 700; color: #fff; display: none; }
+@media (min-width: 640px) { header h1 { display: block; } }
+header h1 span { color: var(--accent); }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.lang-group {
+  display: flex; gap: 2px; background: rgba(255,255,255,0.04);
+  border-radius: 6px; padding: 2px;
+}
+.lang-btn {
+  background: transparent; border: none; color: var(--text-muted);
+  padding: 4px 10px; border-radius: 4px; cursor: pointer;
+  font-size: 0.75rem; font-weight: 600; transition: all 0.15s;
+}
+.lang-btn.active { background: var(--accent); color: #fff; }
 
-  /* Tables */
-  table { width: 100%; border-collapse: collapse; }
-  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
-  th { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-  td { font-size: 0.9rem; }
-  tr:hover td { background: rgba(255,255,255,0.02); }
+/* Nav */
+.nav { display: flex; gap: 2px; }
+.nav a {
+  color: var(--text-muted); text-decoration: none; font-size: 0.8rem;
+  font-weight: 500; padding: 6px 10px; border-radius: 6px;
+  transition: all 0.15s; white-space: nowrap;
+}
+.nav a:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+.nav a.active { background: rgba(225,6,0,0.1); color: var(--accent); }
 
-  .badge {
-    display: inline-block; padding: 3px 12px; border-radius: 12px;
-    font-size: 0.75rem; font-weight: 700;
-  }
-  .badge-soft { background: #ff6b35; color: #fff; }
-  .badge-medium { background: #ffd700; color: #000; }
-  .badge-hard { background: #6b7280; color: #fff; }
-  .badge-intermediate { background: #4caf50; color: #fff; }
-  .badge-wet { background: #2196f3; color: #fff; }
-  .chart-container { width: 100%; height: 380px; }
+/* Cards */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px;
+  transition: all 0.2s ease;
+}
+.card:hover { border-color: rgba(255,255,255,0.12); }
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-size: 0.875rem; font-weight: 600; color: var(--text);
+  display: flex; align-items: center; gap: 8px;
+}
 
-  footer { text-align: center; padding: 32px 0; color: var(--text-muted); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 20px; }
+/* Stat cards (shadcn style) */
+.stat-card { padding: 16px 20px; }
+.stat-card .stat-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
+}
+.stat-card .stat-label {
+  font-size: 0.8rem; font-weight: 500; color: var(--text-muted);
+  letter-spacing: -0.01em;
+}
+.stat-card .stat-value {
+  font-size: 1.75rem; font-weight: 700; color: var(--text); line-height: 1.2;
+}
+.stat-card .stat-footer {
+  font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;
+}
+.stat-card .stat-icon {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(225,6,0,0.1);
+}
+.stat-card .stat-icon svg { width: 18px; height: 18px; stroke: var(--accent); }
 
-  @media (max-width: 768px) {
-    .grid-2, .grid-3 { grid-template-columns: 1fr; }
-    header .container { flex-direction: column; align-items: stretch; }
-    .header-left, .header-right { justify-content: center; }
-    .nav { justify-content: center; }
-    .hero-grid { grid-template-columns: 1fr; text-align: center; }
-    .hero-stats { justify-content: center; }
-    .chart-container { height: 300px; }
-  }
-  .hidden { display: none !important; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-  .card, .hero-card { animation: fadeIn 0.5s ease-out both; }
-  .hero-card { animation-delay: 0s; }
-  .card:nth-child(2) { animation-delay: 0.1s; }
-  .card:nth-child(3) { animation-delay: 0.2s; }
-  .card:nth-child(4) { animation-delay: 0.3s; }
-  .card:nth-child(5) { animation-delay: 0.4s; }
+/* Grids */
+.grid { display: grid; gap: 16px; }
+.grid-cols-2 { grid-template-columns: 1fr 1fr; }
+.grid-cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.grid-cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+@media (max-width: 768px) {
+  .grid-cols-2, .grid-cols-3, .grid-cols-4 { grid-template-columns: 1fr; }
+}
+@media (min-width: 769px) and (max-width: 1024px) {
+  .grid-cols-4 { grid-template-columns: 1fr 1fr; }
+}
+
+/* Charts */
+.chart-card { padding: 0; overflow: hidden; }
+.chart-card .chart-header {
+  padding: 16px 20px 0; display: flex; align-items: center; gap: 8px;
+}
+.chart-card .chart-title {
+  font-size: 0.875rem; font-weight: 600; color: var(--text);
+}
+.chart-container { width: 100%; height: 360px; }
+
+/* Strategy */
+.strategy-card {
+  background: linear-gradient(135deg, rgba(225,6,0,0.06), rgba(225,6,0,0.02));
+  border: 1px solid rgba(225,6,0,0.15); border-radius: var(--radius);
+  padding: 16px 20px;
+}
+.strategy-steps {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 8px 0;
+}
+.strategy-step {
+  padding: 6px 16px; border-radius: 20px; font-size: 0.8rem;
+  font-weight: 700; letter-spacing: 0.2px;
+}
+.strategy-arrow { color: var(--text-muted); font-size: 1.1rem; }
+
+/* Compounds */
+.compound-soft { background: #ff6b35; color: #fff; }
+.compound-medium { background: #ffd700; color: #000; }
+.compound-hard { background: #6b7280; color: #fff; }
+.compound-intermediate { background: #22c55e; color: #fff; }
+.compound-wet { background: #3b82f6; color: #fff; }
+.compound-unknown { background: #475569; color: #fff; }
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; }
+th {
+  padding: 8px 12px; text-align: left; font-size: 0.7rem;
+  font-weight: 600; color: var(--text-muted); text-transform: uppercase;
+  letter-spacing: 0.08em; border-bottom: 1px solid var(--border);
+}
+td {
+  padding: 10px 12px; font-size: 0.85rem; border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,0.02); }
+
+/* Badge */
+.badge {
+  display: inline-block; padding: 2px 10px; border-radius: 10px;
+  font-size: 0.7rem; font-weight: 700;
+}
+
+/* Icons */
+.icon { display: inline-flex; align-items: center; justify-content: center; }
+.icon-sm { width: 16px; height: 16px; }
+.icon-md { width: 20px; height: 20px; }
+.icon-red { stroke: var(--accent); }
+.icon-muted { stroke: var(--text-muted); }
+
+/* Hero */
+.hero {
+  position: relative; overflow: hidden; border-radius: var(--radius);
+  padding: 24px 28px; margin-bottom: 20px;
+  background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+  border: 1px solid var(--border);
+}
+.hero::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--accent), #ff6b35, var(--accent));
+}
+.hero-grid { display: grid; gap: 16px; }
+.hero-label {
+  font-size: 0.7rem; font-weight: 600; color: var(--accent);
+  text-transform: uppercase; letter-spacing: 0.1em;
+}
+.hero-title { font-size: 1.5rem; font-weight: 700; color: #fff; margin: 2px 0; }
+.hero-subtitle { font-size: 0.85rem; color: var(--text-muted); }
+.hero-stats { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 12px; }
+.hero-stat { text-align: center; min-width: 80px; }
+.hero-stat-value { font-size: 1.25rem; font-weight: 700; color: #fff; }
+.hero-stat-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+
+/* Footer */
+footer {
+  text-align: center; padding: 24px 0; color: var(--text-muted);
+  font-size: 0.75rem; border-top: 1px solid var(--border); margin-top: 24px;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.card, .hero, .stat-card { animation: fadeInUp 0.4s ease-out both; }
+.delay-1 { animation-delay: 0.05s; }
+.delay-2 { animation-delay: 0.1s; }
+.delay-3 { animation-delay: 0.15s; }
+.delay-4 { animation-delay: 0.2s; }
+.delay-5 { animation-delay: 0.25s; }
+.delay-6 { animation-delay: 0.3s; }
+
+.hidden { display: none !important; }
+.mb-4 { margin-bottom: 16px; }
+.mt-3 { margin-top: 12px; }
+.gap-4 { gap: 16px; }
+.text-center { text-align: center; }
+.text-muted { color: var(--text-muted); }
+.text-accent { color: var(--accent); }
+.text-green { color: var(--green); }
+.text-red { color: var(--red); }
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.justify-center { justify-content: center; }
 </style>
 </head>
 <body>
+<div class="flag-stripe"></div>
 <header>
-  <div class="container">
-    <h1><span>F1</span> Race Optimizer</h1>
-    <div class="lang-toggle">
-      <button class="lang-btn active" data-lang-btn="en" onclick="setLang('en')">EN</button>
-      <button class="lang-btn" data-lang-btn="es" onclick="setLang('es')">ES</button>
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="logo">F1</div>
+      <h1><span>F1</span> Race Optimizer</h1>
     </div>
-    <nav class="nav">
-      <a href="index.html" class="active" data-i18n="nav_home">Inicio</a>
-      <a href="strategy.html" data-i18n="nav_strategy">Estrategia</a>
-      <a href="quali.html" data-i18n="nav_quali">Clasificación</a>
-      <a href="standings.html" data-i18n="nav_standings">Campeonato</a>
-      <a href="historical.html" data-i18n="nav_historical">Histórico</a>
-    </nav>
+    <div class="header-right">
+      <nav class="nav">
+        <a href="index.html" class="active" data-i18n="nav_home">Inicio</a>
+        <a href="strategy.html" data-i18n="nav_strategy">Estrategia</a>
+        <a href="quali.html" data-i18n="nav_quali">Clasificación</a>
+        <a href="standings.html" data-i18n="nav_standings">Campeonato</a>
+        <a href="historical.html" data-i18n="nav_historical">Histórico</a>
+      </nav>
+      <div class="lang-group">
+        <button class="lang-btn active" data-lang-btn="en" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" data-lang-btn="es" onclick="setLang('es')">ES</button>
+      </div>
+    </div>
   </div>
 </header>
 <main class="container">
 
 
 
-<!-- Hero: Next Race -->
-<div class="hero-card">
-  <div class="hero-grid">
-    <div class="hero-info">
-      <div class="subtitle" data-i18n="next_race_title">PRÓXIMA CARRERA</div>
-      <h2>Spielberg</h2>
-      <div class="subtitle">Austria &middot; 2026</div>
-      <div class="hero-stats">
-        <div class="hero-stat">
-          <div class="value">69.661s</div>
-          <div class="label" data-i18n="avg_winner_lap">Mejor Vuelta</div>
-        </div>
-        <div class="hero-stat">
-          <div class="value">3%</div>
-          <div class="label" data-i18n="rain_prob">Lluvia</div>
-        </div>
-        <div class="hero-stat">
-          <div class="value">0</div>
-          <div class="label" data-i18n="avg_overtakes_label">Adelantamientos</div>
-        </div>
+<!-- Stat cards row -->
+<div class="grid grid-cols-4">
+  <div class="card stat-card delay-1">
+    <div class="stat-header">
+      <span class="stat-label" data-i18n="next_race_title">Próxima Carrera</span>
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
       </div>
     </div>
+    <div class="stat-value">Spielberg</div>
+    <div class="stat-footer">Austria &middot; 2026</div>
+  </div>
+  <div class="card stat-card delay-2">
+    <div class="stat-header">
+      <span class="stat-label" data-i18n="avg_winner_lap">Mejor Vuelta</span>
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+    </div>
+    <div class="stat-value">69.661<span style="font-size:0.9rem;font-weight:400;color:var(--text-muted)">s</span></div>
+    <div class="stat-footer" data-i18n="avg_winner_lap_label">promedio histórico</div>
+  </div>
+  <div class="card stat-card delay-3">
+    <div class="stat-header">
+      <span class="stat-label" data-i18n="rain_prob">Lluvia</span>
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16.2A4.5 4.5 0 0 0 17.5 8h-1.8A7 7 0 0 0 4 14.9"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/></svg>
+      </div>
+    </div>
+    <div class="stat-value">3<span style="font-size:0.9rem;font-weight:400;color:var(--text-muted)">%</span></div>
+    <div class="stat-footer" data-i18n="rain_label">probabilidad</div>
+  </div>
+  <div class="card stat-card delay-4">
+    <div class="stat-header">
+      <span class="stat-label" data-i18n="sc_prob">Safety Car</span>
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+    </div>
+    <div class="stat-value">15<span style="font-size:0.9rem;font-weight:400;color:var(--text-muted)">%</span></div>
+    <div class="stat-footer" data-i18n="sc_label">probabilidad</div>
   </div>
 </div>
 
-<!-- Strategy -->
-<div class="card">
-  <h2><span class="icon">&#9878;</span> <span data-i18n="strategy_title">Estrategia Recomendada</span></h2>
+<!-- Hero: Next Race Detail + Strategy -->
+<div class="hero delay-5">
+  <div class="hero-label" data-i18n="strategy_title">Estrategia Recomendada</div>
   
-  <div class="strategy-box">
-    <div class="steps">
+  <div class="strategy-card" style="margin-top:12px;background:rgba(225,6,0,0.08);border-color:rgba(225,6,0,0.25);">
+    <div class="strategy-steps">
       
       
-      <span class="step badge-medium">MEDIUM(10)</span>
-      <span class="arrow">→</span>
+      <span class="strategy-step compound-medium">MEDIUM(10)</span>
+      <span class="strategy-arrow">→</span>
       
       
-      <span class="step badge-soft">SOFT(61)</span>
+      <span class="strategy-step compound-soft">SOFT(61)</span>
       
       
     </div>
-    <p style="margin-top:12px; font-size:0.9rem; color:var(--text-muted);">
+    <div style="font-size:0.85rem;color:var(--text-muted);margin-top:8px;">
       <span data-i18n="est_time">Tiempo estimado:</span>
-      <strong>5351.2s</strong>
+      <strong style="color:var(--text);">5351.2s</strong>
       &nbsp;|&nbsp; 1
-      <span data-i18n="pit_stops">paradas</span>
-    </p>
+      <span data-i18n="pit_stops">parada</span>
+    </div>
   </div>
   
 </div>
 
-<!-- Stats + Weather in 2-col -->
-<div class="grid-2">
-  <div class="card">
-    <h2><span class="icon">&#9881;</span> <span data-i18n="race_stats_title">Estadísticas Históricas</span></h2>
+<!-- Stats + Weather -->
+<div class="grid grid-cols-2">
+  <div class="card delay-4">
+    <div class="card-header">
+      <span class="card-title">
+        <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+        <span data-i18n="race_stats_title">Estadísticas</span>
+      </span>
+    </div>
     <table>
-      <tr>
-        <td data-i18n="avg_winner_lap">Mejor vuelta promedio</td>
-        <td><strong>69.661s</strong></td>
-      </tr>
-      <tr>
-        <td data-i18n="avg_overtakes_label">Adelantamientos promedio</td>
-        <td><strong>0</strong></td>
-      </tr>
-      <tr>
-        <td data-i18n="sc_prob">Probabilidad de Safety Car</td>
-        <td><strong>15%</strong></td>
-      </tr>
-      <tr>
-        <td data-i18n="quali_improv">Mejora Q1→Q3</td>
-        <td><strong>0.31%</strong></td>
-      </tr>
+      <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="avg_overtakes_label">Adelantamientos prom.</span></td><td style="text-align:right;font-weight:600;">0</td></tr>
+      <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="quali_improv">Mejora Q1→Q3</span></td><td style="text-align:right;font-weight:600;">0.31%</td></tr>
+      <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="avg_winner_lap">Mejor vuelta</span></td><td style="text-align:right;font-weight:600;">69.661s</td></tr>
+      <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="sc_prob">Safety Car</span></td><td style="text-align:right;font-weight:600;">15%</td></tr>
     </table>
   </div>
-  <div class="card">
-    <h2><span class="icon">&#9925;</span> <span data-i18n="weather_title">Clima Histórico</span></h2>
+  <div class="card delay-5">
+    <div class="card-header">
+      <span class="card-title">
+        <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16.2A4.5 4.5 0 0 0 17.5 8h-1.8A7 7 0 0 0 4 14.9"/></svg>
+        <span data-i18n="weather_title">Clima</span>
+      </span>
+    </div>
     
     <table>
-      <tr>
-        <td data-i18n="rain_prob">Probabilidad de lluvia</td>
-        <td><strong>3%</strong></td>
-      </tr>
-      <tr>
-        <td data-i18n="avg_temp">Temp. ambiente promedio</td>
-        <td><strong>25.8°C</strong></td>
-      </tr>
-      <tr>
-        <td data-i18n="avg_track_temp">Temp. pista promedio</td>
-        <td><strong>39.6°C</strong></td>
-      </tr>
-      <tr>
-        <td data-i18n="avg_humidity">Humedad promedio</td>
-        <td><strong>47%</strong></td>
-      </tr>
-      <tr>
-        <td data-i18n="avg_wind">Viento promedio</td>
-        <td><strong>1.3 m/s</strong></td>
-      </tr>
+      <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="avg_temp">Temp. ambiente</span></td><td style="text-align:right;font-weight:600;">25.8°C</td></tr>
+      <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="avg_track_temp">Temp. pista</span></td><td style="text-align:right;font-weight:600;">39.6°C</td></tr>
+      <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="avg_humidity">Humedad</span></td><td style="text-align:right;font-weight:600;">47%</td></tr>
+      <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="avg_wind">Viento</span></td><td style="text-align:right;font-weight:600;">1.3 m/s</td></tr>
+      <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="rain_prob">Prob. lluvia</span></td><td style="text-align:right;font-weight:600;">3%</td></tr>
     </table>
     
   </div>
 </div>
 
-<!-- Tires -->
-<div class="card">
-  <h2><span class="icon">&#9901;</span> <span data-i18n="tire_stats_title">Estadísticas de Neumáticos</span></h2>
+<!-- Tire Stats -->
+<div class="card delay-6">
+  <div class="card-header">
+    <span class="card-title">
+      <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+      <span data-i18n="tire_stats_title">Neumáticos</span>
+    </span>
+  </div>
   
   <table>
     <tr>
       <th data-i18n="compound">Compuesto</th>
-      <th data-i18n="avg_stint">Stint Promedio</th>
-      <th data-i18n="degradation">Degradación (s/vuelta)</th>
-      <th data-i18n="count">Muestras</th>
+      <th data-i18n="avg_stint">Stint</th>
+      <th data-i18n="degradation">Degradación</th>
+      <th data-i18n="count" style="text-align:right;">Muestras</th>
     </tr>
     
     <tr>
-      <td><span class="badge badge-soft">SOFT</span></td>
+      <td><span class="badge compound-soft">SOFT</span></td>
       <td>4.2 v</td>
       <td>-0.435s</td>
-      <td>658</td>
+      <td style="text-align:right;">658</td>
     </tr>
     
     <tr>
-      <td><span class="badge badge-hard">HARD</span></td>
+      <td><span class="badge compound-hard">HARD</span></td>
       <td>14.9 v</td>
       <td>0.028s</td>
-      <td>184</td>
+      <td style="text-align:right;">184</td>
     </tr>
     
     <tr>
-      <td><span class="badge badge-medium">MEDIUM</span></td>
+      <td><span class="badge compound-medium">MEDIUM</span></td>
       <td>10.6 v</td>
       <td>-0.312s</td>
-      <td>355</td>
+      <td style="text-align:right;">355</td>
     </tr>
     
     <tr>
-      <td><span class="badge badge-intermediate">INTERMEDIATE</span></td>
+      <td><span class="badge compound-intermediate">INTERMEDIATE</span></td>
       <td>17.8 v</td>
       <td>-0.344s</td>
-      <td>23</td>
+      <td style="text-align:right;">23</td>
     </tr>
     
   </table>
   
 </div>
 
-<!-- Analysis charts: Grid/Finish, Overtakes -->
-<div class="grid-2">
+<!-- Charts: Grid/Finish + Overtakes -->
+<div class="grid grid-cols-2">
   
-  <div class="card">
-    <h2><span class="icon">&#9654;</span> <span data-i18n="grid_finish_title">Parrilla vs Resultado</span></h2>
+  <div class="card chart-card delay-4">
+    <div class="chart-header">
+      <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      <span class="chart-title" data-i18n="grid_finish_title">Parrilla vs Resultado</span>
+    </div>
     <div class="chart-container" id="grid-finish-chart"></div>
   </div>
   
@@ -328,33 +437,40 @@
 </div>
 
 <!-- Consistency charts -->
-<div class="grid-2">
+<div class="grid grid-cols-2">
   
-  <div class="card">
-    <h2><span class="icon">&#9888;</span> <span data-i18n="consistency_title">Consistencia (Circuito)</span></h2>
+  <div class="card chart-card delay-4">
+    <div class="chart-header">
+      <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+      <span class="chart-title" data-i18n="consistency_title">Consistencia (Circuito)</span>
+    </div>
     <div class="chart-container" id="consistency-chart"></div>
   </div>
   
   
-  <div class="card">
-    <h2><span class="icon">&#9888;</span> <span data-i18n="season_consistency_title">Consistencia (Temp. 2026)</span></h2>
+  <div class="card chart-card delay-5">
+    <div class="chart-header">
+      <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+      <span class="chart-title" data-i18n="season_consistency_title">Consistencia (Temp. 2026)</span>
+    </div>
     <div class="chart-container" id="season-consistency-chart"></div>
   </div>
   
 </div>
 
-<!-- Strategy comparison chart -->
-<div class="card">
-  <h2><span class="icon">&#8801;</span> <span data-i18n="strategy_chart_title">Comparación de Estrategias</span></h2>
+<!-- Strategy comparison -->
+<div class="card chart-card delay-6">
+  <div class="chart-header">
+    <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <span class="chart-title" data-i18n="strategy_chart_title">Comparación de Estrategias</span>
+  </div>
   <div class="chart-container" id="strategy-chart"></div>
 </div>
 
-<!-- Footer info -->
-<div class="card" style="text-align:center; padding:16px;">
-  <p style="color:var(--text-muted); font-size:0.8rem;">
-    <span data-i18n="generated_at">Generado el</span>
-    2026-06-17T16:28:53.722111+00:00
-  </p>
+<!-- Generated at -->
+<div class="text-center" style="padding:16px;color:var(--text-muted);font-size:0.75rem;">
+  <span data-i18n="generated_at">Generado el</span>
+  2026-06-17T17:12:49.198137+00:00
 </div>
 
 <script>
@@ -378,12 +494,13 @@ if (seasonConsistencyChart && seasonConsistencyChart.data) Plotly.newPlot('seaso
 </script>
 
 
+
 </main>
 <footer>
   <p data-i18n="footer">Datos proporcionados por OpenF1. Proyecto de código abierto.</p>
 </footer>
 <script>
-const i18n = {"en": {"nav_home": "Home", "nav_strategy": "Strategy", "nav_quali": "Qualifying", "nav_standings": "Standings", "nav_historical": "Historical", "footer": "Data provided by OpenF1. Open source project.", "next_race_title": "Next Race", "circuit": "Circuit", "country": "Country", "season": "Season", "strategy_title": "Recommended Strategy", "est_time": "Estimated time:", "pit_stops": "pit stops", "no_strategy": "Insufficient data to generate strategy.", "race_stats_title": "Historical Stats", "avg_winner_lap": "Avg Winner Lap", "avg_overtakes_label": "Avg Overtakes", "sc_prob": "Safety Car Probability", "quali_improv": "Q1→Q3 Improvement", "weather_title": "Historical Weather", "rain_prob": "Rain Probability", "avg_temp": "Avg Air Temp", "avg_track_temp": "Avg Track Temp", "avg_humidity": "Avg Humidity", "avg_wind": "Avg Wind", "no_weather": "No weather data", "grid_finish_title": "Grid vs Finish", "overtakes_title": "Overtakes by Driver", "consistency_title": "Race Consistency (Circuit)", "season_consistency_title": "Race Consistency (2026 Season)", "tire_stats_title": "Tire Statistics", "compound": "Compound", "avg_stint": "Avg Stint", "degradation": "Degradation (s/lap)", "count": "Samples", "no_tire": "No tire data", "strategy_chart_title": "Strategy Comparison", "generated_at": "Generated at", "no_prediction": "No prediction available", "no_prediction_desc": "The pipeline hasn't generated data for the next race yet. Check back later.", "strategy_detail_title": "Strategy Optimizer", "strategy_detail_desc": "Race strategy simulation based on historical tire data, degradation, and lap times.", "strategy_comparison": "Top Strategies", "strategy_col": "Strategy", "pit_stops_col": "Pit Stops", "est_time_col": "Est. Time", "no_strategy_data": "No strategy data", "no_strategy_desc": "Not enough historical data to generate strategies.", "quali_title": "Qualifying Analysis", "quali_desc": "Historical qualifying analysis based on previous sessions at this circuit.", "quali_improvement_rate": "Q1→Q3 Improvement", "avg_quali_lap": "Avg Winner Lap", "quali_sc_prob": "Race SC Probability", "tire_quali_title": "Qualifying Tires", "quali_lap_count": "Laps", "no_quali_data": "No qualifying data available", "standings_title": "Championship Standings", "standings_desc": "Current driver and constructor championship standings.", "drivers_title": "Drivers Championship", "teams_title": "Constructors Championship", "driver_col": "Driver", "team_col": "Team", "points_col": "Points", "no_standings": "No championship data available", "historical_title": "Historical Data", "historical_desc": "Aggregated historical data from previous seasons (2023–present).", "circuits_list": "Available Circuits", "circuit_col": "Circuit", "years_col": "Years", "tire_trends": "Tire Trends", "weather_trends": "Weather Trends"}, "es": {"nav_home": "Inicio", "nav_strategy": "Estrategia", "nav_quali": "Clasificación", "nav_standings": "Campeonato", "nav_historical": "Histórico", "footer": "Datos proporcionados por OpenF1. Proyecto de código abierto.", "next_race_title": "Próxima Carrera", "circuit": "Circuito", "country": "País", "season": "Temporada", "strategy_title": "Estrategia Recomendada", "est_time": "Tiempo estimado:", "pit_stops": "paradas", "no_strategy": "No hay datos suficientes para generar estrategia.", "race_stats_title": "Estadísticas Históricas", "avg_winner_lap": "Mejor vuelta promedio", "avg_overtakes_label": "Adelantamientos promedio", "sc_prob": "Probabilidad de Safety Car", "quali_improv": "Mejora Q1→Q3", "weather_title": "Clima Histórico", "rain_prob": "Probabilidad de lluvia", "avg_temp": "Temp. ambiente promedio", "avg_track_temp": "Temp. pista promedio", "avg_humidity": "Humedad promedio", "avg_wind": "Viento promedio", "no_weather": "Sin datos climáticos", "grid_finish_title": "Parrilla vs Resultado", "overtakes_title": "Adelantamientos por Piloto", "consistency_title": "Consistencia (Circuito)", "season_consistency_title": "Consistencia (Temp. 2026)", "tire_stats_title": "Estadísticas de Neumáticos", "compound": "Compuesto", "avg_stint": "Stint Promedio", "degradation": "Degradación (s/vuelta)", "count": "Muestras", "no_tire": "Sin datos de neumáticos", "strategy_chart_title": "Comparación de Estrategias", "generated_at": "Generado el", "no_prediction": "No hay predicción disponible", "no_prediction_desc": "El pipeline aún no ha generado datos para la próxima carrera. Vuelve más tarde.", "strategy_detail_title": "Optimizador de Estrategia", "strategy_detail_desc": "Simulación de estrategias de carrera basada en datos históricos de neumáticos, degradación y tiempos de vuelta.", "strategy_comparison": "Top Estrategias", "strategy_col": "Estrategia", "pit_stops_col": "Paradas", "est_time_col": "Tiempo Est.", "no_strategy_data": "Sin datos de estrategia", "no_strategy_desc": "No hay datos históricos suficientes para generar estrategias.", "quali_title": "Análisis de Clasificación", "quali_desc": "Análisis histórico de clasificación basado en sesiones anteriores en este circuito.", "quali_improvement_rate": "Mejora Q1→Q3", "avg_quali_lap": "Vuelta promedio del ganador", "quali_sc_prob": "Prob. Safety Car en carrera", "tire_quali_title": "Neumáticos en Clasificación", "quali_lap_count": "Vueltas", "no_quali_data": "Sin datos de clasificación disponibles", "standings_title": "Campeonato", "standings_desc": "Posiciones actuales del campeonato de pilotos y constructores.", "drivers_title": "Campeonato de Pilotos", "teams_title": "Campeonato de Constructores", "driver_col": "Piloto", "team_col": "Equipo", "points_col": "Puntos", "no_standings": "Sin datos de campeonato disponibles", "historical_title": "Datos Históricos", "historical_desc": "Datos históricos agregados de temporadas anteriores (2023–presente).", "circuits_list": "Circuitos Disponibles", "circuit_col": "Circuito", "years_col": "Años", "tire_trends": "Tendencias de Neumáticos", "weather_trends": "Tendencias Climáticas"}};
+const i18n = {"en": {"nav_home": "Home", "nav_strategy": "Strategy", "nav_quali": "Qualifying", "nav_standings": "Standings", "nav_historical": "Historical", "footer": "Data provided by OpenF1. Open source project.", "next_race_title": "Next Race", "circuit": "Circuit", "country": "Country", "season": "Season", "strategy_title": "Recommended Strategy", "est_time": "Estimated time:", "pit_stops": "pit stops", "no_strategy": "Insufficient data to generate strategy.", "race_stats_title": "Historical Stats", "avg_winner_lap": "Avg Winner Lap", "avg_winner_lap_label": "historical avg", "rain_label": "probability", "sc_label": "probability", "avg_overtakes_label": "Avg Overtakes", "sc_prob": "Safety Car Probability", "quali_improv": "Q1→Q3 Improvement", "weather_title": "Historical Weather", "rain_prob": "Rain Probability", "avg_temp": "Avg Air Temp", "avg_track_temp": "Avg Track Temp", "avg_humidity": "Avg Humidity", "avg_wind": "Avg Wind", "no_weather": "No weather data", "grid_finish_title": "Grid vs Finish", "overtakes_title": "Overtakes by Driver", "consistency_title": "Race Consistency (Circuit)", "season_consistency_title": "Race Consistency (2026 Season)", "tire_stats_title": "Tire Statistics", "compound": "Compound", "avg_stint": "Avg Stint", "degradation": "Degradation (s/lap)", "count": "Samples", "no_tire": "No tire data", "strategy_chart_title": "Strategy Comparison", "generated_at": "Generated at", "no_prediction": "No prediction available", "no_prediction_desc": "The pipeline hasn't generated data for the next race yet. Check back later.", "strategy_detail_title": "Strategy Optimizer", "strategy_detail_desc": "Race strategy simulation based on historical tire data, degradation, and lap times.", "strategy_comparison": "Top Strategies", "strategy_col": "Strategy", "pit_stops_col": "Pit Stops", "est_time_col": "Est. Time", "no_strategy_data": "No strategy data", "no_strategy_desc": "Not enough historical data to generate strategies.", "quali_title": "Qualifying Analysis", "quali_desc": "Historical qualifying analysis based on previous sessions at this circuit.", "quali_improvement_rate": "Q1→Q3 Improvement", "avg_quali_lap": "Avg Winner Lap", "quali_sc_prob": "Race SC Probability", "tire_quali_title": "Qualifying Tires", "quali_lap_count": "Laps", "no_quali_data": "No qualifying data available", "standings_title": "Championship Standings", "standings_desc": "Current driver and constructor championship standings.", "drivers_title": "Drivers Championship", "teams_title": "Constructors Championship", "driver_col": "Driver", "team_col": "Team", "points_col": "Points", "no_standings": "No championship data available", "historical_title": "Historical Data", "historical_desc": "Aggregated historical data from previous seasons (2023–present).", "circuits_list": "Available Circuits", "circuit_col": "Circuit", "years_col": "Years", "tire_trends": "Tire Trends", "weather_trends": "Weather Trends"}, "es": {"nav_home": "Inicio", "nav_strategy": "Estrategia", "nav_quali": "Clasificación", "nav_standings": "Campeonato", "nav_historical": "Histórico", "footer": "Datos proporcionados por OpenF1. Proyecto de código abierto.", "next_race_title": "Próxima Carrera", "circuit": "Circuito", "country": "País", "season": "Temporada", "strategy_title": "Estrategia Recomendada", "est_time": "Tiempo estimado:", "pit_stops": "paradas", "no_strategy": "No hay datos suficientes para generar estrategia.", "race_stats_title": "Estadísticas Históricas", "avg_winner_lap": "Mejor vuelta promedio", "avg_winner_lap_label": "promedio histórico", "rain_label": "probabilidad", "sc_label": "probabilidad", "avg_overtakes_label": "Adelantamientos promedio", "sc_prob": "Probabilidad de Safety Car", "quali_improv": "Mejora Q1→Q3", "weather_title": "Clima Histórico", "rain_prob": "Probabilidad de lluvia", "avg_temp": "Temp. ambiente promedio", "avg_track_temp": "Temp. pista promedio", "avg_humidity": "Humedad promedio", "avg_wind": "Viento promedio", "no_weather": "Sin datos climáticos", "grid_finish_title": "Parrilla vs Resultado", "overtakes_title": "Adelantamientos por Piloto", "consistency_title": "Consistencia (Circuito)", "season_consistency_title": "Consistencia (Temp. 2026)", "tire_stats_title": "Estadísticas de Neumáticos", "compound": "Compuesto", "avg_stint": "Stint Promedio", "degradation": "Degradación (s/vuelta)", "count": "Muestras", "no_tire": "Sin datos de neumáticos", "strategy_chart_title": "Comparación de Estrategias", "generated_at": "Generado el", "no_prediction": "No hay predicción disponible", "no_prediction_desc": "El pipeline aún no ha generado datos para la próxima carrera. Vuelve más tarde.", "strategy_detail_title": "Optimizador de Estrategia", "strategy_detail_desc": "Simulación de estrategias de carrera basada en datos históricos de neumáticos, degradación y tiempos de vuelta.", "strategy_comparison": "Top Estrategias", "strategy_col": "Estrategia", "pit_stops_col": "Paradas", "est_time_col": "Tiempo Est.", "no_strategy_data": "Sin datos de estrategia", "no_strategy_desc": "No hay datos históricos suficientes para generar estrategias.", "quali_title": "Análisis de Clasificación", "quali_desc": "Análisis histórico de clasificación basado en sesiones anteriores en este circuito.", "quali_improvement_rate": "Mejora Q1→Q3", "avg_quali_lap": "Vuelta promedio del ganador", "quali_sc_prob": "Prob. Safety Car en carrera", "tire_quali_title": "Neumáticos en Clasificación", "quali_lap_count": "Vueltas", "no_quali_data": "Sin datos de clasificación disponibles", "standings_title": "Campeonato", "standings_desc": "Posiciones actuales del campeonato de pilotos y constructores.", "drivers_title": "Campeonato de Pilotos", "teams_title": "Campeonato de Constructores", "driver_col": "Piloto", "team_col": "Equipo", "points_col": "Puntos", "no_standings": "Sin datos de campeonato disponibles", "historical_title": "Datos Históricos", "historical_desc": "Datos históricos agregados de temporadas anteriores (2023–presente).", "circuits_list": "Circuitos Disponibles", "circuit_col": "Circuito", "years_col": "Años", "tire_trends": "Tendencias de Neumáticos", "weather_trends": "Tendencias Climáticas"}};
 function setLang(lang) {
   document.querySelectorAll('[data-lang-btn]').forEach(b => b.classList.toggle('active', b.dataset.langBtn === lang));
   document.querySelectorAll('[data-i18n]').forEach(el => {

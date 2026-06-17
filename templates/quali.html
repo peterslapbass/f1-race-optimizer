@@ -1,30 +1,55 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="card">
-  <h2><span data-i18n="quali_title">{% if lang == 'es' %}Análisis de Clasificación{% else %}Qualifying Analysis{% endif %}</span></h2>
-  <p data-i18n="quali_desc" style="color:var(--text-muted);">
+  <div class="card-header">
+    <span class="card-title">
+      <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span data-i18n="quali_title">{% if lang == 'es' %}Análisis de Clasificación{% else %}Qualifying Analysis{% endif %}</span>
+    </span>
+  </div>
+  <p class="text-muted" data-i18n="quali_desc" style="font-size:0.9rem;">
     {% if lang == 'es' %}Análisis histórico de clasificación basado en sesiones anteriores en este circuito.{% else %}Historical qualifying analysis based on previous sessions at this circuit.{% endif %}
   </p>
 </div>
 
 {% if prediction %}
-<div class="grid-3">
-  <div class="stat">
-    <div class="value">{{ "%.2f"|format(prediction.quali_improvement_rate or 0) }}%</div>
-    <div class="label" data-i18n="quali_improvement_rate">{% if lang == 'es' %}Mejora Q1→Q3{% else %}Q1→Q3 Improvement{% endif %}</div>
+<div class="grid grid-cols-3">
+  <div class="card stat-card delay-1">
+    <div class="stat-header">
+      <span class="stat-label" data-i18n="quali_improvement_rate">{% if lang == 'es' %}Mejora Q1→Q3{% else %}Q1→Q3{% endif %}</span>
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+      </div>
+    </div>
+    <div class="stat-value">{{ "%.2f"|format(prediction.quali_improvement_rate or 0) }}%</div>
   </div>
-  <div class="stat">
-    <div class="value">{{ "%.3f"|format(prediction.avg_winner_lap_time or 0) }}s</div>
-    <div class="label" data-i18n="avg_quali_lap">{% if lang == 'es' %}Vuelta promedio del ganador{% else %}Avg Winner Lap{% endif %}</div>
+  <div class="card stat-card delay-2">
+    <div class="stat-header">
+      <span class="stat-label" data-i18n="avg_quali_lap">{% if lang == 'es' %}Vuelta promedio{% else %}Avg Winner Lap{% endif %}</span>
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+    </div>
+    <div class="stat-value">{{ "%.3f"|format(prediction.avg_winner_lap_time or 0) }}<span style="font-size:0.9rem;font-weight:400;color:var(--text-muted)">s</span></div>
   </div>
-  <div class="stat">
-    <div class="value">{{ "%.0f"|format((prediction.safety_car_probability or 0) * 100) }}%</div>
-    <div class="label" data-i18n="quali_sc_prob">{% if lang == 'es' %}Prob. Safety Car en carrera{% else %}Race SC Probability{% endif %}</div>
+  <div class="card stat-card delay-3">
+    <div class="stat-header">
+      <span class="stat-label" data-i18n="quali_sc_prob">{% if lang == 'es' %}Safety Car{% else %}SC Prob{% endif %}</span>
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+    </div>
+    <div class="stat-value">{{ "%.0f"|format((prediction.safety_car_probability or 0) * 100) }}<span style="font-size:0.9rem;font-weight:400;color:var(--text-muted)">%</span></div>
   </div>
 </div>
 
 <div class="card">
-  <h2><span data-i18n="tire_quali_title">{% if lang == 'es' %}Neumáticos en Clasificación{% else %}Qualifying Tires{% endif %}</span></h2>
+  <div class="card-header">
+    <span class="card-title">
+      <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+      <span data-i18n="tire_quali_title">{% if lang == 'es' %}Neumáticos en Clasificación{% else %}Qualifying Tires{% endif %}</span>
+    </span>
+  </div>
   {% if prediction.tire_stats %}
   <table>
     <tr>
@@ -33,7 +58,7 @@
     </tr>
     {% for ts in prediction.tire_stats[:5] %}
     <tr>
-      <td><span class="badge badge-{{ ts.compound.lower() }}">{{ ts.compound }}</span></td>
+      <td><span class="badge compound-{{ ts.compound.lower() }}">{{ ts.compound }}</span></td>
       <td>{{ ts.count }}</td>
     </tr>
     {% endfor %}
@@ -41,8 +66,8 @@
   {% endif %}
 </div>
 {% else %}
-<div class="card" style="text-align:center; padding:60px 20px;">
-  <p data-i18n="no_quali_data">{% if lang == 'es' %}Sin datos de clasificación disponibles{% else %}No qualifying data available{% endif %}</p>
+<div class="card text-center" style="padding:60px 20px;">
+  <p class="text-muted" data-i18n="no_quali_data">{% if lang == 'es' %}Sin datos de clasificación disponibles{% else %}No qualifying data available{% endif %}</p>
 </div>
 {% endif %}
 {% endblock %}
