@@ -1,4 +1,8 @@
+import json
 import logging
+from dataclasses import asdict
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Optional
 
 from src.client import OpenF1Client
@@ -9,6 +13,58 @@ from src.models import (
 )
 
 logger = logging.getLogger(__name__)
+
+CACHE_DIR = Path("data") / "circuits"
+CACHE_MAX_AGE = 86400
+
+
+def _cache_path(circuit_name: str, year: int) -> Path:
+    return CACHE_DIR / f"{circuit_name.lower()}_{year}.json"
+
+
+def _dict_to_historical(data: dict) -> CircuitHistoricalData:
+    obj = CircuitHistoricalData(
+        circuit_name=data["circuit_name"],
+        country=data["country"],
+        year=data["year"],
+        meeting_key=data["meeting_key"],
+    )
+    for item in data.get("sessions", []):
+        obj.sessions.append(Session(**item))
+    for item in data.get("laps", []):
+        obj.laps.append(Lap(**item))
+    for item in data.get("stints", []):
+        obj.stints.append(Stint(**item))
+    for item in data.get("pit_stops", []):
+        obj.pit_stops.append(PitStop(**item))
+    for item in data.get("positions", []):
+        obj.positions.append(Position(**item))
+    for item in data.get("results", []):
+        obj.results.append(SessionResult(**item))
+    for item in data.get("overtakes", []):
+        obj.overtakes.append(Overtake(**item))
+    for item in data.get("weather", []):
+        obj.weather.append(Weather(**item))
+    return obj
+
+
+def _load_cached_data(circuit_name: str, year: int) -> Optional[CircuitHistoricalData]:
+    path = _cache_path(circuit_name, year)
+    if not path.exists():
+        return None
+    age = datetime.now(timezone.utc).timestamp() - path.stat().st_mtime
+    if age > CACHE_MAX_AGE:
+        return None
+    with open(path, "r") as f:
+        data = json.load(f)
+    return _dict_to_historical(data)
+
+
+def _save_cached_data(data: CircuitHistoricalData):
+    path = _cache_path(data.circuit_name, data.year)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(asdict(data), f, indent=2, default=str)
 
 
 def fetch_session_data(
@@ -153,8 +209,14 @@ def fetch_circuit_history(
     meetings = get_historical_meetings_for_circuit(client, circuit_name, exclude_year)
     results = []
     for meeting in meetings:
+        cached = _load_cached_data(circuit_name, meeting.year)
+        if cached is not None:
+            logger.info(f"Using cached data for {circuit_name} ({meeting.year})")
+            results.append(cached)
+            continue
         logger.info(f"Fetching historical data for {circuit_name} ({meeting.year})")
         data = build_historical_data(client, meeting, meeting.year)
         if data:
+            _save_cached_data(data)
             results.append(data)
     return results

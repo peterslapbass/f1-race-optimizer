@@ -65,21 +65,4 @@ def generate_prediction(
     return prediction
 
 
-def load_prediction_from_cache(circuit_name: str, year: int) -> Optional[CircuitPrediction]:
-    import json
-    import os
-    path = f"data/circuits/{circuit_name.lower()}_{year}.json"
-    if os.path.exists(path):
-        with open(path) as f:
-            data = json.load(f)
-        return CircuitPrediction(**data)
-    return None
 
-
-def save_prediction_cache(prediction: CircuitPrediction):
-    import json
-    import os
-    path = f"data/circuits/{prediction.circuit_name.lower()}_{prediction.year}.json"
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w") as f:
-        json.dump(prediction.__dict__, f, indent=2, default=str)
