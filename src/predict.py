@@ -66,24 +66,26 @@ def generate_prediction(
     recommended, top_strategies = recommend_strategy(historical, tire_stats, total_laps)
     prediction.recommended_strategy = recommended
     prediction.strategies = top_strategies
-    # Driver map
+    # Driver map (from all historical Race sessions)
     try:
-        race_sks = []
+        race_sks = set()
         for h in historical:
             for s in h.sessions:
                 if s.session_type == "Race":
-                    race_sks.append(s.session_key)
-        if race_sks:
-            latest_sk = max(race_sks)
-            drivers_raw = client.get_drivers(session_key=latest_sk)
-            for d in drivers_raw:
-                dn = d.get("driver_number")
-                if dn:
-                    prediction.driver_map[dn] = {
-                        "full_name": d.get("full_name", f"Driver {dn}"),
-                        "team_name": d.get("team_name", "Unknown"),
-                        "name_acronym": d.get("name_acronym", ""),
-                    }
+                    race_sks.add(s.session_key)
+        for sk in sorted(race_sks):
+            try:
+                drivers_raw = client.get_drivers(session_key=sk)
+                for d in drivers_raw:
+                    dn = d.get("driver_number")
+                    if dn:
+                        prediction.driver_map[dn] = {
+                            "full_name": d.get("full_name", f"Driver {dn}"),
+                            "team_name": d.get("team_name", "Unknown"),
+                            "name_acronym": d.get("name_acronym", ""),
+                        }
+            except Exception:
+                continue
     except Exception as e:
         logger.warning(f"Failed to fetch driver map: {e}")
     # Grid vs finish
