@@ -373,17 +373,27 @@ def fetch_standings(client: OpenF1Client) -> dict:
         ct = client.get_championship_teams()
         result = {"drivers": [], "teams": []}
         if cd:
-            session_keys = list(set(d.get("session_key") for d in cd if d.get("session_key")))
-            sk = session_keys[0] if session_keys else None
+            session_keys = sorted(set(d.get("session_key") for d in cd if d.get("session_key")))
+            latest_sk = session_keys[-1] if session_keys else None
             driver_info = {}
-            if sk:
+            if latest_sk:
                 try:
-                    from src.client import OpenF1Client as _OF
-                    drivers_raw = client.get_drivers(session_key=sk)
+                    drivers_raw = client.get_drivers(session_key=latest_sk)
                     driver_info = {d["driver_number"]: d for d in drivers_raw if d.get("driver_number")}
                 except Exception:
                     pass
-            sorted_drivers = sorted(cd, key=lambda d: d.get("position_current", 999))
+            latest_by_driver = {}
+            for d in cd:
+                dn = d.get("driver_number")
+                sk = d.get("session_key", 0)
+                if dn is None:
+                    continue
+                if dn not in latest_by_driver or sk > latest_by_driver[dn].get("session_key", 0):
+                    latest_by_driver[dn] = d
+            sorted_drivers = sorted(
+                latest_by_driver.values(),
+                key=lambda d: d.get("position_current", d.get("position", 999)),
+            )
             for d in sorted_drivers[:25]:
                 dn = d.get("driver_number")
                 info = driver_info.get(dn, {})
@@ -394,7 +404,18 @@ def fetch_standings(client: OpenF1Client) -> dict:
                     "points": d.get("points_current", d.get("points", 0)),
                 })
         if ct:
-            sorted_teams = sorted(ct, key=lambda t: t.get("position_current", 999))
+            latest_by_team = {}
+            for t in ct:
+                tn = t.get("team_name")
+                sk = t.get("session_key", 0)
+                if tn is None:
+                    continue
+                if tn not in latest_by_team or sk > latest_by_team[tn].get("session_key", 0):
+                    latest_by_team[tn] = t
+            sorted_teams = sorted(
+                latest_by_team.values(),
+                key=lambda t: t.get("position_current", t.get("position", 999)),
+            )
             for t in sorted_teams[:15]:
                 result["teams"].append({
                     "position": t.get("position_current", t.get("position", 0)),
