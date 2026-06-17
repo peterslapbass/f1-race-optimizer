@@ -190,7 +190,7 @@ def build_historical_data(
                         driver_number=dn,
                         session_key=r.get("session_key", session.session_key),
                         position=r.get("position", 0),
-                        total_laps=r.get("total_laps", 0),
+                        total_laps=r.get("number_of_laps", 0),
                         time_penalty=r.get("time_penalty"),
                         grid_position=r.get("grid_position", 0),
                         finishing_status=r.get("finishing_status", ""),

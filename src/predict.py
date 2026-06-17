@@ -58,7 +58,10 @@ def generate_prediction(
                     results = [r for r in h.results if r.session_key == s.session_key]
                     if results:
                         total_laps = max(r.total_laps for r in results)
-                        break
+                        if total_laps > 0:
+                            break
+    if total_laps <= 0:
+        total_laps = 71
     recommended, top_strategies = recommend_strategy(historical, tire_stats, total_laps)
     prediction.recommended_strategy = recommended
     prediction.strategies = top_strategies

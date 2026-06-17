@@ -55,7 +55,14 @@ def simulate_strategy(
         for lap in range(remaining):
             lap_time = base_lap_time + deg * lap
             total_time += lap_time
-        stints_desc[-1] = f"{last_compound}({stints_desc[-1].split('(')[1].rstrip(')').split('(')[0] if '(' in stints_desc[-1] else ''}{remaining})"
+        if stints_desc:
+            last_desc = stints_desc[-1]
+            if '(' in last_desc:
+                base = last_desc.split('(')[0]
+                orig = int(last_desc.split('(')[1].rstrip(')'))
+                stints_desc[-1] = f"{base}({orig + remaining})"
+            else:
+                stints_desc[-1] = f"{last_compound}({remaining})"
     return StrategyOption(
         stints=stints_desc,
         total_time=total_time,
