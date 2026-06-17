@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2><span data-i18n="standings_title">{% if lang == 'es' %}Campeonato{% else %}Championship Standings{% endif %}</span></h2>
+  <p data-i18n="standings_desc" style="color:var(--text-muted);">
+    {% if lang == 'es' %}Posiciones actuales del campeonato de pilotos y constructores.{% else %}Current driver and constructor championship standings.{% endif %}
+  </p>
+</div>
+
+{% if drivers_championship %}
+<div class="card">
+  <h2><span data-i18n="drivers_title">{% if lang == 'es' %}Campeonato de Pilotos{% else %}Drivers Championship{% endif %}</span></h2>
+  <table>
+    <tr>
+      <th>#</th>
+      <th data-i18n="driver_col">{% if lang == 'es' %}Piloto{% else %}Driver{% endif %}</th>
+      <th data-i18n="team_col">{% if lang == 'es' %}Equipo{% else %}Team{% endif %}</th>
+      <th data-i18n="points_col">{% if lang == 'es' %}Puntos{% else %}Points{% endif %}</th>
+    </tr>
+    {% for driver in drivers_championship %}
+    <tr>
+      <td>{{ driver.position }}</td>
+      <td><strong>{{ driver.full_name }}</strong></td>
+      <td>{{ driver.team_name }}</td>
+      <td>{{ driver.points }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+{% if teams_championship %}
+<div class="card">
+  <h2><span data-i18n="teams_title">{% if lang == 'es' %}Campeonato de Constructores{% else %}Constructors Championship{% endif %}</span></h2>
+  <table>
+    <tr>
+      <th>#</th>
+      <th data-i18n="team_col">{% if lang == 'es' %}Equipo{% else %}Team{% endif %}</th>
+      <th data-i18n="points_col">{% if lang == 'es' %}Puntos{% else %}Points{% endif %}</th>
+    </tr>
+    {% for team in teams_championship %}
+    <tr>
+      <td>{{ team.position }}</td>
+      <td><strong>{{ team.team_name }}</strong></td>
+      <td>{{ team.points }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+{% if not drivers_championship and not teams_championship %}
+<div class="card" style="text-align:center; padding:60px 20px;">
+  <p data-i18n="no_standings">{% if lang == 'es' %}Sin datos de campeonato disponibles{% else %}No championship data available{% endif %}</p>
+</div>
+{% endif %}
+{% endblock %}

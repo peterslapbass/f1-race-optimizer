@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2><span data-i18n="quali_title">{% if lang == 'es' %}Análisis de Clasificación{% else %}Qualifying Analysis{% endif %}</span></h2>
+  <p data-i18n="quali_desc" style="color:var(--text-muted);">
+    {% if lang == 'es' %}Análisis histórico de clasificación basado en sesiones anteriores en este circuito.{% else %}Historical qualifying analysis based on previous sessions at this circuit.{% endif %}
+  </p>
+</div>
+
+{% if prediction %}
+<div class="grid-3">
+  <div class="stat">
+    <div class="value">{{ "%.2f"|format(prediction.quali_improvement_rate or 0) }}%</div>
+    <div class="label" data-i18n="quali_improvement_rate">{% if lang == 'es' %}Mejora Q1→Q3{% else %}Q1→Q3 Improvement{% endif %}</div>
+  </div>
+  <div class="stat">
+    <div class="value">{{ "%.3f"|format(prediction.avg_winner_lap_time or 0) }}s</div>
+    <div class="label" data-i18n="avg_quali_lap">{% if lang == 'es' %}Vuelta promedio del ganador{% else %}Avg Winner Lap{% endif %}</div>
+  </div>
+  <div class="stat">
+    <div class="value">{{ "%.0f"|format((prediction.safety_car_probability or 0) * 100) }}%</div>
+    <div class="label" data-i18n="quali_sc_prob">{% if lang == 'es' %}Prob. Safety Car en carrera{% else %}Race SC Probability{% endif %}</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2><span data-i18n="tire_quali_title">{% if lang == 'es' %}Neumáticos en Clasificación{% else %}Qualifying Tires{% endif %}</span></h2>
+  {% if prediction.tire_stats %}
+  <table>
+    <tr>
+      <th data-i18n="compound">{% if lang == 'es' %}Compuesto{% else %}Compound{% endif %}</th>
+      <th data-i18n="quali_lap_count">{% if lang == 'es' %}Vueltas{% else %}Laps{% endif %}</th>
+    </tr>
+    {% for ts in prediction.tire_stats[:5] %}
+    <tr>
+      <td><span class="badge badge-{{ ts.compound.lower() }}">{{ ts.compound }}</span></td>
+      <td>{{ ts.count }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+</div>
+{% else %}
+<div class="card" style="text-align:center; padding:60px 20px;">
+  <p data-i18n="no_quali_data">{% if lang == 'es' %}Sin datos de clasificación disponibles{% else %}No qualifying data available{% endif %}</p>
+</div>
+{% endif %}
+{% endblock %}

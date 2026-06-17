@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2><span data-i18n="strategy_detail_title">{% if lang == 'es' %}Optimizador de Estrategia{% else %}Strategy Optimizer{% endif %}</span></h2>
+  <p data-i18n="strategy_detail_desc" style="color:var(--text-muted);">
+    {% if lang == 'es' %}Simulación de estrategias de carrera basada en datos históricos de neumáticos, degradación y tiempos de vuelta.{% else %}Race strategy simulation based on historical tire data, degradation, and lap times.{% endif %}
+  </p>
+</div>
+
+{% if prediction and prediction.strategies %}
+<div class="card">
+  <h2><span data-i18n="strategy_comparison">{% if lang == 'es' %}Top Estrategias{% else %}Top Strategies{% endif %}</span></h2>
+  <table>
+    <tr>
+      <th>#</th>
+      <th data-i18n="strategy_col">{% if lang == 'es' %}Estrategia{% else %}Strategy{% endif %}</th>
+      <th data-i18n="pit_stops_col">{% if lang == 'es' %}Paradas{% else %}Pit Stops{% endif %}</th>
+      <th data-i18n="est_time_col">{% if lang == 'es' %}Tiempo Est.{% else %}Est. Time{% endif %}</th>
+    </tr>
+    {% for strategy in prediction.strategies %}
+    <tr>
+      <td>
+        {% if loop.index == 1 %}
+        <span style="color:gold; font-weight:700;">★</span>
+        {% else %}
+        {{ loop.index }}
+        {% endif %}
+      </td>
+      <td>
+        <div class="steps" style="gap:4px;">
+          {% set parts = strategy.description.split(' → ') %}
+          {% for part in parts %}
+          {% set compound = part.split('(')[0] %}
+          <span class="step badge-{{ compound.lower() }}" style="font-size:0.75rem; padding:3px 10px;">{{ part }}</span>
+          {% if not loop.last %}<span class="arrow" style="font-size:0.9rem;">→</span>{% endif %}
+          {% endfor %}
+        </div>
+      </td>
+      <td>{{ strategy.total_pit_stops }}</td>
+      <td><strong>{{ "%.1f"|format(strategy.total_time) }}s</strong></td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="card">
+  <h2><span data-i18n="strategy_chart_title">{% if lang == 'es' %}Gráfico Comparativo{% else %}Comparison Chart{% endif %}</span></h2>
+  <div class="chart-container" id="strategy-compare-chart"></div>
+</div>
+
+<script>
+const stratChart = {{ strategy_compare_chart|safe }};
+if (stratChart && stratChart.data) {
+  Plotly.newPlot('strategy-compare-chart', stratChart.data, stratChart.layout || {}, {responsive: true});
+}
+</script>
+{% else %}
+<div class="card" style="text-align:center; padding:60px 20px;">
+  <h2 data-i18n="no_strategy_data">{% if lang == 'es' %}Sin datos de estrategia{% else %}No strategy data{% endif %}</h2>
+  <p data-i18n="no_strategy_desc" style="color:var(--text-muted); margin-top:10px;">
+    {% if lang == 'es' %}No hay datos históricos suficientes para generar estrategias.{% else %}Not enough historical data to generate strategies.{% endif %}
+  </p>
+</div>
+{% endif %}
+{% endblock %}

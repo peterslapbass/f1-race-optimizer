@@ -1,0 +1,83 @@
+name: F1 Race Pipeline
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+    inputs:
+      force_run:
+        description: "Force pipeline run (skip proximity check)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  check-and-run:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check if next race is within 48h
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.force_run }}" = "true" ]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          python -c "
+          import json, urllib.request
+          from datetime import datetime, timezone
+          url = 'https://api.openf1.org/v1/meetings?year=2026'
+          resp = urllib.request.urlopen(url)
+          meetings = json.loads(resp.read())
+          now = datetime.now(timezone.utc)
+          for m in sorted(meetings, key=lambda x: x.get('date_start', '')):
+              start = datetime.fromisoformat(m.get('date_start', '').replace('Z', '+00:00'))
+              end = datetime.fromisoformat(m.get('date_end', '').replace('Z', '+00:00'))
+              hours_until = (start - now).total_seconds() / 3600
+              hours_since = (now - end).total_seconds() / 3600
+              if 0 <= hours_until <= 48:
+                  print(f'Race in {hours_until:.0f}h, running pipeline')
+                  exit(0)
+              if 0 <= hours_since <= 24:
+                  print(f'Race ended {hours_since:.0f}h ago, running post-race')
+                  exit(0)
+          print('No upcoming/recent race, skipping')
+          exit(1)
+          " && echo "should_run=true" >> $GITHUB_OUTPUT || echo "should_run=false" >> $GITHUB_OUTPUT
+
+  build-dashboard:
+    needs: check-and-run
+    if: needs.check-and-run.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      - name: Run dashboard pipeline
+        run: python -m src.dashboard
+        env:
+          PYTHONUNBUFFERED: 1
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
