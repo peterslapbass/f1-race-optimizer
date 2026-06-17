@@ -54,6 +54,8 @@ def calc_tire_stats(historical: list[CircuitHistoricalData]) -> list[TireStats]:
     all_stints = []
     for h in historical:
         for s in h.stints:
+            if not s.compound:
+                continue
             stint_length = s.lap_end - s.lap_start + 1
             if stint_length > 2:
                 all_stints.append((s.compound, stint_length))

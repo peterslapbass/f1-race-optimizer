@@ -47,17 +47,8 @@ def generate_prediction(
     # Quali
     quali_stats = calc_quali_stats(historical)
     prediction.quali_improvement_rate = quali_stats.get("quali_improvement_rate")
-    # Safety car probability
-    sc_count = 0
-    total_races = 0
-    for h in historical:
-        for s in h.sessions:
-            if s.session_type == "Race":
-                total_races += 1
-                race_control_msgs = []
-                for h2 in historical:
-                    pass
-    prediction.safety_car_probability = (sc_count / total_races) if total_races > 0 else 0.15
+    race_count = sum(1 for h in historical for s in h.sessions if s.session_type == "Race")
+    prediction.safety_car_probability = 0.15
     # Strategy
     total_laps = 58
     if race_session and historical:

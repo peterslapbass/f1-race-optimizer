@@ -99,7 +99,7 @@
     </tr>
     {% for ts in prediction.tire_stats %}
     <tr>
-      <td><span class="badge badge-{{ ts.compound.lower() }}">{{ ts.compound }}</span></td>
+      <td><span class="badge badge-{{ (ts.compound|default(''))|lower }}">{{ ts.compound|default('?') }}</span></td>
       <td>{{ "%.1f"|format(ts.avg_stint_length) }} {% if lang == 'es' %}vueltas{% else %}laps{% endif %}</td>
       <td>{{ "%.3f"|format(ts.degradation_per_lap) }}s</td>
       <td>{{ ts.count }}</td>
