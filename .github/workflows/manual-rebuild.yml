@@ -1,14 +1,14 @@
-name: Rebuild Dashboard (Manual)
+name: Rebuild Dashboard
 
 on:
   workflow_dispatch:
     inputs:
       circuit:
-        description: "Circuit name (leave empty for next race)"
+        description: "Circuit name (empty = next race)"
         required: false
         type: string
       year:
-        description: "Year (default: 2026)"
+        description: "Season year"
         required: false
         default: "2026"
         type: string
@@ -20,7 +20,6 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: false
 
 jobs:
   rebuild:
@@ -32,17 +31,16 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Run dashboard pipeline
+      - run: pip install -r requirements.txt
+      - name: Run pipeline
         run: python -m src.dashboard
         env:
           PYTHONUNBUFFERED: 1
           F1_CIRCUIT: ${{ inputs.circuit || '' }}
           F1_YEAR: ${{ inputs.year || '2026' }}
-      - name: Upload Pages artifact
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs
-      - name: Deploy to GitHub Pages
+      - name: Deploy
         uses: actions/deploy-pages@v4
