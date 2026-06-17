@@ -22,16 +22,25 @@
       </div>
     </div>
     <div class="stat-value">{{ "%.2f"|format(prediction.quali_improvement_rate or 0) }}%</div>
+    <div class="stat-footer" data-i18n="quali_improvement_label">{% if lang == 'es' %}mejora Q1 a Q3{% else %}Q1 to Q3 gain{% endif %}</div>
   </div>
+  {% if quali_consistency_data %}
+  {% set top_quali = quali_consistency_data[:5] %}
+  {% set best_avg = top_quali[0] if top_quali else None %}
   <div class="card stat-card delay-2">
     <div class="stat-header">
-      <span class="stat-label" data-i18n="avg_quali_lap">{% if lang == 'es' %}Vuelta promedio{% else %}Avg Winner Lap{% endif %}</span>
+      <span class="stat-label" data-i18n="best_quali_pos">{% if lang == 'es' %}Mejor Promedio{% else %}Best Avg Grid{% endif %}</span>
       <div class="stat-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
       </div>
     </div>
-    <div class="stat-value">{{ "%.3f"|format(prediction.avg_winner_lap_time or 0) }}<span style="font-size:0.9rem;font-weight:400;color:var(--text-muted)">s</span></div>
+    {% if best_avg %}
+    {% set best_name = driver_map.get(best_avg.driver_number, {}).get("full_name", "#" ~ best_avg.driver_number) %}
+    <div class="stat-value">{{ "%.1f"|format(best_avg.avg_position) }}</div>
+    <div class="stat-footer">{{ best_name }}</div>
+    {% endif %}
   </div>
+  {% endif %}
   <div class="card stat-card delay-3">
     <div class="stat-header">
       <span class="stat-label" data-i18n="quali_sc_prob">{% if lang == 'es' %}Safety Car{% else %}SC Prob{% endif %}</span>
@@ -40,34 +49,61 @@
       </div>
     </div>
     <div class="stat-value">{{ "%.0f"|format((prediction.safety_car_probability or 0) * 100) }}<span style="font-size:0.9rem;font-weight:400;color:var(--text-muted)">%</span></div>
+    <div class="stat-footer" data-i18n="sc_label">{% if lang == 'es' %}probabilidad{% else %}probability{% endif %}</div>
   </div>
 </div>
 
-<div class="card">
-  <div class="card-header">
-    <span class="card-title">
-      <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-      <span data-i18n="tire_quali_title">{% if lang == 'es' %}Neumáticos en Clasificación{% else %}Qualifying Tires{% endif %}</span>
-    </span>
+<!-- Pole History Chart -->
+{% if quali_pole_data and quali_pole_chart_json and quali_pole_chart_json != 'null' %}
+<div class="card chart-card delay-4">
+  <div class="chart-header">
+    <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    <span class="chart-title" data-i18n="quali_pole_title">{% if lang == 'es' %}Historial de Poles{% else %}Pole Position History{% endif %}</span>
   </div>
-  {% if prediction.tire_stats %}
-  <table>
-    <tr>
-      <th data-i18n="compound">{% if lang == 'es' %}Compuesto{% else %}Compound{% endif %}</th>
-      <th data-i18n="quali_lap_count">{% if lang == 'es' %}Vueltas{% else %}Laps{% endif %}</th>
-    </tr>
-    {% for ts in prediction.tire_stats[:5] %}
-    <tr>
-      <td><span class="badge compound-{{ ts.compound.lower() }}">{{ ts.compound }}</span></td>
-      <td>{{ ts.count }}</td>
-    </tr>
-    {% endfor %}
-  </table>
-  {% endif %}
+  <div class="chart-container" id="quali-pole-chart"></div>
 </div>
+{% endif %}
+
+<!-- Gap to Leader Chart -->
+{% if quali_gap_data and quali_gap_chart_json and quali_gap_chart_json != 'null' %}
+<div class="card chart-card delay-5">
+  <div class="chart-header">
+    <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+    <span class="chart-title" data-i18n="quali_gap_title">{% if lang == 'es' %}Diferencia con el Líder{% else %}Gap to Leader{% endif %}</span>
+  </div>
+  <div class="chart-container" id="quali-gap-chart"></div>
+</div>
+{% endif %}
+
+<!-- Qualifying Consistency -->
+{% if quali_consistency_data and quali_consistency_chart_json and quali_consistency_chart_json != 'null' %}
+<div class="card chart-card delay-6">
+  <div class="chart-header">
+    <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+    <span class="chart-title" data-i18n="quali_consistency_title">{% if lang == 'es' %}Consistencia en Clasificación{% else %}Qualifying Consistency{% endif %}</span>
+  </div>
+  <div class="chart-container" id="quali-consistency-chart"></div>
+</div>
+{% endif %}
+
 {% else %}
 <div class="card text-center" style="padding:60px 20px;">
   <p class="text-muted" data-i18n="no_quali_data">{% if lang == 'es' %}Sin datos de clasificación disponibles{% else %}No qualifying data available{% endif %}</p>
 </div>
 {% endif %}
+
+<script>
+{% if quali_pole_chart_json and quali_pole_chart_json != 'null' %}
+const qualiPoleChart = {{ quali_pole_chart_json|safe }};
+if (qualiPoleChart && qualiPoleChart.data) Plotly.newPlot('quali-pole-chart', qualiPoleChart.data, qualiPoleChart.layout || {}, {responsive: true});
+{% endif %}
+{% if quali_gap_chart_json and quali_gap_chart_json != 'null' %}
+const qualiGapChart = {{ quali_gap_chart_json|safe }};
+if (qualiGapChart && qualiGapChart.data) Plotly.newPlot('quali-gap-chart', qualiGapChart.data, qualiGapChart.layout || {}, {responsive: true});
+{% endif %}
+{% if quali_consistency_chart_json and quali_consistency_chart_json != 'null' %}
+const qualiConsistencyChart = {{ quali_consistency_chart_json|safe }};
+if (qualiConsistencyChart && qualiConsistencyChart.data) Plotly.newPlot('quali-consistency-chart', qualiConsistencyChart.data, qualiConsistencyChart.layout || {}, {responsive: true});
+{% endif %}
+</script>
 {% endblock %}

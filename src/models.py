@@ -155,6 +155,7 @@ class CircuitHistoricalData:
     results: list = field(default_factory=list)
     overtakes: list = field(default_factory=list)
     weather: list = field(default_factory=list)
+    intervals: list = field(default_factory=list)
 
 
 @dataclass
@@ -198,6 +199,9 @@ class CircuitPrediction:
     consistency_data: list = field(default_factory=list)
     season_consistency_data: list = field(default_factory=list)
     pit_data: list = field(default_factory=list)
+    quali_pole_data: list = field(default_factory=list)
+    quali_gap_data: list = field(default_factory=list)
+    quali_consistency_data: list = field(default_factory=list)
     generated_at: str = ""
 
 

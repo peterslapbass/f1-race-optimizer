@@ -9,7 +9,7 @@ from src.client import OpenF1Client
 from src.models import (
     Meeting, Session, CircuitHistoricalData,
     Lap, Stint, PitStop, Position, SessionResult, Overtake,
-    Weather, CarData,
+    Weather, CarData, Interval,
 )
 
 logger = logging.getLogger(__name__)
@@ -45,6 +45,8 @@ def _dict_to_historical(data: dict) -> CircuitHistoricalData:
         obj.overtakes.append(Overtake(**item))
     for item in data.get("weather", []):
         obj.weather.append(Weather(**item))
+    for item in data.get("intervals", []):
+        obj.intervals.append(Interval(**item))
     return obj
 
 
@@ -85,8 +87,9 @@ def fetch_session_data(
     data["pit_stops"] = _safe_fetch(client, "get_pit_stops", session_key)
     data["positions"] = _safe_fetch(client, "get_positions", session_key)
     data["weather"] = _safe_fetch(client, "get_weather", session_key)
+    data["results"] = _safe_fetch(client, "get_session_results", session_key)
+    data["intervals"] = _safe_fetch(client, "get_intervals", session_key)
     if session_type == "Race":
-        data["results"] = _safe_fetch(client, "get_session_results", session_key)
         data["overtakes"] = _safe_fetch(client, "get_overtakes", session_key)
     return data
 
@@ -181,20 +184,31 @@ def build_historical_data(
                     rainfall=w.get("rainfall", False),
                     wind_speed=w.get("wind_speed"),
                 ))
+            for r in session_data.get("results", []):
+                dn = r.get("driver_number")
+                if dn is None:
+                    continue
+                historical_data.results.append(SessionResult(
+                    driver_number=dn,
+                    session_key=r.get("session_key", session.session_key),
+                    position=r.get("position", 0),
+                    total_laps=r.get("number_of_laps", 0),
+                    time_penalty=r.get("time_penalty"),
+                    grid_position=r.get("grid_position", 0),
+                    finishing_status=r.get("finishing_status", ""),
+                ))
+            for iv in session_data.get("intervals", []):
+                dn = iv.get("driver_number")
+                if dn is None:
+                    continue
+                historical_data.intervals.append(Interval(
+                    driver_number=dn,
+                    session_key=iv.get("session_key", session.session_key),
+                    gap_to_leader=iv.get("gap_to_leader"),
+                    interval=iv.get("interval"),
+                    date=iv.get("date", ""),
+                ))
             if st == "Race":
-                for r in session_data.get("results", []):
-                    dn = r.get("driver_number")
-                    if dn is None:
-                        continue
-                    historical_data.results.append(SessionResult(
-                        driver_number=dn,
-                        session_key=r.get("session_key", session.session_key),
-                        position=r.get("position", 0),
-                        total_laps=r.get("number_of_laps", 0),
-                        time_penalty=r.get("time_penalty"),
-                        grid_position=r.get("grid_position", 0),
-                        finishing_status=r.get("finishing_status", ""),
-                    ))
                 for ov in session_data.get("overtakes", []):
                     dn = ov.get("driver_number")
                     if dn is None:

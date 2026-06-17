@@ -71,8 +71,13 @@ I18N_DATA = {
         "quali_title": "Qualifying Analysis",
         "quali_desc": "Historical qualifying analysis based on previous sessions at this circuit.",
         "quali_improvement_rate": "Q1\u2192Q3 Improvement",
+        "quali_improvement_label": "Q1 to Q3 gain",
+        "best_quali_pos": "Best Avg Grid",
         "avg_quali_lap": "Avg Winner Lap",
         "quali_sc_prob": "Race SC Probability",
+        "quali_pole_title": "Pole Position History",
+        "quali_gap_title": "Gap to Leader by Position",
+        "quali_consistency_title": "Qualifying Consistency",
         "tire_quali_title": "Qualifying Tires",
         "quali_lap_count": "Laps",
         "no_quali_data": "No qualifying data available",
@@ -147,8 +152,13 @@ I18N_DATA = {
         "quali_title": "Análisis de Clasificación",
         "quali_desc": "Análisis histórico de clasificación basado en sesiones anteriores en este circuito.",
         "quali_improvement_rate": "Mejora Q1→Q3",
+        "quali_improvement_label": "mejora Q1 a Q3",
+        "best_quali_pos": "Mejor Promedio Parrilla",
         "avg_quali_lap": "Vuelta promedio del ganador",
         "quali_sc_prob": "Prob. Safety Car en carrera",
+        "quali_pole_title": "Historial de Poles",
+        "quali_gap_title": "Diferencia con el Líder",
+        "quali_consistency_title": "Consistencia en Clasificación",
         "tire_quali_title": "Neumáticos en Clasificación",
         "quali_lap_count": "Vueltas",
         "no_quali_data": "Sin datos de clasificación disponibles",
@@ -407,6 +417,95 @@ def build_consistency_chart(consistency_data: list, driver_lookup: dict) -> Opti
     return json.loads(fig.to_json())
 
 
+def build_quali_pole_chart(pole_data: dict, driver_lookup: dict) -> Optional[dict]:
+    counts = pole_data.get("pole_counts", []) if pole_data else []
+    if not counts:
+        return None
+    names = [d["full_name"] for d in counts[:10]]
+    vals = [d["count"] for d in counts[:10]]
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=vals, y=names, orientation="h",
+        marker_color="#e10600",
+        text=vals, textposition="outside",
+        hovertemplate="<b>%{y}</b><br>Poles: %{x}<extra></extra>",
+    ))
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font_color="#94a3b8",
+        xaxis_title="Pole Positions",
+        yaxis=dict(autorange="reversed"),
+        showlegend=False,
+        margin=dict(l=10, r=40, t=10, b=40),
+    )
+    return json.loads(fig.to_json())
+
+
+def build_quali_gap_chart(gap_data: list) -> Optional[dict]:
+    if not gap_data:
+        return None
+    positions = [d["position"] for d in gap_data]
+    avg_gaps = [d["avg_gap"] for d in gap_data]
+    min_gaps = [d["min_gap"] for d in gap_data]
+    max_gaps = [d["max_gap"] for d in gap_data]
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=positions, y=avg_gaps, mode="lines+markers",
+        name="Avg Gap", line=dict(color="#e10600", width=2),
+        marker=dict(size=8, color="#e10600"),
+        hovertemplate="P%{x}<br>Avg Gap: %{y:.3f}s<extra></extra>",
+    ))
+    fig.add_trace(go.Scatter(
+        x=positions, y=min_gaps, mode="lines",
+        name="Min Gap", line=dict(color="#94a3b8", width=1, dash="dot"),
+    ))
+    fig.add_trace(go.Scatter(
+        x=positions, y=max_gaps, mode="lines",
+        name="Max Gap", line=dict(color="#94a3b8", width=1, dash="dot"),
+    ))
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font_color="#94a3b8",
+        xaxis_title="Qualifying Position",
+        yaxis_title="Gap to Leader (s)",
+        showlegend=False,
+        margin=dict(l=40, r=20, t=10, b=40),
+    )
+    return json.loads(fig.to_json())
+
+
+def build_quali_consistency_chart(consistency_data: list, driver_lookup: dict) -> Optional[dict]:
+    if not consistency_data:
+        return None
+    top = consistency_data[:12]
+    names = [driver_lookup.get(d["driver_number"], {}).get("full_name", f"#{d['driver_number']}") for d in top]
+    avgs = [d["avg_position"] for d in top]
+    stds = [d["std_position"] for d in top]
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=names, y=avgs,
+        marker_color="#e10600",
+        text=[f"{a:.1f}" for a in avgs],
+        textposition="outside",
+        hovertemplate="<b>%{x}</b><br>Avg Pos: %{y:.1f}<br>Std Dev: %{customdata:.1f}<extra></extra>",
+        customdata=stds,
+    ))
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font_color="#94a3b8",
+        yaxis_title="Avg Qualifying Position",
+        showlegend=False,
+        margin=dict(l=40, r=20, t=10, b=80),
+    )
+    return json.loads(fig.to_json())
+
+
 def build_weather_chart(prediction: CircuitPrediction) -> Optional[dict]:
     wp = prediction.weather_pattern
     if not wp:
@@ -466,6 +565,9 @@ def build_dashboard(
     overtakes_chart = build_overtakes_chart(prediction.overtake_data if prediction else [], driver_lookup) if prediction else None
     consistency_chart = build_consistency_chart(prediction.consistency_data if prediction else [], driver_lookup) if prediction else None
     season_consistency_chart = build_season_consistency_chart(prediction.season_consistency_data if prediction else []) if prediction else None
+    quali_pole_chart = build_quali_pole_chart(prediction.quali_pole_data if prediction else {}, driver_lookup) if prediction else None
+    quali_gap_chart = build_quali_gap_chart(prediction.quali_gap_data if prediction else []) if prediction else None
+    quali_consistency_chart = build_quali_consistency_chart(prediction.quali_consistency_data if prediction else [], driver_lookup) if prediction else None
 
     pages = {
         "index.html": ("dashboard.html", {
@@ -484,7 +586,16 @@ def build_dashboard(
             "prediction": prediction,
             "strategy_compare_chart": json.dumps(strategy_compare) if strategy_compare else "null",
         }),
-        "quali.html": ("quali.html", {"prediction": prediction}),
+        "quali.html": ("quali.html", {
+            "prediction": prediction,
+            "quali_pole_chart_json": json.dumps(quali_pole_chart) if quali_pole_chart else "null",
+            "quali_gap_chart_json": json.dumps(quali_gap_chart) if quali_gap_chart else "null",
+            "quali_consistency_chart_json": json.dumps(quali_consistency_chart) if quali_consistency_chart else "null",
+            "quali_pole_data": prediction.quali_pole_data if prediction else {},
+            "quali_gap_data": prediction.quali_gap_data if prediction else [],
+            "quali_consistency_data": prediction.quali_consistency_data if prediction else [],
+            "driver_map": driver_lookup,
+        }),
         "standings.html": ("standings.html", {
             "drivers_championship": [],
             "teams_championship": [],

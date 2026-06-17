@@ -12,6 +12,7 @@ from src.fetch import fetch_circuit_history, build_historical_data
 from src.analyze import (
     calc_tire_stats, calc_race_stats, calc_weather_pattern, calc_quali_stats,
     calc_grid_finish_stats, calc_driver_overtakes, calc_consistency,
+    calc_quali_pole_stats, calc_quali_gap_stats, calc_quali_consistency,
 )
 from src.strategy import recommend_strategy
 
@@ -90,6 +91,22 @@ def generate_prediction(
                 continue
     except Exception as e:
         logger.warning(f"Failed to fetch driver map: {e}")
+    # Quali analysis (needs driver_map)
+    try:
+        quali_pole = calc_quali_pole_stats(historical, prediction.driver_map)
+        prediction.quali_pole_data = quali_pole
+    except Exception as e:
+        logger.warning(f"Failed to compute quali pole stats: {e}")
+    try:
+        quali_gaps = calc_quali_gap_stats(historical, prediction.driver_map)
+        prediction.quali_gap_data = quali_gaps
+    except Exception as e:
+        logger.warning(f"Failed to compute quali gap stats: {e}")
+    try:
+        quali_consistency = calc_quali_consistency(historical)
+        prediction.quali_consistency_data = quali_consistency
+    except Exception as e:
+        logger.warning(f"Failed to compute quali consistency: {e}")
     # Grid vs finish
     prediction.grid_finish_data = calc_grid_finish_stats(historical)
     # Overtakes by driver

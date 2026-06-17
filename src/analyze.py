@@ -259,3 +259,89 @@ def calc_quali_stats(historical: list[CircuitHistoricalData]) -> dict:
     return {
         "quali_improvement_rate": statistics.mean(improvements) if improvements else None,
     }
+
+
+def calc_quali_pole_stats(historical: list[CircuitHistoricalData], driver_lookup: dict) -> list[dict]:
+    poles_by_driver = defaultdict(int)
+    pole_times = []
+    for h in historical:
+        for s in h.sessions:
+            if s.session_type not in ("Qualifying",):
+                continue
+            sk = s.session_key
+            results_sk = [r for r in h.results if r.session_key == sk]
+            pole = next((r for r in results_sk if r.position == 1), None)
+            if pole is None:
+                continue
+            pole_laps = [l for l in h.laps if l.session_key == sk and l.driver_number == pole.driver_number and l.lap_duration and not l.is_pit_in_lap and not l.is_pit_out_lap]
+            best = min(pole_laps, key=lambda x: x.lap_duration) if pole_laps else None
+            info = driver_lookup.get(pole.driver_number, {})
+            poles_by_driver[pole.driver_number] += 1
+            pole_times.append({
+                "driver_number": pole.driver_number,
+                "full_name": info.get("full_name", f"#{pole.driver_number}"),
+                "year": h.year,
+                "lap_time": best.lap_duration if best else None,
+            })
+    pole_counts = [{"driver_number": dn, "full_name": driver_lookup.get(dn, {}).get("full_name", f"#{dn}"), "count": c}
+                   for dn, c in poles_by_driver.items()]
+    pole_counts.sort(key=lambda x: x["count"], reverse=True)
+    pole_times.sort(key=lambda x: x["year"])
+    return {"pole_counts": pole_counts, "pole_times": pole_times}
+
+
+def calc_quali_gap_stats(historical: list[CircuitHistoricalData], driver_lookup: dict) -> list[dict]:
+    gaps_by_position = defaultdict(list)
+    for h in historical:
+        for s in h.sessions:
+            if s.session_type not in ("Qualifying",):
+                continue
+            sk = s.session_key
+            intv_sk = [i for i in h.intervals if i.session_key == sk]
+            results_sk = {r.driver_number: r.position for r in h.results if r.session_key == sk}
+            for i in intv_sk:
+                pos = results_sk.get(i.driver_number)
+                if pos is not None and i.gap_to_leader is not None and pos <= 20:
+                    gaps_by_position[pos].append(i.gap_to_leader)
+    gap_stats = []
+    for pos in sorted(gaps_by_position.keys()):
+        vals = gaps_by_position[pos]
+        if len(vals) < 2:
+            continue
+        gap_stats.append({
+            "position": pos,
+            "avg_gap": statistics.mean(vals),
+            "min_gap": min(vals),
+            "max_gap": max(vals),
+            "count": len(vals),
+        })
+    return gap_stats
+
+
+def calc_quali_consistency(historical: list[CircuitHistoricalData]) -> list[dict]:
+    by_driver = defaultdict(list)
+    for h in historical:
+        for s in h.sessions:
+            if s.session_type not in ("Qualifying",):
+                continue
+            sk = s.session_key
+            for r in h.results:
+                if r.session_key != sk:
+                    continue
+                if r.position is None or r.position > 20:
+                    continue
+                by_driver[r.driver_number].append(r.position)
+    stats = []
+    for dn, positions in by_driver.items():
+        if len(positions) < 2:
+            continue
+        stats.append({
+            "driver_number": dn,
+            "avg_position": statistics.mean(positions),
+            "best_position": min(positions),
+            "worst_position": max(positions),
+            "std_position": statistics.stdev(positions) if len(positions) > 1 else 0,
+            "count": len(positions),
+        })
+    stats.sort(key=lambda x: x["avg_position"])
+    return stats
