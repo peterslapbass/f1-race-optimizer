@@ -46,7 +46,7 @@ exit(1)
     if: needs.check.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       pages: write
       id-token: write
     steps:
@@ -61,6 +61,15 @@ exit(1)
         run: python -m src.dashboard
         env:
           PYTHONUNBUFFERED: 1
+      - name: Commit cached data
+        run: |
+          git config user.name "f1-bot"
+          git config user.email "bot@f1-race-optimizer"
+          git add data/circuits/
+          if ! git diff --staged --quiet; then
+            git commit -m "cache: update historical data"
+            git push
+          fi
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

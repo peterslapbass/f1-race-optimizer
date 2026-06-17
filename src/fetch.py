@@ -72,7 +72,7 @@ def _safe_fetch(client: OpenF1Client, method_name: str, session_key: int) -> lis
         method = getattr(client, method_name)
         return method(session_key)
     except Exception as e:
-        logger.debug(f"{method_name}({session_key}) failed: {e}")
+        logger.warning(f"{method_name}({session_key}) failed: {e}")
         return []
 
 
