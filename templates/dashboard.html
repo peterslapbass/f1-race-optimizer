@@ -1,26 +1,35 @@
 {% extends "base.html" %}
 {% block content %}
 {% if prediction %}
-<div class="card">
-  <h2><span data-i18n="next_race_title">{% if lang == 'es' %}Próxima Carrera{% else %}Next Race{% endif %}</span></h2>
-  <div class="grid-3">
-    <div class="stat">
-      <div class="value">{{ prediction.circuit_name }}</div>
-      <div class="label" data-i18n="circuit">{% if lang == 'es' %}Circuito{% else %}Circuit{% endif %}</div>
-    </div>
-    <div class="stat">
-      <div class="value">{{ prediction.country }}</div>
-      <div class="label" data-i18n="country">{% if lang == 'es' %}País{% else %}Country{% endif %}</div>
-    </div>
-    <div class="stat">
-      <div class="value">{{ prediction.year }}</div>
-      <div class="label" data-i18n="season">{% if lang == 'es' %}Temporada{% else %}Season{% endif %}</div>
+
+<!-- Hero: Next Race -->
+<div class="hero-card">
+  <div class="hero-grid">
+    <div class="hero-info">
+      <div class="subtitle" data-i18n="next_race_title">{% if lang == 'es' %}PRÓXIMA CARRERA{% else %}NEXT RACE{% endif %}</div>
+      <h2>{{ prediction.circuit_name }}</h2>
+      <div class="subtitle">{{ prediction.country }} &middot; {{ prediction.year }}</div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="value">{{ "%.3f"|format(prediction.avg_winner_lap_time or 0) }}s</div>
+          <div class="label" data-i18n="avg_winner_lap">{% if lang == 'es' %}Mejor Vuelta{% else %}Best Lap{% endif %}</div>
+        </div>
+        <div class="hero-stat">
+          <div class="value">{{ "%.0f"|format((prediction.weather_pattern.rain_probability or 0) * 100) }}%</div>
+          <div class="label" data-i18n="rain_prob">{% if lang == 'es' %}Lluvia{% else %}Rain{% endif %}</div>
+        </div>
+        <div class="hero-stat">
+          <div class="value">{{ "%.0f"|format(prediction.avg_overtakes or 0) }}</div>
+          <div class="label" data-i18n="avg_overtakes_label">{% if lang == 'es' %}Adelantamientos{% else %}Overtakes{% endif %}</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
+<!-- Strategy -->
 <div class="card">
-  <h2><span data-i18n="strategy_title">{% if lang == 'es' %}Estrategia Recomendada{% else %}Recommended Strategy{% endif %}</span></h2>
+  <h2><span class="icon">&#9878;</span> <span data-i18n="strategy_title">{% if lang == 'es' %}Estrategia Recomendada{% else %}Recommended Strategy{% endif %}</span></h2>
   {% if prediction.recommended_strategy %}
   <div class="strategy-box">
     <div class="steps">
@@ -42,51 +51,52 @@
   {% endif %}
 </div>
 
+<!-- Stats + Weather in 2-col -->
 <div class="grid-2">
   <div class="card">
-    <h2><span data-i18n="race_stats_title">{% if lang == 'es' %}Estadísticas Históricas{% else %}Historical Stats{% endif %}</span></h2>
+    <h2><span class="icon">&#9881;</span> <span data-i18n="race_stats_title">{% if lang == 'es' %}Estadísticas Históricas{% else %}Historical Stats{% endif %}</span></h2>
     <table>
       <tr>
         <td data-i18n="avg_winner_lap">{% if lang == 'es' %}Mejor vuelta promedio{% else %}Avg Winner Lap{% endif %}</td>
-        <td>{{ "%.3f"|format(prediction.avg_winner_lap_time or 0) }}s</td>
+        <td><strong>{{ "%.3f"|format(prediction.avg_winner_lap_time or 0) }}s</strong></td>
       </tr>
       <tr>
         <td data-i18n="avg_overtakes_label">{% if lang == 'es' %}Adelantamientos promedio{% else %}Avg Overtakes{% endif %}</td>
-        <td>{{ "%.0f"|format(prediction.avg_overtakes or 0) }}</td>
+        <td><strong>{{ "%.0f"|format(prediction.avg_overtakes or 0) }}</strong></td>
       </tr>
       <tr>
         <td data-i18n="sc_prob">{% if lang == 'es' %}Probabilidad de Safety Car{% else %}Safety Car Probability{% endif %}</td>
-        <td>{{ "%.0f"|format((prediction.safety_car_probability or 0) * 100) }}%</td>
+        <td><strong>{{ "%.0f"|format((prediction.safety_car_probability or 0) * 100) }}%</strong></td>
       </tr>
       <tr>
         <td data-i18n="quali_improv">{% if lang == 'es' %}Mejora Q1→Q3{% else %}Q1→Q3 Improvement{% endif %}</td>
-        <td>{{ "%.2f"|format(prediction.quali_improvement_rate or 0) }}%</td>
+        <td><strong>{{ "%.2f"|format(prediction.quali_improvement_rate or 0) }}%</strong></td>
       </tr>
     </table>
   </div>
   <div class="card">
-    <h2><span data-i18n="weather_title">{% if lang == 'es' %}Clima Histórico{% else %}Historical Weather{% endif %}</span></h2>
+    <h2><span class="icon">&#9925;</span> <span data-i18n="weather_title">{% if lang == 'es' %}Clima Histórico{% else %}Historical Weather{% endif %}</span></h2>
     {% if prediction.weather_pattern %}
     <table>
       <tr>
         <td data-i18n="rain_prob">{% if lang == 'es' %}Probabilidad de lluvia{% else %}Rain Probability{% endif %}</td>
-        <td>{{ "%.0f"|format((prediction.weather_pattern.rain_probability or 0) * 100) }}%</td>
+        <td><strong>{{ "%.0f"|format((prediction.weather_pattern.rain_probability or 0) * 100) }}%</strong></td>
       </tr>
       <tr>
         <td data-i18n="avg_temp">{% if lang == 'es' %}Temp. ambiente promedio{% else %}Avg Air Temp{% endif %}</td>
-        <td>{{ "%.1f"|format(prediction.weather_pattern.avg_air_temp or 0) }}°C</td>
+        <td><strong>{{ "%.1f"|format(prediction.weather_pattern.avg_air_temp or 0) }}°C</strong></td>
       </tr>
       <tr>
         <td data-i18n="avg_track_temp">{% if lang == 'es' %}Temp. pista promedio{% else %}Avg Track Temp{% endif %}</td>
-        <td>{{ "%.1f"|format(prediction.weather_pattern.avg_track_temp or 0) }}°C</td>
+        <td><strong>{{ "%.1f"|format(prediction.weather_pattern.avg_track_temp or 0) }}°C</strong></td>
       </tr>
       <tr>
         <td data-i18n="avg_humidity">{% if lang == 'es' %}Humedad promedio{% else %}Avg Humidity{% endif %}</td>
-        <td>{{ "%.0f"|format(prediction.weather_pattern.avg_humidity or 0) }}%</td>
+        <td><strong>{{ "%.0f"|format(prediction.weather_pattern.avg_humidity or 0) }}%</strong></td>
       </tr>
       <tr>
         <td data-i18n="avg_wind">{% if lang == 'es' %}Viento promedio{% else %}Avg Wind{% endif %}</td>
-        <td>{{ "%.1f"|format(prediction.weather_pattern.avg_wind_speed or 0) }} m/s</td>
+        <td><strong>{{ "%.1f"|format(prediction.weather_pattern.avg_wind_speed or 0) }} m/s</strong></td>
       </tr>
     </table>
     {% else %}
@@ -95,8 +105,9 @@
   </div>
 </div>
 
+<!-- Tires -->
 <div class="card">
-  <h2><span data-i18n="tire_stats_title">{% if lang == 'es' %}Estadísticas de Neumáticos{% else %}Tire Statistics{% endif %}</span></h2>
+  <h2><span class="icon">&#9901;</span> <span data-i18n="tire_stats_title">{% if lang == 'es' %}Estadísticas de Neumáticos{% else %}Tire Statistics{% endif %}</span></h2>
   {% if prediction.tire_stats %}
   <table>
     <tr>
@@ -108,7 +119,7 @@
     {% for ts in prediction.tire_stats %}
     <tr>
       <td><span class="badge badge-{{ (ts.compound|default(''))|lower }}">{{ ts.compound|default('?') }}</span></td>
-      <td>{{ "%.1f"|format(ts.avg_stint_length) }} {% if lang == 'es' %}vueltas{% else %}laps{% endif %}</td>
+      <td>{{ "%.1f"|format(ts.avg_stint_length) }} {% if lang == 'es' %}v{% else %}laps{% endif %}</td>
       <td>{{ "%.3f"|format(ts.degradation_per_lap) }}s</td>
       <td>{{ ts.count }}</td>
     </tr>
@@ -119,42 +130,50 @@
   {% endif %}
 </div>
 
-{% if grid_finish_data and grid_chart_json != 'null' %}
-<div class="card">
-  <h2><span data-i18n="grid_finish_title">{% if lang == 'es' %}Parrilla vs Resultado{% else %}Grid vs Finish{% endif %}</span></h2>
-  <div class="chart-container" id="grid-finish-chart"></div>
+<!-- Analysis charts: Grid/Finish, Overtakes -->
+<div class="grid-2">
+  {% if grid_finish_data and grid_chart_json != 'null' %}
+  <div class="card">
+    <h2><span class="icon">&#9654;</span> <span data-i18n="grid_finish_title">{% if lang == 'es' %}Parrilla vs Resultado{% else %}Grid vs Finish{% endif %}</span></h2>
+    <div class="chart-container" id="grid-finish-chart"></div>
+  </div>
+  {% endif %}
+  {% if overtake_data and overtakes_chart_json != 'null' %}
+  <div class="card">
+    <h2><span class="icon">&#9889;</span> <span data-i18n="overtakes_title">{% if lang == 'es' %}Adelantamientos por Piloto{% else %}Overtakes by Driver{% endif %}</span></h2>
+    <div class="chart-container" id="overtakes-chart"></div>
+  </div>
+  {% endif %}
 </div>
-{% endif %}
 
-{% if overtake_data and overtakes_chart_json != 'null' %}
-<div class="card">
-  <h2><span data-i18n="overtakes_title">{% if lang == 'es' %}Adelantamientos por Piloto{% else %}Overtakes by Driver{% endif %}</span></h2>
-  <div class="chart-container" id="overtakes-chart"></div>
+<!-- Consistency charts -->
+<div class="grid-2">
+  {% if consistency_data and consistency_chart_json != 'null' %}
+  <div class="card">
+    <h2><span class="icon">&#9888;</span> <span data-i18n="consistency_title">{% if lang == 'es' %}Consistencia (Circuito){% else %}Race Consistency (Circuit){% endif %}</span></h2>
+    <div class="chart-container" id="consistency-chart"></div>
+  </div>
+  {% endif %}
+  {% if season_consistency_chart_json and season_consistency_chart_json != 'null' %}
+  <div class="card">
+    <h2><span class="icon">&#9888;</span> <span data-i18n="season_consistency_title">{% if lang == 'es' %}Consistencia (Temp. 2026){% else %}Race Consistency (2026 Season){% endif %}</span></h2>
+    <div class="chart-container" id="season-consistency-chart"></div>
+  </div>
+  {% endif %}
 </div>
-{% endif %}
 
-{% if consistency_data and consistency_chart_json != 'null' %}
+<!-- Strategy comparison chart -->
 <div class="card">
-  <h2><span data-i18n="consistency_title">{% if lang == 'es' %}Consistencia (Circuito){% else %}Race Consistency (Circuit){% endif %}</span></h2>
-  <div class="chart-container" id="consistency-chart"></div>
-</div>
-{% endif %}
-
-{% if season_consistency_chart_json and season_consistency_chart_json != 'null' %}
-<div class="card">
-  <h2><span data-i18n="season_consistency_title">{% if lang == 'es' %}Consistencia (Temp. 2026){% else %}Race Consistency (2026 Season){% endif %}</span></h2>
-  <div class="chart-container" id="season-consistency-chart"></div>
-</div>
-{% endif %}
-
-<div class="card">
-  <h2><span data-i18n="strategy_chart_title">{% if lang == 'es' %}Comparación de Estrategias{% else %}Strategy Comparison{% endif %}</span></h2>
+  <h2><span class="icon">&#8801;</span> <span data-i18n="strategy_chart_title">{% if lang == 'es' %}Comparación de Estrategias{% else %}Strategy Comparison{% endif %}</span></h2>
   <div class="chart-container" id="strategy-chart"></div>
 </div>
 
-<div class="card">
-  <h2><span data-i18n="generated_at">{% if lang == 'es' %}Generado el{% else %}Generated at{% endif %}</span></h2>
-  <p style="color:var(--text-muted); font-size:0.85rem;">{{ prediction.generated_at }}</p>
+<!-- Footer info -->
+<div class="card" style="text-align:center; padding:16px;">
+  <p style="color:var(--text-muted); font-size:0.8rem;">
+    <span data-i18n="generated_at">{% if lang == 'es' %}Generado el{% else %}Generated at{% endif %}</span>
+    {{ prediction.generated_at }}
+  </p>
 </div>
 
 <script>
@@ -180,7 +199,7 @@ if (seasonConsistencyChart && seasonConsistencyChart.data) Plotly.newPlot('seaso
 {% endif %}
 </script>
 {% else %}
-<div class="card" style="text-align:center; padding:60px 20px;">
+<div class="hero-card" style="text-align:center; padding:60px 20px;">
   <h2 data-i18n="no_prediction">{% if lang == 'es' %}No hay predicción disponible{% else %}No prediction available{% endif %}</h2>
   <p data-i18n="no_prediction_desc" style="color:var(--text-muted); margin-top:10px;">
     {% if lang == 'es' %}El pipeline aún no ha generado datos para la próxima carrera. Vuelve más tarde.{% else %}The pipeline hasn't generated data for the next race yet. Check back later.{% endif %}

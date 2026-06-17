@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F1 Race Optimizer</title>
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0a0f; --card: #12121e; --accent: #e10600;
+    --text: #e8e8e8; --text-muted: #6b7280; --border: rgba(255,255,255,0.06);
+    --f1-red: #e10600; --f1-dark: #0a0a0f;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+  /* F1 flag stripe header */
+  .flag-stripe { height: 4px; background: repeating-linear-gradient(90deg, var(--f1-red) 0px, var(--f1-red) 20px, #fff 20px, #fff 40px); }
+  header {
+    background: linear-gradient(180deg, #0d0d1a 0%, var(--card) 100%);
+    padding: 18px 0 14px; border-bottom: 1px solid var(--border);
+  }
+  header .container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-logo {
+    width: 36px; height: 36px; background: var(--f1-red); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 1.1rem; color: #fff; letter-spacing: -1px;
+  }
+  header h1 { font-size: 1.3rem; color: #fff; font-weight: 700; }
+  header h1 span { color: var(--f1-red); }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .lang-toggle { display: flex; gap: 4px; background: rgba(255,255,255,0.05); border-radius: 6px; padding: 3px; }
+  .lang-btn {
+    background: transparent; border: none; color: var(--text-muted);
+    padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;
+    font-weight: 600; transition: all 0.2s;
+  }
+  .lang-btn.active { background: var(--f1-red); color: #fff; }
+  .nav {
+    display: flex; gap: 4px; margin-top: 12px; flex-wrap: wrap;
+  }
+  .nav a {
+    color: var(--text-muted); text-decoration: none; font-size: 0.85rem; font-weight: 500;
+    padding: 6px 14px; border-radius: 6px; transition: all 0.2s;
+  }
+  .nav a:hover, .nav a.active { background: rgba(225,6,0,0.1); color: #fff; }
+
+  /* Hero card for next race */
+  .hero-card {
+    background: linear-gradient(135deg, #1a1a2e 0%, #0d0d1a 100%);
+    border-radius: 14px; padding: 32px; margin-bottom: 24px;
+    border: 1px solid var(--border); position: relative; overflow: hidden;
+  }
+  .hero-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--f1-red), #ff6b35, var(--f1-red));
+  }
+  .hero-grid { display: grid; grid-template-columns: auto 1fr; gap: 24px; align-items: start; }
+  .hero-flag {
+    width: 72px; height: 48px; border-radius: 6px; background-size: cover;
+    background-position: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    flex-shrink: 0;
+  }
+  .hero-info h2 { font-size: 1.6rem; color: #fff; margin-bottom: 4px; }
+  .hero-info .subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px; }
+  .hero-stats { display: flex; gap: 24px; flex-wrap: wrap; }
+  .hero-stat { text-align: center; }
+  .hero-stat .value { font-size: 1.5rem; font-weight: 700; color: #fff; }
+  .hero-stat .label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+  /* Cards */
+  .card {
+    background: var(--card); border-radius: 12px; padding: 24px; margin-bottom: 20px;
+    border: 1px solid var(--border); transition: border-color 0.3s;
+  }
+  .card:hover { border-color: rgba(255,255,255,0.1); }
+  .card h2 {
+    font-size: 1.1rem; margin-bottom: 16px; color: #fff; font-weight: 600;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card h2 .icon { color: var(--f1-red); font-size: 1.2rem; }
+  .card h2 span:not(.icon) { color: var(--f1-red); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .stat {
+    text-align: center; padding: 20px 16px; background: rgba(255,255,255,0.02);
+    border-radius: 10px; border: 1px solid rgba(255,255,255,0.04);
+  }
+  .stat .value { font-size: 1.8rem; font-weight: 700; color: #fff; }
+  .stat .label { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* Strategy */
+  .strategy-box {
+    background: linear-gradient(135deg, rgba(225,6,0,0.08), rgba(225,6,0,0.02));
+    border: 1px solid rgba(225,6,0,0.2); border-radius: 10px; padding: 20px;
+    margin-top: 8px;
+  }
+  .strategy-box .steps {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 12px 0;
+  }
+  .strategy-box .step {
+    background: var(--f1-red); color: #fff; padding: 7px 18px; border-radius: 20px;
+    font-size: 0.85rem; font-weight: 700; letter-spacing: 0.3px;
+  }
+  .strategy-box .arrow { color: var(--text-muted); font-size: 1.3rem; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+  td { font-size: 0.9rem; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .badge {
+    display: inline-block; padding: 3px 12px; border-radius: 12px;
+    font-size: 0.75rem; font-weight: 700;
+  }
+  .badge-soft { background: #ff6b35; color: #fff; }
+  .badge-medium { background: #ffd700; color: #000; }
+  .badge-hard { background: #6b7280; color: #fff; }
+  .badge-intermediate { background: #4caf50; color: #fff; }
+  .badge-wet { background: #2196f3; color: #fff; }
+  .chart-container { width: 100%; height: 380px; }
+
+  footer { text-align: center; padding: 32px 0; color: var(--text-muted); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 20px; }
+
+  @media (max-width: 768px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    header .container { flex-direction: column; align-items: stretch; }
+    .header-left, .header-right { justify-content: center; }
+    .nav { justify-content: center; }
+    .hero-grid { grid-template-columns: 1fr; text-align: center; }
+    .hero-stats { justify-content: center; }
+    .chart-container { height: 300px; }
+  }
+  .hidden { display: none !important; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .card, .hero-card { animation: fadeIn 0.5s ease-out both; }
+  .hero-card { animation-delay: 0s; }
+  .card:nth-child(2) { animation-delay: 0.1s; }
+  .card:nth-child(3) { animation-delay: 0.2s; }
+  .card:nth-child(4) { animation-delay: 0.3s; }
+  .card:nth-child(5) { animation-delay: 0.4s; }
+</style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <h1><span>F1</span> Race Optimizer</h1>
+    <div class="lang-toggle">
+      <button class="lang-btn active" data-lang-btn="en" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" data-lang-btn="es" onclick="setLang('es')">ES</button>
+    </div>
+    <nav class="nav">
+      <a href="index.html" class="active" data-i18n="nav_home">Inicio</a>
+      <a href="strategy.html" data-i18n="nav_strategy">Estrategia</a>
+      <a href="quali.html" data-i18n="nav_quali">Clasificación</a>
+      <a href="standings.html" data-i18n="nav_standings">Campeonato</a>
+      <a href="historical.html" data-i18n="nav_historical">Histórico</a>
+    </nav>
+  </div>
+</header>
+<main class="container">
+
+
+
+<!-- Hero: Next Race -->
+<div class="hero-card">
+  <div class="hero-grid">
+    <div class="hero-info">
+      <div class="subtitle" data-i18n="next_race_title">PRÓXIMA CARRERA</div>
+      <h2>Spielberg</h2>
+      <div class="subtitle">Austria &middot; 2026</div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="value">69.661s</div>
+          <div class="label" data-i18n="avg_winner_lap">Mejor Vuelta</div>
+        </div>
+        <div class="hero-stat">
+          <div class="value">3%</div>
+          <div class="label" data-i18n="rain_prob">Lluvia</div>
+        </div>
+        <div class="hero-stat">
+          <div class="value">0</div>
+          <div class="label" data-i18n="avg_overtakes_label">Adelantamientos</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Strategy -->
+<div class="card">
+  <h2><span class="icon">&#9878;</span> <span data-i18n="strategy_title">Estrategia Recomendada</span></h2>
+  
+  <div class="strategy-box">
+    <div class="steps">
+      
+      
+      <span class="step badge-medium">MEDIUM(10)</span>
+      <span class="arrow">→</span>
+      
+      
+      <span class="step badge-soft">SOFT(61)</span>
+      
+      
+    </div>
+    <p style="margin-top:12px; font-size:0.9rem; color:var(--text-muted);">
+      <span data-i18n="est_time">Tiempo estimado:</span>
+      <strong>5351.2s</strong>
+      &nbsp;|&nbsp; 1
+      <span data-i18n="pit_stops">paradas</span>
+    </p>
+  </div>
+  
+</div>
+
+<!-- Stats + Weather in 2-col -->
+<div class="grid-2">
+  <div class="card">
+    <h2><span class="icon">&#9881;</span> <span data-i18n="race_stats_title">Estadísticas Históricas</span></h2>
+    <table>
+      <tr>
+        <td data-i18n="avg_winner_lap">Mejor vuelta promedio</td>
+        <td><strong>69.661s</strong></td>
+      </tr>
+      <tr>
+        <td data-i18n="avg_overtakes_label">Adelantamientos promedio</td>
+        <td><strong>0</strong></td>
+      </tr>
+      <tr>
+        <td data-i18n="sc_prob">Probabilidad de Safety Car</td>
+        <td><strong>15%</strong></td>
+      </tr>
+      <tr>
+        <td data-i18n="quali_improv">Mejora Q1→Q3</td>
+        <td><strong>0.31%</strong></td>
+      </tr>
+    </table>
+  </div>
+  <div class="card">
+    <h2><span class="icon">&#9925;</span> <span data-i18n="weather_title">Clima Histórico</span></h2>
+    
+    <table>
+      <tr>
+        <td data-i18n="rain_prob">Probabilidad de lluvia</td>
+        <td><strong>3%</strong></td>
+      </tr>
+      <tr>
+        <td data-i18n="avg_temp">Temp. ambiente promedio</td>
+        <td><strong>25.8°C</strong></td>
+      </tr>
+      <tr>
+        <td data-i18n="avg_track_temp">Temp. pista promedio</td>
+        <td><strong>39.6°C</strong></td>
+      </tr>
+      <tr>
+        <td data-i18n="avg_humidity">Humedad promedio</td>
+        <td><strong>47%</strong></td>
+      </tr>
+      <tr>
+        <td data-i18n="avg_wind">Viento promedio</td>
+        <td><strong>1.3 m/s</strong></td>
+      </tr>
+    </table>
+    
+  </div>
+</div>
+
+<!-- Tires -->
+<div class="card">
+  <h2><span class="icon">&#9901;</span> <span data-i18n="tire_stats_title">Estadísticas de Neumáticos</span></h2>
+  
+  <table>
+    <tr>
+      <th data-i18n="compound">Compuesto</th>
+      <th data-i18n="avg_stint">Stint Promedio</th>
+      <th data-i18n="degradation">Degradación (s/vuelta)</th>
+      <th data-i18n="count">Muestras</th>
+    </tr>
+    
+    <tr>
+      <td><span class="badge badge-soft">SOFT</span></td>
+      <td>4.2 v</td>
+      <td>-0.435s</td>
+      <td>658</td>
+    </tr>
+    
+    <tr>
+      <td><span class="badge badge-hard">HARD</span></td>
+      <td>14.9 v</td>
+      <td>0.028s</td>
+      <td>184</td>
+    </tr>
+    
+    <tr>
+      <td><span class="badge badge-medium">MEDIUM</span></td>
+      <td>10.6 v</td>
+      <td>-0.312s</td>
+      <td>355</td>
+    </tr>
+    
+    <tr>
+      <td><span class="badge badge-intermediate">INTERMEDIATE</span></td>
+      <td>17.8 v</td>
+      <td>-0.344s</td>
+      <td>23</td>
+    </tr>
+    
+  </table>
+  
+</div>
+
+<!-- Analysis charts: Grid/Finish, Overtakes -->
+<div class="grid-2">
+  
+  <div class="card">
+    <h2><span class="icon">&#9654;</span> <span data-i18n="grid_finish_title">Parrilla vs Resultado</span></h2>
+    <div class="chart-container" id="grid-finish-chart"></div>
+  </div>
+  
+  
+</div>
+
+<!-- Consistency charts -->
+<div class="grid-2">
+  
+  <div class="card">
+    <h2><span class="icon">&#9888;</span> <span data-i18n="consistency_title">Consistencia (Circuito)</span></h2>
+    <div class="chart-container" id="consistency-chart"></div>
+  </div>
+  
+  
+  <div class="card">
+    <h2><span class="icon">&#9888;</span> <span data-i18n="season_consistency_title">Consistencia (Temp. 2026)</span></h2>
+    <div class="chart-container" id="season-consistency-chart"></div>
+  </div>
+  
+</div>
+
+<!-- Strategy comparison chart -->
+<div class="card">
+  <h2><span class="icon">&#8801;</span> <span data-i18n="strategy_chart_title">Comparación de Estrategias</span></h2>
+  <div class="chart-container" id="strategy-chart"></div>
+</div>
+
+<!-- Footer info -->
+<div class="card" style="text-align:center; padding:16px;">
+  <p style="color:var(--text-muted); font-size:0.8rem;">
+    <span data-i18n="generated_at">Generado el</span>
+    2026-06-17T16:28:53.722111+00:00
+  </p>
+</div>
+
+<script>
+const strategyChart = {"data": [{"customdata": [1, 1, 2, 2, 1], "hovertemplate": "<b>%{x}</b><br>Time: %{text}<br>Pit Stops: %{customdata}<extra></extra>", "marker": {"color": ["#e10600", "#333", "#333", "#333", "#333"]}, "text": ["5351.2s", "5462.6s", "5470.9s", "5470.9s", "5479.9s"], "textposition": "outside", "x": ["S1", "S2", "S3", "S4", "S5"], "y": [5351.1555951344235, 5462.580068253976, 5470.9346522772785, 5470.9346522772785, 5479.9377063365], "type": "bar"}], "layout": {"template": {"data": {"barpolar": [{"marker": {"line": {"color": "rgb(17,17,17)", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "barpolar"}], "bar": [{"error_x": {"color": "#f2f5fa"}, "error_y": {"color": "#f2f5fa"}, "marker": {"line": {"color": "rgb(17,17,17)", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "bar"}], "carpet": [{"aaxis": {"endlinecolor": "#A2B1C6", "gridcolor": "#506784", "linecolor": "#506784", "minorgridcolor": "#506784", "startlinecolor": "#A2B1C6"}, "baxis": {"endlinecolor": "#A2B1C6", "gridcolor": "#506784", "linecolor": "#506784", "minorgridcolor": "#506784", "startlinecolor": "#A2B1C6"}, "type": "carpet"}], "choropleth": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "type": "choropleth"}], "contourcarpet": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "type": "contourcarpet"}], "contour": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "contour"}], "heatmap": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "heatmap"}], "histogram2dcontour": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "histogram2dcontour"}], "histogram2d": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "histogram2d"}], "histogram": [{"marker": {"pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "histogram"}], "mesh3d": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "type": "mesh3d"}], "parcoords": [{"line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "parcoords"}], "pie": [{"automargin": true, "type": "pie"}], "scatter3d": [{"line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatter3d"}], "scattercarpet": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattercarpet"}], "scattergeo": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattergeo"}], "scattergl": [{"marker": {"line": {"color": "#283442"}}, "type": "scattergl"}], "scattermapbox": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattermapbox"}], "scattermap": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattermap"}], "scatterpolargl": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatterpolargl"}], "scatterpolar": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatterpolar"}], "scatter": [{"marker": {"line": {"color": "#283442"}}, "type": "scatter"}], "scatterternary": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatterternary"}], "surface": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "surface"}], "table": [{"cells": {"fill": {"color": "#506784"}, "line": {"color": "rgb(17,17,17)"}}, "header": {"fill": {"color": "#2a3f5f"}, "line": {"color": "rgb(17,17,17)"}}, "type": "table"}]}, "layout": {"annotationdefaults": {"arrowcolor": "#f2f5fa", "arrowhead": 0, "arrowwidth": 1}, "autotypenumbers": "strict", "coloraxis": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "colorscale": {"diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]], "sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}, "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"], "font": {"color": "#f2f5fa"}, "geo": {"bgcolor": "rgb(17,17,17)", "lakecolor": "rgb(17,17,17)", "landcolor": "rgb(17,17,17)", "showlakes": true, "showland": true, "subunitcolor": "#506784"}, "hoverlabel": {"align": "left"}, "hovermode": "closest", "mapbox": {"style": "dark"}, "paper_bgcolor": "rgb(17,17,17)", "plot_bgcolor": "rgb(17,17,17)", "polar": {"angularaxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}, "bgcolor": "rgb(17,17,17)", "radialaxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}}, "scene": {"xaxis": {"backgroundcolor": "rgb(17,17,17)", "gridcolor": "#506784", "gridwidth": 2, "linecolor": "#506784", "showbackground": true, "ticks": "", "zerolinecolor": "#C8D4E3"}, "yaxis": {"backgroundcolor": "rgb(17,17,17)", "gridcolor": "#506784", "gridwidth": 2, "linecolor": "#506784", "showbackground": true, "ticks": "", "zerolinecolor": "#C8D4E3"}, "zaxis": {"backgroundcolor": "rgb(17,17,17)", "gridcolor": "#506784", "gridwidth": 2, "linecolor": "#506784", "showbackground": true, "ticks": "", "zerolinecolor": "#C8D4E3"}}, "shapedefaults": {"line": {"color": "#f2f5fa"}}, "sliderdefaults": {"bgcolor": "#C8D4E3", "bordercolor": "rgb(17,17,17)", "borderwidth": 1, "tickwidth": 0}, "ternary": {"aaxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}, "baxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}, "bgcolor": "rgb(17,17,17)", "caxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}}, "title": {"x": 0.05}, "updatemenudefaults": {"bgcolor": "#506784", "borderwidth": 0}, "xaxis": {"automargin": true, "gridcolor": "#283442", "linecolor": "#506784", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "#283442", "zerolinewidth": 2}, "yaxis": {"automargin": true, "gridcolor": "#283442", "linecolor": "#506784", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "#283442", "zerolinewidth": 2}}}, "font": {"color": "#888"}, "margin": {"l": 40, "r": 20, "t": 20, "b": 40}, "paper_bgcolor": "rgba(0,0,0,0)", "plot_bgcolor": "rgba(0,0,0,0)", "yaxis": {"title": {"text": "Total Time (s)"}}, "showlegend": false}};
+if (strategyChart && strategyChart.data) {
+  Plotly.newPlot('strategy-chart', strategyChart.data, strategyChart.layout || {}, {responsive: true});
+}
+
+const gridChart = {"data": [{"customdata": [[8, 5], [7.6, 5], [12.5, 10], [8.6, 6.6], [13.5, 11.5], [11.6, 10], [18, 16.5], [7.6, 6.4], [18, 17], [13, 12.25]], "hovertemplate": "<b>%{x}</b><br>Grid\u2192Finish: %{text}<br>Avg Grid: %{customdata[0]:.1f}<br>Avg Finish: %{customdata[1]:.1f}<extra></extra>", "marker": {"color": ["#4caf50", "#4caf50", "#4caf50", "#4caf50", "#4caf50", "#4caf50", "#4caf50", "#4caf50", "#4caf50", "#4caf50"]}, "text": ["+3.0", "+2.6", "+2.5", "+2.0", "+2.0", "+1.6", "+1.5", "+1.2", "+1.0", "+0.8"], "textposition": "outside", "x": ["Sergio PEREZ", "George RUSSELL", "Nico HULKENBERG", "Oscar PIASTRI", "Daniel RICCIARDO", "Lance STROLL", "Logan SARGEANT", "Lewis HAMILTON", "ZHOU Guanyu", "Kevin MAGNUSSEN"], "y": [3, 2.6, 2.5, 2, 2, 1.6, 1.5, 1.2, 1, 0.75], "type": "bar"}], "layout": {"template": {"data": {"barpolar": [{"marker": {"line": {"color": "rgb(17,17,17)", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "barpolar"}], "bar": [{"error_x": {"color": "#f2f5fa"}, "error_y": {"color": "#f2f5fa"}, "marker": {"line": {"color": "rgb(17,17,17)", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "bar"}], "carpet": [{"aaxis": {"endlinecolor": "#A2B1C6", "gridcolor": "#506784", "linecolor": "#506784", "minorgridcolor": "#506784", "startlinecolor": "#A2B1C6"}, "baxis": {"endlinecolor": "#A2B1C6", "gridcolor": "#506784", "linecolor": "#506784", "minorgridcolor": "#506784", "startlinecolor": "#A2B1C6"}, "type": "carpet"}], "choropleth": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "type": "choropleth"}], "contourcarpet": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "type": "contourcarpet"}], "contour": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "contour"}], "heatmap": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "heatmap"}], "histogram2dcontour": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "histogram2dcontour"}], "histogram2d": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "histogram2d"}], "histogram": [{"marker": {"pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "histogram"}], "mesh3d": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "type": "mesh3d"}], "parcoords": [{"line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "parcoords"}], "pie": [{"automargin": true, "type": "pie"}], "scatter3d": [{"line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatter3d"}], "scattercarpet": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattercarpet"}], "scattergeo": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattergeo"}], "scattergl": [{"marker": {"line": {"color": "#283442"}}, "type": "scattergl"}], "scattermapbox": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattermapbox"}], "scattermap": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattermap"}], "scatterpolargl": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatterpolargl"}], "scatterpolar": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatterpolar"}], "scatter": [{"marker": {"line": {"color": "#283442"}}, "type": "scatter"}], "scatterternary": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatterternary"}], "surface": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "surface"}], "table": [{"cells": {"fill": {"color": "#506784"}, "line": {"color": "rgb(17,17,17)"}}, "header": {"fill": {"color": "#2a3f5f"}, "line": {"color": "rgb(17,17,17)"}}, "type": "table"}]}, "layout": {"annotationdefaults": {"arrowcolor": "#f2f5fa", "arrowhead": 0, "arrowwidth": 1}, "autotypenumbers": "strict", "coloraxis": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "colorscale": {"diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]], "sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}, "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"], "font": {"color": "#f2f5fa"}, "geo": {"bgcolor": "rgb(17,17,17)", "lakecolor": "rgb(17,17,17)", "landcolor": "rgb(17,17,17)", "showlakes": true, "showland": true, "subunitcolor": "#506784"}, "hoverlabel": {"align": "left"}, "hovermode": "closest", "mapbox": {"style": "dark"}, "paper_bgcolor": "rgb(17,17,17)", "plot_bgcolor": "rgb(17,17,17)", "polar": {"angularaxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}, "bgcolor": "rgb(17,17,17)", "radialaxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}}, "scene": {"xaxis": {"backgroundcolor": "rgb(17,17,17)", "gridcolor": "#506784", "gridwidth": 2, "linecolor": "#506784", "showbackground": true, "ticks": "", "zerolinecolor": "#C8D4E3"}, "yaxis": {"backgroundcolor": "rgb(17,17,17)", "gridcolor": "#506784", "gridwidth": 2, "linecolor": "#506784", "showbackground": true, "ticks": "", "zerolinecolor": "#C8D4E3"}, "zaxis": {"backgroundcolor": "rgb(17,17,17)", "gridcolor": "#506784", "gridwidth": 2, "linecolor": "#506784", "showbackground": true, "ticks": "", "zerolinecolor": "#C8D4E3"}}, "shapedefaults": {"line": {"color": "#f2f5fa"}}, "sliderdefaults": {"bgcolor": "#C8D4E3", "bordercolor": "rgb(17,17,17)", "borderwidth": 1, "tickwidth": 0}, "ternary": {"aaxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}, "baxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}, "bgcolor": "rgb(17,17,17)", "caxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}}, "title": {"x": 0.05}, "updatemenudefaults": {"bgcolor": "#506784", "borderwidth": 0}, "xaxis": {"automargin": true, "gridcolor": "#283442", "linecolor": "#506784", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "#283442", "zerolinewidth": 2}, "yaxis": {"automargin": true, "gridcolor": "#283442", "linecolor": "#506784", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "#283442", "zerolinewidth": 2}}}, "font": {"color": "#888"}, "margin": {"l": 40, "r": 20, "t": 20, "b": 80}, "paper_bgcolor": "rgba(0,0,0,0)", "plot_bgcolor": "rgba(0,0,0,0)", "yaxis": {"title": {"text": "Avg Positions Gained (+) / Lost (-)"}}, "showlegend": false}};
+if (gridChart && gridChart.data) Plotly.newPlot('grid-finish-chart', gridChart.data, gridChart.layout || {}, {responsive: true});
+
+
+
+const consistencyChart = {"data": [{"hovertemplate": "<b>%{x}</b><br>Std Dev: %{y:.3f}s<extra></extra>", "marker": {"color": "#2196f3"}, "name": "Lap Time Std Dev", "x": ["Daniel RICCIARDO", "Kevin MAGNUSSEN", "Carlos SAINZ", "Max VERSTAPPEN", "Sergio PEREZ", "ZHOU Guanyu", "Logan SARGEANT", "Lewis HAMILTON", "Yuki TSUNODA", "Pierre GASLY"], "y": [2.1652738589786953, 3.478566345583501, 4.7787457090282786, 5.0469939417805785, 5.179747481345942, 5.379850053231168, 5.391936085412019, 5.507521130436015, 5.539279963118186, 5.647787206921074], "yaxis": "y", "type": "bar"}, {"hovertemplate": "<b>%{x}</b><br>Avg: %{y:.3f}s<extra></extra>", "marker": {"color": "#e10600", "size": 10}, "mode": "markers+lines", "name": "Avg Lap Time", "x": ["Daniel RICCIARDO", "Kevin MAGNUSSEN", "Carlos SAINZ", "Max VERSTAPPEN", "Sergio PEREZ", "ZHOU Guanyu", "Logan SARGEANT", "Lewis HAMILTON", "Yuki TSUNODA", "Pierre GASLY"], "y": [71.63280434782608, 72.53822651933702, 71.77107608695653, 71.40104945054945, 72.15236413043478, 73.17028333333333, 73.08379329608938, 71.83940637450199, 72.85864081632653, 72.62343426294821], "yaxis": "y2", "type": "scatter"}], "layout": {"template": {"data": {"barpolar": [{"marker": {"line": {"color": "rgb(17,17,17)", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "barpolar"}], "bar": [{"error_x": {"color": "#f2f5fa"}, "error_y": {"color": "#f2f5fa"}, "marker": {"line": {"color": "rgb(17,17,17)", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "bar"}], "carpet": [{"aaxis": {"endlinecolor": "#A2B1C6", "gridcolor": "#506784", "linecolor": "#506784", "minorgridcolor": "#506784", "startlinecolor": "#A2B1C6"}, "baxis": {"endlinecolor": "#A2B1C6", "gridcolor": "#506784", "linecolor": "#506784", "minorgridcolor": "#506784", "startlinecolor": "#A2B1C6"}, "type": "carpet"}], "choropleth": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "type": "choropleth"}], "contourcarpet": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "type": "contourcarpet"}], "contour": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "contour"}], "heatmap": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "heatmap"}], "histogram2dcontour": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "histogram2dcontour"}], "histogram2d": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "histogram2d"}], "histogram": [{"marker": {"pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "histogram"}], "mesh3d": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "type": "mesh3d"}], "parcoords": [{"line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "parcoords"}], "pie": [{"automargin": true, "type": "pie"}], "scatter3d": [{"line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatter3d"}], "scattercarpet": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattercarpet"}], "scattergeo": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattergeo"}], "scattergl": [{"marker": {"line": {"color": "#283442"}}, "type": "scattergl"}], "scattermapbox": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattermapbox"}], "scattermap": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattermap"}], "scatterpolargl": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatterpolargl"}], "scatterpolar": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatterpolar"}], "scatter": [{"marker": {"line": {"color": "#283442"}}, "type": "scatter"}], "scatterternary": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatterternary"}], "surface": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "surface"}], "table": [{"cells": {"fill": {"color": "#506784"}, "line": {"color": "rgb(17,17,17)"}}, "header": {"fill": {"color": "#2a3f5f"}, "line": {"color": "rgb(17,17,17)"}}, "type": "table"}]}, "layout": {"annotationdefaults": {"arrowcolor": "#f2f5fa", "arrowhead": 0, "arrowwidth": 1}, "autotypenumbers": "strict", "coloraxis": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "colorscale": {"diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]], "sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}, "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"], "font": {"color": "#f2f5fa"}, "geo": {"bgcolor": "rgb(17,17,17)", "lakecolor": "rgb(17,17,17)", "landcolor": "rgb(17,17,17)", "showlakes": true, "showland": true, "subunitcolor": "#506784"}, "hoverlabel": {"align": "left"}, "hovermode": "closest", "mapbox": {"style": "dark"}, "paper_bgcolor": "rgb(17,17,17)", "plot_bgcolor": "rgb(17,17,17)", "polar": {"angularaxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}, "bgcolor": "rgb(17,17,17)", "radialaxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}}, "scene": {"xaxis": {"backgroundcolor": "rgb(17,17,17)", "gridcolor": "#506784", "gridwidth": 2, "linecolor": "#506784", "showbackground": true, "ticks": "", "zerolinecolor": "#C8D4E3"}, "yaxis": {"backgroundcolor": "rgb(17,17,17)", "gridcolor": "#506784", "gridwidth": 2, "linecolor": "#506784", "showbackground": true, "ticks": "", "zerolinecolor": "#C8D4E3"}, "zaxis": {"backgroundcolor": "rgb(17,17,17)", "gridcolor": "#506784", "gridwidth": 2, "linecolor": "#506784", "showbackground": true, "ticks": "", "zerolinecolor": "#C8D4E3"}}, "shapedefaults": {"line": {"color": "#f2f5fa"}}, "sliderdefaults": {"bgcolor": "#C8D4E3", "bordercolor": "rgb(17,17,17)", "borderwidth": 1, "tickwidth": 0}, "ternary": {"aaxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}, "baxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}, "bgcolor": "rgb(17,17,17)", "caxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}}, "title": {"x": 0.05}, "updatemenudefaults": {"bgcolor": "#506784", "borderwidth": 0}, "xaxis": {"automargin": true, "gridcolor": "#283442", "linecolor": "#506784", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "#283442", "zerolinewidth": 2}, "yaxis": {"automargin": true, "gridcolor": "#283442", "linecolor": "#506784", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "#283442", "zerolinewidth": 2}}}, "font": {"color": "#888"}, "yaxis": {"title": {"text": "Lap Time Std Dev (s)"}, "side": "left"}, "yaxis2": {"title": {"text": "Avg Lap Time (s)"}, "overlaying": "y", "side": "right"}, "legend": {"orientation": "h", "yanchor": "bottom", "y": 1.02, "xanchor": "right", "x": 1}, "margin": {"l": 40, "r": 40, "t": 20, "b": 80}, "paper_bgcolor": "rgba(0,0,0,0)", "plot_bgcolor": "rgba(0,0,0,0)", "showlegend": true}};
+if (consistencyChart && consistencyChart.data) Plotly.newPlot('consistency-chart', consistencyChart.data, consistencyChart.layout || {}, {responsive: true});
+
+
+const seasonConsistencyChart = {"data": [{"hovertemplate": "<b>%{x}</b><br>Std Dev: %{y:.3f}s<extra></extra>", "marker": {"color": "#e10600"}, "name": "Lap Time Std Dev", "x": ["Lando NORRIS", "Oliver BEARMAN", "Max VERSTAPPEN", "Charles LECLERC", "Valtteri BOTTAS", "Sergio PEREZ", "Lance STROLL", "Gabriel BORTOLETO", "Alexander ALBON", "Pierre GASLY"], "y": [8.260473941118775, 8.83410886379804, 9.561614267203694, 9.83689123477831, 10.37576135364088, 12.629556104011453, 12.841336015931294, 12.980244821955388, 13.049868587271119, 13.113927967395172], "yaxis": "y", "type": "bar"}, {"hovertemplate": "<b>%{x}</b><br>Avg: %{y:.3f}s<extra></extra>", "marker": {"color": "#ffd700", "size": 10}, "mode": "markers+lines", "name": "Avg Lap Time", "x": ["Lando NORRIS", "Oliver BEARMAN", "Max VERSTAPPEN", "Charles LECLERC", "Valtteri BOTTAS", "Sergio PEREZ", "Lance STROLL", "Gabriel BORTOLETO", "Alexander ALBON", "Pierre GASLY"], "y": [86.60301704545455, 88.7642605263158, 88.23109685863875, 87.13275166297117, 93.42117940199336, 92.35190888382688, 90.96790553745929, 89.29386778846154, 90.91241739130434, 89.02365727699531], "yaxis": "y2", "type": "scatter"}], "layout": {"template": {"data": {"barpolar": [{"marker": {"line": {"color": "rgb(17,17,17)", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "barpolar"}], "bar": [{"error_x": {"color": "#f2f5fa"}, "error_y": {"color": "#f2f5fa"}, "marker": {"line": {"color": "rgb(17,17,17)", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "bar"}], "carpet": [{"aaxis": {"endlinecolor": "#A2B1C6", "gridcolor": "#506784", "linecolor": "#506784", "minorgridcolor": "#506784", "startlinecolor": "#A2B1C6"}, "baxis": {"endlinecolor": "#A2B1C6", "gridcolor": "#506784", "linecolor": "#506784", "minorgridcolor": "#506784", "startlinecolor": "#A2B1C6"}, "type": "carpet"}], "choropleth": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "type": "choropleth"}], "contourcarpet": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "type": "contourcarpet"}], "contour": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "contour"}], "heatmap": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "heatmap"}], "histogram2dcontour": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "histogram2dcontour"}], "histogram2d": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "histogram2d"}], "histogram": [{"marker": {"pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "histogram"}], "mesh3d": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "type": "mesh3d"}], "parcoords": [{"line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "parcoords"}], "pie": [{"automargin": true, "type": "pie"}], "scatter3d": [{"line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatter3d"}], "scattercarpet": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattercarpet"}], "scattergeo": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattergeo"}], "scattergl": [{"marker": {"line": {"color": "#283442"}}, "type": "scattergl"}], "scattermapbox": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattermapbox"}], "scattermap": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattermap"}], "scatterpolargl": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatterpolargl"}], "scatterpolar": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatterpolar"}], "scatter": [{"marker": {"line": {"color": "#283442"}}, "type": "scatter"}], "scatterternary": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatterternary"}], "surface": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "surface"}], "table": [{"cells": {"fill": {"color": "#506784"}, "line": {"color": "rgb(17,17,17)"}}, "header": {"fill": {"color": "#2a3f5f"}, "line": {"color": "rgb(17,17,17)"}}, "type": "table"}]}, "layout": {"annotationdefaults": {"arrowcolor": "#f2f5fa", "arrowhead": 0, "arrowwidth": 1}, "autotypenumbers": "strict", "coloraxis": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "colorscale": {"diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]], "sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}, "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"], "font": {"color": "#f2f5fa"}, "geo": {"bgcolor": "rgb(17,17,17)", "lakecolor": "rgb(17,17,17)", "landcolor": "rgb(17,17,17)", "showlakes": true, "showland": true, "subunitcolor": "#506784"}, "hoverlabel": {"align": "left"}, "hovermode": "closest", "mapbox": {"style": "dark"}, "paper_bgcolor": "rgb(17,17,17)", "plot_bgcolor": "rgb(17,17,17)", "polar": {"angularaxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}, "bgcolor": "rgb(17,17,17)", "radialaxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}}, "scene": {"xaxis": {"backgroundcolor": "rgb(17,17,17)", "gridcolor": "#506784", "gridwidth": 2, "linecolor": "#506784", "showbackground": true, "ticks": "", "zerolinecolor": "#C8D4E3"}, "yaxis": {"backgroundcolor": "rgb(17,17,17)", "gridcolor": "#506784", "gridwidth": 2, "linecolor": "#506784", "showbackground": true, "ticks": "", "zerolinecolor": "#C8D4E3"}, "zaxis": {"backgroundcolor": "rgb(17,17,17)", "gridcolor": "#506784", "gridwidth": 2, "linecolor": "#506784", "showbackground": true, "ticks": "", "zerolinecolor": "#C8D4E3"}}, "shapedefaults": {"line": {"color": "#f2f5fa"}}, "sliderdefaults": {"bgcolor": "#C8D4E3", "bordercolor": "rgb(17,17,17)", "borderwidth": 1, "tickwidth": 0}, "ternary": {"aaxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}, "baxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}, "bgcolor": "rgb(17,17,17)", "caxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}}, "title": {"x": 0.05}, "updatemenudefaults": {"bgcolor": "#506784", "borderwidth": 0}, "xaxis": {"automargin": true, "gridcolor": "#283442", "linecolor": "#506784", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "#283442", "zerolinewidth": 2}, "yaxis": {"automargin": true, "gridcolor": "#283442", "linecolor": "#506784", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "#283442", "zerolinewidth": 2}}}, "font": {"color": "#888"}, "yaxis": {"title": {"text": "Lap Time Std Dev (s)"}, "side": "left"}, "yaxis2": {"title": {"text": "Avg Lap Time (s)"}, "overlaying": "y", "side": "right"}, "legend": {"orientation": "h", "yanchor": "bottom", "y": 1.02, "xanchor": "right", "x": 1}, "margin": {"l": 40, "r": 40, "t": 20, "b": 80}, "paper_bgcolor": "rgba(0,0,0,0)", "plot_bgcolor": "rgba(0,0,0,0)", "showlegend": true}};
+if (seasonConsistencyChart && seasonConsistencyChart.data) Plotly.newPlot('season-consistency-chart', seasonConsistencyChart.data, seasonConsistencyChart.layout || {}, {responsive: true});
+
+</script>
+
+
+</main>
+<footer>
+  <p data-i18n="footer">Datos proporcionados por OpenF1. Proyecto de código abierto.</p>
+</footer>
+<script>
+const i18n = {"en": {"nav_home": "Home", "nav_strategy": "Strategy", "nav_quali": "Qualifying", "nav_standings": "Standings", "nav_historical": "Historical", "footer": "Data provided by OpenF1. Open source project.", "next_race_title": "Next Race", "circuit": "Circuit", "country": "Country", "season": "Season", "strategy_title": "Recommended Strategy", "est_time": "Estimated time:", "pit_stops": "pit stops", "no_strategy": "Insufficient data to generate strategy.", "race_stats_title": "Historical Stats", "avg_winner_lap": "Avg Winner Lap", "avg_overtakes_label": "Avg Overtakes", "sc_prob": "Safety Car Probability", "quali_improv": "Q1→Q3 Improvement", "weather_title": "Historical Weather", "rain_prob": "Rain Probability", "avg_temp": "Avg Air Temp", "avg_track_temp": "Avg Track Temp", "avg_humidity": "Avg Humidity", "avg_wind": "Avg Wind", "no_weather": "No weather data", "grid_finish_title": "Grid vs Finish", "overtakes_title": "Overtakes by Driver", "consistency_title": "Race Consistency (Circuit)", "season_consistency_title": "Race Consistency (2026 Season)", "tire_stats_title": "Tire Statistics", "compound": "Compound", "avg_stint": "Avg Stint", "degradation": "Degradation (s/lap)", "count": "Samples", "no_tire": "No tire data", "strategy_chart_title": "Strategy Comparison", "generated_at": "Generated at", "no_prediction": "No prediction available", "no_prediction_desc": "The pipeline hasn't generated data for the next race yet. Check back later.", "strategy_detail_title": "Strategy Optimizer", "strategy_detail_desc": "Race strategy simulation based on historical tire data, degradation, and lap times.", "strategy_comparison": "Top Strategies", "strategy_col": "Strategy", "pit_stops_col": "Pit Stops", "est_time_col": "Est. Time", "no_strategy_data": "No strategy data", "no_strategy_desc": "Not enough historical data to generate strategies.", "quali_title": "Qualifying Analysis", "quali_desc": "Historical qualifying analysis based on previous sessions at this circuit.", "quali_improvement_rate": "Q1→Q3 Improvement", "avg_quali_lap": "Avg Winner Lap", "quali_sc_prob": "Race SC Probability", "tire_quali_title": "Qualifying Tires", "quali_lap_count": "Laps", "no_quali_data": "No qualifying data available", "standings_title": "Championship Standings", "standings_desc": "Current driver and constructor championship standings.", "drivers_title": "Drivers Championship", "teams_title": "Constructors Championship", "driver_col": "Driver", "team_col": "Team", "points_col": "Points", "no_standings": "No championship data available", "historical_title": "Historical Data", "historical_desc": "Aggregated historical data from previous seasons (2023–present).", "circuits_list": "Available Circuits", "circuit_col": "Circuit", "years_col": "Years", "tire_trends": "Tire Trends", "weather_trends": "Weather Trends"}, "es": {"nav_home": "Inicio", "nav_strategy": "Estrategia", "nav_quali": "Clasificación", "nav_standings": "Campeonato", "nav_historical": "Histórico", "footer": "Datos proporcionados por OpenF1. Proyecto de código abierto.", "next_race_title": "Próxima Carrera", "circuit": "Circuito", "country": "País", "season": "Temporada", "strategy_title": "Estrategia Recomendada", "est_time": "Tiempo estimado:", "pit_stops": "paradas", "no_strategy": "No hay datos suficientes para generar estrategia.", "race_stats_title": "Estadísticas Históricas", "avg_winner_lap": "Mejor vuelta promedio", "avg_overtakes_label": "Adelantamientos promedio", "sc_prob": "Probabilidad de Safety Car", "quali_improv": "Mejora Q1→Q3", "weather_title": "Clima Histórico", "rain_prob": "Probabilidad de lluvia", "avg_temp": "Temp. ambiente promedio", "avg_track_temp": "Temp. pista promedio", "avg_humidity": "Humedad promedio", "avg_wind": "Viento promedio", "no_weather": "Sin datos climáticos", "grid_finish_title": "Parrilla vs Resultado", "overtakes_title": "Adelantamientos por Piloto", "consistency_title": "Consistencia (Circuito)", "season_consistency_title": "Consistencia (Temp. 2026)", "tire_stats_title": "Estadísticas de Neumáticos", "compound": "Compuesto", "avg_stint": "Stint Promedio", "degradation": "Degradación (s/vuelta)", "count": "Muestras", "no_tire": "Sin datos de neumáticos", "strategy_chart_title": "Comparación de Estrategias", "generated_at": "Generado el", "no_prediction": "No hay predicción disponible", "no_prediction_desc": "El pipeline aún no ha generado datos para la próxima carrera. Vuelve más tarde.", "strategy_detail_title": "Optimizador de Estrategia", "strategy_detail_desc": "Simulación de estrategias de carrera basada en datos históricos de neumáticos, degradación y tiempos de vuelta.", "strategy_comparison": "Top Estrategias", "strategy_col": "Estrategia", "pit_stops_col": "Paradas", "est_time_col": "Tiempo Est.", "no_strategy_data": "Sin datos de estrategia", "no_strategy_desc": "No hay datos históricos suficientes para generar estrategias.", "quali_title": "Análisis de Clasificación", "quali_desc": "Análisis histórico de clasificación basado en sesiones anteriores en este circuito.", "quali_improvement_rate": "Mejora Q1→Q3", "avg_quali_lap": "Vuelta promedio del ganador", "quali_sc_prob": "Prob. Safety Car en carrera", "tire_quali_title": "Neumáticos en Clasificación", "quali_lap_count": "Vueltas", "no_quali_data": "Sin datos de clasificación disponibles", "standings_title": "Campeonato", "standings_desc": "Posiciones actuales del campeonato de pilotos y constructores.", "drivers_title": "Campeonato de Pilotos", "teams_title": "Campeonato de Constructores", "driver_col": "Piloto", "team_col": "Equipo", "points_col": "Puntos", "no_standings": "Sin datos de campeonato disponibles", "historical_title": "Datos Históricos", "historical_desc": "Datos históricos agregados de temporadas anteriores (2023–presente).", "circuits_list": "Circuitos Disponibles", "circuit_col": "Circuito", "years_col": "Años", "tire_trends": "Tendencias de Neumáticos", "weather_trends": "Tendencias Climáticas"}};
+function setLang(lang) {
+  document.querySelectorAll('[data-lang-btn]').forEach(b => b.classList.toggle('active', b.dataset.langBtn === lang));
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    if (i18n[lang] && i18n[lang][key]) el.textContent = i18n[lang][key];
+  });
+  localStorage.setItem('f1-lang', lang);
+}
+const saved = localStorage.getItem('f1-lang');
+if (saved) setLang(saved);
+</script>
+</body>
+</html>
