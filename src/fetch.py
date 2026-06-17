@@ -67,18 +67,27 @@ def _save_cached_data(data: CircuitHistoricalData):
         json.dump(asdict(data), f, indent=2, default=str)
 
 
+def _safe_fetch(client: OpenF1Client, method_name: str, session_key: int) -> list:
+    try:
+        method = getattr(client, method_name)
+        return method(session_key)
+    except Exception as e:
+        logger.debug(f"{method_name}({session_key}) failed: {e}")
+        return []
+
+
 def fetch_session_data(
     client: OpenF1Client, session_key: int, session_type: str
 ) -> dict:
     data = {}
-    data["laps"] = client.get_laps(session_key)
-    data["stints"] = client.get_stints(session_key)
-    data["pit_stops"] = client.get_pit_stops(session_key)
-    data["positions"] = client.get_positions(session_key)
-    data["weather"] = client.get_weather(session_key)
+    data["laps"] = _safe_fetch(client, "get_laps", session_key)
+    data["stints"] = _safe_fetch(client, "get_stints", session_key)
+    data["pit_stops"] = _safe_fetch(client, "get_pit_stops", session_key)
+    data["positions"] = _safe_fetch(client, "get_positions", session_key)
+    data["weather"] = _safe_fetch(client, "get_weather", session_key)
     if session_type == "Race":
-        data["results"] = client.get_session_results(session_key)
-        data["overtakes"] = client.get_overtakes(session_key)
+        data["results"] = _safe_fetch(client, "get_session_results", session_key)
+        data["overtakes"] = _safe_fetch(client, "get_overtakes", session_key)
     return data
 
 

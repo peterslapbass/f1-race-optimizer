@@ -366,6 +366,22 @@ def build_dashboard(
     logger.info(f"Dashboard generated in {output_dir}/")
 
 
+def _build_driver_map(client: OpenF1Client, session_keys: list) -> dict:
+    result = {}
+    for sk in session_keys:
+        if not sk:
+            continue
+        try:
+            drivers_raw = client.get_drivers(session_key=sk)
+            for d in drivers_raw:
+                dn = d.get("driver_number")
+                if dn and dn not in result:
+                    result[dn] = d
+        except Exception:
+            continue
+    return result
+
+
 def fetch_standings(client: OpenF1Client) -> dict:
     import requests as _requests
     try:
@@ -374,14 +390,7 @@ def fetch_standings(client: OpenF1Client) -> dict:
         result = {"drivers": [], "teams": []}
         if cd:
             session_keys = sorted(set(d.get("session_key") for d in cd if d.get("session_key")))
-            latest_sk = session_keys[-1] if session_keys else None
-            driver_info = {}
-            if latest_sk:
-                try:
-                    drivers_raw = client.get_drivers(session_key=latest_sk)
-                    driver_info = {d["driver_number"]: d for d in drivers_raw if d.get("driver_number")}
-                except Exception:
-                    pass
+            driver_info = _build_driver_map(client, session_keys)
             latest_by_driver = {}
             for d in cd:
                 dn = d.get("driver_number")
