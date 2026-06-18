@@ -207,6 +207,18 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 .hero-stat-value { font-size: 1.25rem; font-weight: 700; color: #fff; }
 .hero-stat-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
 
+/* Section dividers */
+.section-divider {
+  display: flex; align-items: center; gap: 12px; margin: 24px 0 16px 0;
+}
+.section-label {
+  font-size: 0.75rem; font-weight: 700; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.12em; white-space: nowrap;
+}
+.section-line {
+  flex: 1; height: 1px; background: var(--border);
+}
+
 /* Footer */
 footer {
   text-align: center; padding: 24px 0; color: var(--text-muted);
@@ -268,79 +280,14 @@ footer {
 
 
 
-<!-- Stat cards row -->
-<div class="grid grid-cols-4">
-  <div class="card stat-card delay-1">
-    <div class="stat-header">
-      <span class="stat-label" data-i18n="next_race_title">Próxima Carrera</span>
-      <div class="stat-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
-      </div>
-    </div>
-    <div class="stat-value">Spielberg</div>
-    <div class="stat-footer">Austria &middot; 2026</div>
-  </div>
-  <div class="card stat-card delay-2">
-    <div class="stat-header">
-      <span class="stat-label" data-i18n="avg_winner_lap">Mejor Vuelta</span>
-      <div class="stat-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      </div>
-    </div>
-    <div class="stat-value">69.661<span style="font-size:0.9rem;font-weight:400;color:var(--text-muted)">s</span></div>
-    <div class="stat-footer" data-i18n="avg_winner_lap_label">promedio histórico</div>
-  </div>
-  <div class="card stat-card delay-3">
-    <div class="stat-header">
-      <span class="stat-label" data-i18n="rain_prob">Lluvia</span>
-      <div class="stat-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16.2A4.5 4.5 0 0 0 17.5 8h-1.8A7 7 0 0 0 4 14.9"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/></svg>
-      </div>
-    </div>
-    <div class="stat-value">3<span style="font-size:0.9rem;font-weight:400;color:var(--text-muted)">%</span></div>
-    <div class="stat-footer" data-i18n="rain_label">probabilidad</div>
-  </div>
-  <div class="card stat-card delay-4">
-    <div class="stat-header">
-      <span class="stat-label" data-i18n="sc_prob">Safety Car</span>
-      <div class="stat-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      </div>
-    </div>
-    <div class="stat-value">15<span style="font-size:0.9rem;font-weight:400;color:var(--text-muted)">%</span></div>
-    <div class="stat-footer" data-i18n="sc_label">probabilidad</div>
-  </div>
+<!-- Section: Last Race Recap -->
+
+<div class="section-divider">
+  <span class="section-label" data-i18n="section_last_race">Resumen Carrera Anterior</span>
+  <span class="section-line"></span>
 </div>
 
-<!-- Hero: Next Race Detail + Strategy -->
-<div class="hero delay-5">
-  <div class="hero-label" data-i18n="strategy_title">Estrategia Recomendada</div>
-  
-  <div class="strategy-card" style="margin-top:12px;background:rgba(225,6,0,0.08);border-color:rgba(225,6,0,0.25);">
-    <div class="strategy-steps">
-      
-      
-      <span class="strategy-step compound-intermediate">INTERMEDIATE(17)</span>
-      <span class="strategy-arrow">→</span>
-      
-      
-      <span class="strategy-step compound-medium">MEDIUM(7)</span>
-      
-      
-    </div>
-    <div style="font-size:0.85rem;color:var(--text-muted);margin-top:8px;">
-      <span data-i18n="est_time">Tiempo estimado:</span>
-      <strong style="color:var(--text);">2014.2s</strong>
-      &nbsp;|&nbsp; 1
-      <span data-i18n="pit_stops">parada</span>
-    </div>
-  </div>
-  
-</div>
-
-<!-- Last Race -->
-
-<div class="card delay-5" style="margin-bottom:16px;">
+<div class="card delay-1" style="margin-bottom:16px;">
   <div class="card-header">
     <span class="card-title">
       <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><path d="M6 6h.01M6 18h.01"/></svg>
@@ -402,9 +349,7 @@ footer {
 </div>
 
 
-<!-- Top Speed Chart -->
-
-<div class="card chart-card delay-5">
+<div class="card chart-card delay-2" style="margin-bottom:16px;">
   <div class="chart-header">
     <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
     <span class="chart-title" data-i18n="last_race_top_speed">Velocidad Máxima</span>
@@ -412,6 +357,83 @@ footer {
   <div class="chart-container" id="top-speed-chart"></div>
 </div>
 
+
+
+<!-- Section: Next Race Prediction -->
+<div class="section-divider">
+  <span class="section-label" data-i18n="section_next_race">Predicción Próxima Carrera</span>
+  <span class="section-line"></span>
+</div>
+
+<!-- Stat cards row -->
+<div class="grid grid-cols-4">
+  <div class="card stat-card delay-1">
+    <div class="stat-header">
+      <span class="stat-label" data-i18n="next_race_title">Próxima Carrera</span>
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
+      </div>
+    </div>
+    <div class="stat-value">Spielberg</div>
+    <div class="stat-footer">Austria &middot; 2026</div>
+  </div>
+  <div class="card stat-card delay-2">
+    <div class="stat-header">
+      <span class="stat-label" data-i18n="avg_winner_lap">Mejor Vuelta</span>
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+    </div>
+    <div class="stat-value">69.661<span style="font-size:0.9rem;font-weight:400;color:var(--text-muted)">s</span></div>
+    <div class="stat-footer" data-i18n="avg_winner_lap_label">promedio histórico</div>
+  </div>
+  <div class="card stat-card delay-3">
+    <div class="stat-header">
+      <span class="stat-label" data-i18n="rain_prob">Lluvia</span>
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16.2A4.5 4.5 0 0 0 17.5 8h-1.8A7 7 0 0 0 4 14.9"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/></svg>
+      </div>
+    </div>
+    <div class="stat-value">3<span style="font-size:0.9rem;font-weight:400;color:var(--text-muted)">%</span></div>
+    <div class="stat-footer" data-i18n="rain_label">probabilidad</div>
+  </div>
+  <div class="card stat-card delay-4">
+    <div class="stat-header">
+      <span class="stat-label" data-i18n="sc_prob">Safety Car</span>
+      <div class="stat-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+    </div>
+    <div class="stat-value">15<span style="font-size:0.9rem;font-weight:400;color:var(--text-muted)">%</span></div>
+    <div class="stat-footer" data-i18n="sc_label">probabilidad</div>
+  </div>
+</div>
+
+<!-- Hero: Strategy -->
+<div class="hero delay-5">
+  <div class="hero-label" data-i18n="strategy_title">Estrategia Recomendada</div>
+  
+  <div class="strategy-card" style="margin-top:12px;background:rgba(225,6,0,0.08);border-color:rgba(225,6,0,0.25);">
+    <div class="strategy-steps">
+      
+      
+      <span class="strategy-step compound-intermediate">INTERMEDIATE(17)</span>
+      <span class="strategy-arrow">→</span>
+      
+      
+      <span class="strategy-step compound-medium">MEDIUM(7)</span>
+      
+      
+    </div>
+    <div style="font-size:0.85rem;color:var(--text-muted);margin-top:8px;">
+      <span data-i18n="est_time">Tiempo estimado:</span>
+      <strong style="color:var(--text);">2014.2s</strong>
+      &nbsp;|&nbsp; 1
+      <span data-i18n="pit_stops">parada</span>
+    </div>
+  </div>
+  
+</div>
 
 <!-- Stats + Weather -->
 <div class="grid grid-cols-2">
@@ -556,7 +578,7 @@ footer {
 <!-- Generated at -->
 <div class="text-center" style="padding:16px;color:var(--text-muted);font-size:0.75rem;">
   <span data-i18n="generated_at">Generado el</span>
-  2026-06-18T19:14:40.300721+00:00
+  2026-06-18T19:38:52.678174+00:00
 </div>
 
 <script>
@@ -594,7 +616,7 @@ if (topSpeedChart && topSpeedChart.data) Plotly.newPlot('top-speed-chart', topSp
   <p data-i18n="footer">Datos proporcionados por OpenF1. Proyecto de código abierto.</p>
 </footer>
 <script>
-const i18n = {"en": {"nav_home": "Home", "nav_strategy": "Strategy", "nav_quali": "Qualifying", "nav_standings": "Standings", "nav_historical": "Historical", "footer": "Data provided by OpenF1. Open source project.", "next_race_title": "Next Race", "circuit": "Circuit", "country": "Country", "season": "Season", "strategy_title": "Recommended Strategy", "est_time": "Estimated time:", "pit_stops": "pit stops", "no_strategy": "Insufficient data to generate strategy.", "race_stats_title": "Historical Stats", "avg_winner_lap": "Avg Winner Lap", "avg_winner_lap_label": "historical avg", "rain_label": "probability", "sc_label": "probability", "avg_overtakes_label": "Avg Overtakes", "sc_prob": "Safety Car Probability", "last_race_title": "Last Race", "last_race_results": "Results", "last_race_fastest_lap": "Fastest Lap", "last_race_top_speed": "Top Speed", "last_race_driver": "Driver", "last_race_team": "Team", "last_race_pos": "Pos", "last_race_time": "Best Lap", "last_race_speed": "Speed", "quali_improv": "Q1→Q3 Improvement", "weather_title": "Historical Weather", "rain_prob": "Rain Probability", "avg_temp": "Avg Air Temp", "avg_track_temp": "Avg Track Temp", "avg_humidity": "Avg Humidity", "avg_wind": "Avg Wind", "no_weather": "No weather data", "grid_finish_title": "Grid vs Finish", "overtakes_title": "Overtakes by Driver", "consistency_title": "Race Consistency (Circuit)", "season_consistency_title": "Race Consistency (2026 Season)", "race_pace_title": "Race Pace Evolution", "tire_stats_title": "Tire Statistics", "compound": "Compound", "avg_stint": "Avg Stint", "degradation": "Degradation (s/lap)", "count": "Samples", "no_tire": "No tire data", "strategy_chart_title": "Strategy Comparison", "generated_at": "Generated at", "no_prediction": "No prediction available", "no_prediction_desc": "The pipeline hasn't generated data for the next race yet. Check back later.", "strategy_detail_title": "Strategy Optimizer", "strategy_detail_desc": "Race strategy simulation based on historical tire data, degradation, and lap times.", "strategy_comparison": "Top Strategies", "strategy_col": "Strategy", "pit_stops_col": "Pit Stops", "est_time_col": "Est. Time", "no_strategy_data": "No strategy data", "no_strategy_desc": "Not enough historical data to generate strategies.", "quali_title": "Qualifying Analysis", "quali_desc": "Historical qualifying analysis based on previous sessions at this circuit.", "quali_improvement_rate": "Q1→Q3 Improvement", "quali_improvement_label": "Q1 to Q3 gain", "best_quali_pos": "Best Avg Grid", "avg_quali_lap": "Avg Winner Lap", "quali_sc_prob": "Race SC Probability", "quali_pole_title": "Pole Position History", "quali_gap_title": "Gap to Leader by Position", "quali_consistency_title": "Qualifying Consistency", "tire_quali_title": "Qualifying Tires", "quali_lap_count": "Laps", "no_quali_data": "No qualifying data available", "standings_title": "Championship Standings", "standings_desc": "Current driver and constructor championship standings.", "drivers_title": "Drivers Championship", "teams_title": "Constructors Championship", "driver_col": "Driver", "team_col": "Team", "points_col": "Points", "no_standings": "No championship data available", "historical_title": "Historical Data", "historical_desc": "Aggregated historical data from previous seasons (2023–present).", "circuits_list": "Available Circuits", "circuit_col": "Circuit", "years_col": "Years", "tire_trends": "Tire Trends", "weather_trends": "Weather Trends"}, "es": {"nav_home": "Inicio", "nav_strategy": "Estrategia", "nav_quali": "Clasificación", "nav_standings": "Campeonato", "nav_historical": "Histórico", "footer": "Datos proporcionados por OpenF1. Proyecto de código abierto.", "next_race_title": "Próxima Carrera", "circuit": "Circuito", "country": "País", "season": "Temporada", "strategy_title": "Estrategia Recomendada", "est_time": "Tiempo estimado:", "pit_stops": "paradas", "no_strategy": "No hay datos suficientes para generar estrategia.", "race_stats_title": "Estadísticas Históricas", "avg_winner_lap": "Mejor vuelta promedio", "avg_winner_lap_label": "promedio histórico", "rain_label": "probabilidad", "sc_label": "probabilidad", "avg_overtakes_label": "Adelantamientos promedio", "sc_prob": "Probabilidad de Safety Car", "last_race_title": "Última Carrera", "last_race_results": "Resultados", "last_race_fastest_lap": "Vuelta Rápida", "last_race_top_speed": "Velocidad Máxima", "last_race_driver": "Piloto", "last_race_team": "Equipo", "last_race_pos": "Pos", "last_race_time": "Mejor Vuelta", "last_race_speed": "Velocidad", "quali_improv": "Mejora Q1→Q3", "weather_title": "Clima Histórico", "rain_prob": "Probabilidad de lluvia", "avg_temp": "Temp. ambiente promedio", "avg_track_temp": "Temp. pista promedio", "avg_humidity": "Humedad promedio", "avg_wind": "Viento promedio", "no_weather": "Sin datos climáticos", "grid_finish_title": "Parrilla vs Resultado", "overtakes_title": "Adelantamientos por Piloto", "consistency_title": "Consistencia (Circuito)", "season_consistency_title": "Consistencia (Temp. 2026)", "race_pace_title": "Evolución de Ritmo de Carrera", "tire_stats_title": "Estadísticas de Neumáticos", "compound": "Compuesto", "avg_stint": "Stint Promedio", "degradation": "Degradación (s/vuelta)", "count": "Muestras", "no_tire": "Sin datos de neumáticos", "strategy_chart_title": "Comparación de Estrategias", "generated_at": "Generado el", "no_prediction": "No hay predicción disponible", "no_prediction_desc": "El pipeline aún no ha generado datos para la próxima carrera. Vuelve más tarde.", "strategy_detail_title": "Optimizador de Estrategia", "strategy_detail_desc": "Simulación de estrategias de carrera basada en datos históricos de neumáticos, degradación y tiempos de vuelta.", "strategy_comparison": "Top Estrategias", "strategy_col": "Estrategia", "pit_stops_col": "Paradas", "est_time_col": "Tiempo Est.", "no_strategy_data": "Sin datos de estrategia", "no_strategy_desc": "No hay datos históricos suficientes para generar estrategias.", "quali_title": "Análisis de Clasificación", "quali_desc": "Análisis histórico de clasificación basado en sesiones anteriores en este circuito.", "quali_improvement_rate": "Mejora Q1→Q3", "quali_improvement_label": "mejora Q1 a Q3", "best_quali_pos": "Mejor Promedio Parrilla", "avg_quali_lap": "Vuelta promedio del ganador", "quali_sc_prob": "Prob. Safety Car en carrera", "quali_pole_title": "Historial de Poles", "quali_gap_title": "Diferencia con el Líder", "quali_consistency_title": "Consistencia en Clasificación", "tire_quali_title": "Neumáticos en Clasificación", "quali_lap_count": "Vueltas", "no_quali_data": "Sin datos de clasificación disponibles", "standings_title": "Campeonato", "standings_desc": "Posiciones actuales del campeonato de pilotos y constructores.", "drivers_title": "Campeonato de Pilotos", "teams_title": "Campeonato de Constructores", "driver_col": "Piloto", "team_col": "Equipo", "points_col": "Puntos", "no_standings": "Sin datos de campeonato disponibles", "historical_title": "Datos Históricos", "historical_desc": "Datos históricos agregados de temporadas anteriores (2023–presente).", "circuits_list": "Circuitos Disponibles", "circuit_col": "Circuito", "years_col": "Años", "tire_trends": "Tendencias de Neumáticos", "weather_trends": "Tendencias Climáticas"}};
+const i18n = {"en": {"nav_home": "Home", "nav_strategy": "Strategy", "nav_quali": "Qualifying", "nav_standings": "Standings", "nav_historical": "Historical", "footer": "Data provided by OpenF1. Open source project.", "next_race_title": "Next Race", "circuit": "Circuit", "country": "Country", "season": "Season", "strategy_title": "Recommended Strategy", "est_time": "Estimated time:", "pit_stops": "pit stops", "no_strategy": "Insufficient data to generate strategy.", "race_stats_title": "Historical Stats", "avg_winner_lap": "Avg Winner Lap", "avg_winner_lap_label": "historical avg", "rain_label": "probability", "sc_label": "probability", "avg_overtakes_label": "Avg Overtakes", "sc_prob": "Safety Car Probability", "last_race_title": "Last Race", "last_race_results": "Results", "last_race_fastest_lap": "Fastest Lap", "last_race_top_speed": "Top Speed", "last_race_driver": "Driver", "last_race_team": "Team", "last_race_pos": "Pos", "last_race_time": "Best Lap", "last_race_speed": "Speed", "section_next_race": "Next Race Prediction", "section_last_race": "Last Race Recap", "quali_improv": "Q1→Q3 Improvement", "weather_title": "Historical Weather", "rain_prob": "Rain Probability", "avg_temp": "Avg Air Temp", "avg_track_temp": "Avg Track Temp", "avg_humidity": "Avg Humidity", "avg_wind": "Avg Wind", "no_weather": "No weather data", "grid_finish_title": "Grid vs Finish", "overtakes_title": "Overtakes by Driver", "consistency_title": "Race Consistency (Circuit)", "season_consistency_title": "Race Consistency (2026 Season)", "race_pace_title": "Race Pace Evolution", "tire_stats_title": "Tire Statistics", "compound": "Compound", "avg_stint": "Avg Stint", "degradation": "Degradation (s/lap)", "count": "Samples", "no_tire": "No tire data", "strategy_chart_title": "Strategy Comparison", "generated_at": "Generated at", "no_prediction": "No prediction available", "no_prediction_desc": "The pipeline hasn't generated data for the next race yet. Check back later.", "strategy_detail_title": "Strategy Optimizer", "strategy_detail_desc": "Race strategy simulation based on historical tire data, degradation, and lap times.", "strategy_comparison": "Top Strategies", "strategy_col": "Strategy", "pit_stops_col": "Pit Stops", "est_time_col": "Est. Time", "no_strategy_data": "No strategy data", "no_strategy_desc": "Not enough historical data to generate strategies.", "quali_title": "Qualifying Analysis", "quali_desc": "Historical qualifying analysis based on previous sessions at this circuit.", "quali_improvement_rate": "Q1→Q3 Improvement", "quali_improvement_label": "Q1 to Q3 gain", "best_quali_pos": "Best Avg Grid", "avg_quali_lap": "Avg Winner Lap", "quali_sc_prob": "Race SC Probability", "quali_pole_title": "Pole Position History", "quali_gap_title": "Gap to Leader by Position", "quali_consistency_title": "Qualifying Consistency", "tire_quali_title": "Qualifying Tires", "quali_lap_count": "Laps", "no_quali_data": "No qualifying data available", "standings_title": "Championship Standings", "standings_desc": "Current driver and constructor championship standings.", "drivers_title": "Drivers Championship", "teams_title": "Constructors Championship", "driver_col": "Driver", "team_col": "Team", "points_col": "Points", "no_standings": "No championship data available", "historical_title": "Historical Data", "historical_desc": "Aggregated historical data from previous seasons (2023–present).", "circuits_list": "Available Circuits", "circuit_col": "Circuit", "years_col": "Years", "tire_trends": "Tire Trends", "weather_trends": "Weather Trends"}, "es": {"nav_home": "Inicio", "nav_strategy": "Estrategia", "nav_quali": "Clasificación", "nav_standings": "Campeonato", "nav_historical": "Histórico", "footer": "Datos proporcionados por OpenF1. Proyecto de código abierto.", "next_race_title": "Próxima Carrera", "circuit": "Circuito", "country": "País", "season": "Temporada", "strategy_title": "Estrategia Recomendada", "est_time": "Tiempo estimado:", "pit_stops": "paradas", "no_strategy": "No hay datos suficientes para generar estrategia.", "race_stats_title": "Estadísticas Históricas", "avg_winner_lap": "Mejor vuelta promedio", "avg_winner_lap_label": "promedio histórico", "rain_label": "probabilidad", "sc_label": "probabilidad", "avg_overtakes_label": "Adelantamientos promedio", "sc_prob": "Probabilidad de Safety Car", "last_race_title": "Última Carrera", "last_race_results": "Resultados", "last_race_fastest_lap": "Vuelta Rápida", "last_race_top_speed": "Velocidad Máxima", "last_race_driver": "Piloto", "last_race_team": "Equipo", "last_race_pos": "Pos", "last_race_time": "Mejor Vuelta", "last_race_speed": "Velocidad", "section_next_race": "Predicción Próxima Carrera", "section_last_race": "Resumen Carrera Anterior", "quali_improv": "Mejora Q1→Q3", "weather_title": "Clima Histórico", "rain_prob": "Probabilidad de lluvia", "avg_temp": "Temp. ambiente promedio", "avg_track_temp": "Temp. pista promedio", "avg_humidity": "Humedad promedio", "avg_wind": "Viento promedio", "no_weather": "Sin datos climáticos", "grid_finish_title": "Parrilla vs Resultado", "overtakes_title": "Adelantamientos por Piloto", "consistency_title": "Consistencia (Circuito)", "season_consistency_title": "Consistencia (Temp. 2026)", "race_pace_title": "Evolución de Ritmo de Carrera", "tire_stats_title": "Estadísticas de Neumáticos", "compound": "Compuesto", "avg_stint": "Stint Promedio", "degradation": "Degradación (s/vuelta)", "count": "Muestras", "no_tire": "Sin datos de neumáticos", "strategy_chart_title": "Comparación de Estrategias", "generated_at": "Generado el", "no_prediction": "No hay predicción disponible", "no_prediction_desc": "El pipeline aún no ha generado datos para la próxima carrera. Vuelve más tarde.", "strategy_detail_title": "Optimizador de Estrategia", "strategy_detail_desc": "Simulación de estrategias de carrera basada en datos históricos de neumáticos, degradación y tiempos de vuelta.", "strategy_comparison": "Top Estrategias", "strategy_col": "Estrategia", "pit_stops_col": "Paradas", "est_time_col": "Tiempo Est.", "no_strategy_data": "Sin datos de estrategia", "no_strategy_desc": "No hay datos históricos suficientes para generar estrategias.", "quali_title": "Análisis de Clasificación", "quali_desc": "Análisis histórico de clasificación basado en sesiones anteriores en este circuito.", "quali_improvement_rate": "Mejora Q1→Q3", "quali_improvement_label": "mejora Q1 a Q3", "best_quali_pos": "Mejor Promedio Parrilla", "avg_quali_lap": "Vuelta promedio del ganador", "quali_sc_prob": "Prob. Safety Car en carrera", "quali_pole_title": "Historial de Poles", "quali_gap_title": "Diferencia con el Líder", "quali_consistency_title": "Consistencia en Clasificación", "tire_quali_title": "Neumáticos en Clasificación", "quali_lap_count": "Vueltas", "no_quali_data": "Sin datos de clasificación disponibles", "standings_title": "Campeonato", "standings_desc": "Posiciones actuales del campeonato de pilotos y constructores.", "drivers_title": "Campeonato de Pilotos", "teams_title": "Campeonato de Constructores", "driver_col": "Piloto", "team_col": "Equipo", "points_col": "Puntos", "no_standings": "Sin datos de campeonato disponibles", "historical_title": "Datos Históricos", "historical_desc": "Datos históricos agregados de temporadas anteriores (2023–presente).", "circuits_list": "Circuitos Disponibles", "circuit_col": "Circuito", "years_col": "Años", "tire_trends": "Tendencias de Neumáticos", "weather_trends": "Tendencias Climáticas"}};
 function setLang(lang) {
   document.querySelectorAll('[data-lang-btn]').forEach(b => b.classList.toggle('active', b.dataset.langBtn === lang));
   document.querySelectorAll('[data-i18n]').forEach(el => {
