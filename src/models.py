@@ -203,6 +203,7 @@ class CircuitPrediction:
     quali_gap_data: list = field(default_factory=list)
     quali_consistency_data: list = field(default_factory=list)
     race_pace_data: list = field(default_factory=list)
+    last_race_data: dict = field(default_factory=dict)
     generated_at: str = ""
 
 

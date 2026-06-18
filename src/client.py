@@ -52,12 +52,14 @@ class OpenF1Client:
         resp.raise_for_status()
         return resp.json()
 
-    def get_meetings(self, year: Optional[int] = None, country_name: Optional[str] = None) -> list:
+    def get_meetings(self, year: Optional[int] = None, country_name: Optional[str] = None, meeting_key: Optional[int] = None) -> list:
         params = {}
         if year:
             params["year"] = year
         if country_name:
             params["country_name"] = country_name
+        if meeting_key:
+            params["meeting_key"] = meeting_key
         return self._get("meetings", params)
 
     def get_sessions(self, meeting_key: Optional[int] = None, session_type: Optional[str] = None, year: Optional[int] = None) -> list:

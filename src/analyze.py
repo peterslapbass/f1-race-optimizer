@@ -360,7 +360,10 @@ def calc_race_pace_data(historical: list[CircuitHistoricalData], driver_lookup: 
     if not last_race:
         return []
     sk = last_race.session_key
-    results_sk = sorted([r for r in sum((h.results for h in historical), []) if r.session_key == sk], key=lambda r: r.position)
+    results_sk = sorted(
+        [r for r in sum((h.results for h in historical), []) if r.session_key == sk and r.position is not None],
+        key=lambda r: r.position,
+    )
     top_drivers = results_sk[:top_n]
     stints_sk = [st for h in historical for st in h.stints if st.session_key == sk]
     pits_sk = [p for h in historical for p in h.pit_stops if p.session_key == sk]

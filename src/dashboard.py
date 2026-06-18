@@ -38,6 +38,15 @@ I18N_DATA = {
         "sc_label": "probability",
         "avg_overtakes_label": "Avg Overtakes",
         "sc_prob": "Safety Car Probability",
+        "last_race_title": "Last Race",
+        "last_race_results": "Results",
+        "last_race_fastest_lap": "Fastest Lap",
+        "last_race_top_speed": "Top Speed",
+        "last_race_driver": "Driver",
+        "last_race_team": "Team",
+        "last_race_pos": "Pos",
+        "last_race_time": "Best Lap",
+        "last_race_speed": "Speed",
         "quali_improv": "Q1\u2192Q3 Improvement",
         "weather_title": "Historical Weather",
         "rain_prob": "Rain Probability",
@@ -120,6 +129,15 @@ I18N_DATA = {
         "sc_label": "probabilidad",
         "avg_overtakes_label": "Adelantamientos promedio",
         "sc_prob": "Probabilidad de Safety Car",
+        "last_race_title": "Última Carrera",
+        "last_race_results": "Resultados",
+        "last_race_fastest_lap": "Vuelta Rápida",
+        "last_race_top_speed": "Velocidad Máxima",
+        "last_race_driver": "Piloto",
+        "last_race_team": "Equipo",
+        "last_race_pos": "Pos",
+        "last_race_time": "Mejor Vuelta",
+        "last_race_speed": "Velocidad",
         "quali_improv": "Mejora Q1→Q3",
         "weather_title": "Clima Histórico",
         "rain_prob": "Probabilidad de lluvia",
@@ -590,6 +608,33 @@ def build_weather_chart(prediction: CircuitPrediction) -> Optional[dict]:
     return json.loads(fig.to_json())
 
 
+def build_top_speed_chart(top_speeds: list) -> dict:
+    if not top_speeds:
+        return {}
+    drivers = [s["full_name"] for s in top_speeds]
+    speeds = [s["top_speed"] for s in top_speeds]
+    colors = ["#ff6b6b", "#ffd93d", "#6bcb77"]  # win, podium
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=drivers,
+        y=speeds,
+        marker_color=colors[:len(drivers)],
+        text=[f"{s:.1f} km/h" for s in speeds],
+        textposition="outside",
+        textfont_color="#ccc",
+    ))
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font_color="#888",
+        margin=dict(l=20, r=20, t=20, b=40),
+        yaxis_title="Speed (km/h)",
+        yaxis_range=[min(speeds) - 10, max(speeds) + 15],
+    )
+    return json.loads(fig.to_json())
+
+
 def build_dashboard(
     client: OpenF1Client,
     output_dir: str = "docs",
@@ -622,6 +667,7 @@ def build_dashboard(
     quali_gap_chart = build_quali_gap_chart(prediction.quali_gap_data if prediction else []) if prediction else None
     quali_consistency_chart = build_quali_consistency_chart(prediction.quali_consistency_data if prediction else [], driver_lookup) if prediction else None
     race_pace_chart = build_race_pace_chart(prediction.race_pace_data if prediction else []) if prediction else None
+    top_speed_chart = build_top_speed_chart(prediction.last_race_data.get("top_speeds", []) if prediction and prediction.last_race_data else []) if prediction else None
 
     pages = {
         "index.html": ("dashboard.html", {
@@ -632,10 +678,12 @@ def build_dashboard(
             "consistency_chart_json": json.dumps(consistency_chart) if consistency_chart else "null",
             "season_consistency_chart_json": json.dumps(season_consistency_chart) if season_consistency_chart else "null",
             "race_pace_chart_json": json.dumps(race_pace_chart) if race_pace_chart else "null",
+            "top_speed_chart_json": json.dumps(top_speed_chart) if top_speed_chart else "null",
             "overtake_data": prediction.overtake_data if prediction else [],
             "grid_finish_data": prediction.grid_finish_data if prediction else [],
             "consistency_data": prediction.consistency_data if prediction else [],
             "driver_map": driver_lookup,
+            "last_race_data": prediction.last_race_data if prediction else {},
         }),
         "strategy.html": ("strategy.html", {
             "prediction": prediction,
