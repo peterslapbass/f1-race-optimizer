@@ -53,6 +53,17 @@ I18N_DATA = {
         "quali_evo_desc": "Fastest qualifying lap by driver",
         "quali_speed_title": "Qualifying Speed Traces",
         "quali_speed_desc": "Speed over time during fastest lap",
+        "telemetry_title": "Full Telemetry",
+        "telemetry_select_driver": "Select Driver",
+        "telemetry_compare": "Compare with",
+        "telemetry_none": "None",
+        "telemetry_max_speed": "Max Speed",
+        "telemetry_avg_speed": "Avg Speed",
+        "telemetry_max_rpm": "Max RPM",
+        "telemetry_throttle_full": "Full Throttle",
+        "telemetry_brake_time": "Braking Time",
+        "telemetry_gear_changes": "Gear Changes",
+        "telemetry_drs_time": "DRS Time",
         "quali_improv": "Q1\u2192Q3 Improvement",
         "weather_title": "Historical Weather",
         "rain_prob": "Rain Probability",
@@ -150,6 +161,17 @@ I18N_DATA = {
         "quali_evo_desc": "Mejor vuelta de clasificación por piloto",
         "quali_speed_title": "Trazas de Velocidad",
         "quali_speed_desc": "Velocidad durante la vuelta rápida",
+        "telemetry_title": "Telemetría Completa",
+        "telemetry_select_driver": "Seleccionar Piloto",
+        "telemetry_compare": "Comparar con",
+        "telemetry_none": "Ninguno",
+        "telemetry_max_speed": "Vel. Máxima",
+        "telemetry_avg_speed": "Vel. Promedio",
+        "telemetry_max_rpm": "RPM Máx",
+        "telemetry_throttle_full": "A Fondo",
+        "telemetry_brake_time": "Frenando",
+        "telemetry_gear_changes": "Cambios",
+        "telemetry_drs_time": "DRS Activo",
         "quali_improv": "Mejora Q1→Q3",
         "weather_title": "Clima Histórico",
         "rain_prob": "Probabilidad de lluvia",
@@ -757,6 +779,8 @@ def build_dashboard(
     quali_telemetry = prediction.last_race_data.get("quali_telemetry", {}) if prediction and prediction.last_race_data else {}
     quali_evo_chart = build_quali_evolution_chart(quali_telemetry.get("results", []), quali_telemetry.get("speed_traces", [])) if quali_telemetry else None
     quali_speed_chart = build_quali_speed_chart(quali_telemetry.get("speed_traces", [])) if quali_telemetry else None
+    quali_telemetry_raw = quali_telemetry.get("raw_data", {}) if quali_telemetry else {}
+    quali_driver_stats = quali_telemetry.get("driver_stats", []) if quali_telemetry else {}
 
     pages = {
         "index.html": ("dashboard.html", {
@@ -770,6 +794,8 @@ def build_dashboard(
             "top_speed_chart_json": json.dumps(top_speed_chart) if top_speed_chart else "null",
             "quali_evo_chart_json": json.dumps(quali_evo_chart) if quali_evo_chart else "null",
             "quali_speed_chart_json": json.dumps(quali_speed_chart) if quali_speed_chart else "null",
+            "quali_telemetry_raw_json": json.dumps(quali_telemetry_raw, default=str) if quali_telemetry_raw else "null",
+            "quali_driver_stats_json": json.dumps(quali_driver_stats, default=str) if quali_driver_stats else "null",
             "overtake_data": prediction.overtake_data if prediction else [],
             "grid_finish_data": prediction.grid_finish_data if prediction else [],
             "consistency_data": prediction.consistency_data if prediction else [],

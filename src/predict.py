@@ -317,6 +317,8 @@ def generate_prediction(
                             if dn and ld and ds:
                                 if dn not in dn_best_lap or ld < dn_best_lap[dn]["lap_duration"]:
                                     dn_best_lap[dn] = {"lap_duration": ld, "date_start": ds}
+                        quali_telemetry["raw_data"] = {}
+                        quali_telemetry["driver_stats"] = []
                         for r in sorted(q_results, key=lambda x: x.get("position", 999)):
                             dn = r.get("driver_number")
                             if not dn or dn not in dn_best_lap:
@@ -327,28 +329,52 @@ def generate_prediction(
                                 cd = client.get_car_data(session_key=q_sk, driver_number=dn)
                                 ds_dt = datetime.fromisoformat(bl["date_start"].replace("Z", "+00:00"))
                                 dur_s = bl["lap_duration"]
-                                speeds = []
-                                times = []
+                                times, speeds, throttles, brakes, rpms, n_gears, drss = [], [], [], [], [], [], []
                                 for entry in cd:
                                     ed = entry.get("date")
                                     es = entry.get("speed") if isinstance(entry, dict) else getattr(entry, "speed", 0)
-                                    if ed and es and isinstance(es, (int, float)) and es > 0:
-                                        try:
-                                            ed_dt = datetime.fromisoformat(ed.replace("Z", "+00:00"))
-                                            secs = (ed_dt - ds_dt).total_seconds()
-                                            if 0 <= secs <= dur_s:
-                                                speeds.append(es)
-                                                times.append(round(secs, 2))
-                                        except (ValueError, TypeError):
-                                            continue
+                                    if not ed or not es or not isinstance(es, (int, float)) or es <= 0:
+                                        continue
+                                    try:
+                                        ed_dt = datetime.fromisoformat(ed.replace("Z", "+00:00"))
+                                        secs = (ed_dt - ds_dt).total_seconds()
+                                        if 0 <= secs <= dur_s:
+                                            times.append(round(secs, 2))
+                                            speeds.append(es)
+                                            throttles.append(entry.get("throttle", 0) if isinstance(entry, dict) else getattr(entry, "throttle", 0))
+                                            brakes.append(entry.get("brake", 0) if isinstance(entry, dict) else getattr(entry, "brake", 0))
+                                            rpms.append(entry.get("rpm", 0) if isinstance(entry, dict) else getattr(entry, "rpm", 0))
+                                            n_gears.append(entry.get("n_gear", 0) if isinstance(entry, dict) else getattr(entry, "n_gear", 0))
+                                            drss.append(entry.get("drs", 0) if isinstance(entry, dict) else getattr(entry, "drs", 0))
+                                    except (ValueError, TypeError):
+                                        continue
                                 if speeds:
-                                    quali_telemetry["speed_traces"].append({
+                                    trace = {
                                         "driver_number": dn,
                                         "full_name": info.get("full_name", f"#{dn}"),
                                         "team_name": info.get("team_name", ""),
                                         "lap_time": bl["lap_duration"],
-                                        "speeds": speeds,
-                                        "lap_seconds": times,
+                                        "speeds": speeds, "lap_seconds": times,
+                                    }
+                                    quali_telemetry["speed_traces"].append(trace)
+                                    quali_telemetry["raw_data"][str(dn)] = {
+                                        "full_name": info.get("full_name", f"#{dn}"),
+                                        "lap_seconds": times, "speeds": speeds,
+                                        "throttle": throttles, "brake": brakes,
+                                        "rpm": rpms, "n_gear": n_gears, "drs": drss,
+                                    }
+                                    gear_changes = sum(1 for i in range(1, len(n_gears)) if n_gears[i] != n_gears[i-1])
+                                    quali_telemetry["driver_stats"].append({
+                                        "driver_number": dn,
+                                        "full_name": info.get("full_name", f"#{dn}"),
+                                        "team_name": info.get("team_name", ""),
+                                        "max_speed": max(speeds),
+                                        "avg_speed": round(sum(speeds) / len(speeds), 1),
+                                        "max_rpm": max(rpms),
+                                        "throttle_full_pct": round(sum(1 for t in throttles if t is not None and t >= 99) / len(throttles) * 100, 1),
+                                        "brake_pct": round(sum(1 for b in brakes if b is not None and b > 0) / len(brakes) * 100, 1),
+                                        "gear_changes": gear_changes,
+                                        "drs_pct": round(sum(1 for d in drss if d == 1) / len(drss) * 100, 1),
                                     })
                             except Exception:
                                 continue

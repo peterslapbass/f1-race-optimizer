@@ -63,12 +63,58 @@
 {% endif %}
 
 {% if quali_speed_chart_json and quali_speed_chart_json != 'null' %}
-<div class="card chart-card delay-4" style="margin-bottom:16px;">
-  <div class="chart-header">
-    <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-    <span class="chart-title" data-i18n="quali_speed_title">{% if lang == 'es' %}Trazas de Velocidad{% else %}Qualifying Speed Traces{% endif %}</span>
+<div class="card delay-4" style="margin-bottom:16px;">
+  <div class="card-header">
+    <span class="card-title">
+      <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span data-i18n="telemetry_title">{% if lang == 'es' %}Telemetría Completa{% else %}Full Telemetry{% endif %}</span>
+    </span>
   </div>
-  <div class="chart-container" id="quali-speed-chart"></div>
+  <div style="display:flex;gap:12px;padding:12px 16px;flex-wrap:wrap;align-items:center;">
+    <label style="color:var(--text-muted);font-size:0.8rem;" data-i18n="telemetry_select_driver">{% if lang == 'es' %}Seleccionar Piloto{% else %}Select Driver{% endif %}:</label>
+    <select id="telemetry-driver" style="background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:0.85rem;">
+      {% for st in quali_driver_stats %}
+      <option value="{{ st.driver_number }}" {% if loop.first %}selected{% endif %}>{{ st.full_name }}</option>
+      {% endfor %}
+    </select>
+    <label style="color:var(--text-muted);font-size:0.8rem;margin-left:12px;" data-i18n="telemetry_compare">{% if lang == 'es' %}Comparar con{% else %}Compare with{% endif %}:</label>
+    <select id="telemetry-compare" style="background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:0.85rem;">
+      <option value="" data-i18n="telemetry_none">{% if lang == 'es' %}Ninguno{% else %}None{% endif %}</option>
+      {% for st in quali_driver_stats %}
+      <option value="{{ st.driver_number }}">{{ st.full_name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="chart-container" id="quali-telemetry-chart" style="height:500px;"></div>
+</div>
+{% endif %}
+
+{% if quali_driver_stats_json and quali_driver_stats_json != 'null' %}
+<div class="grid grid-cols-6" id="telemetry-stats">
+  <div class="card stat-card" style="padding:12px;">
+    <div class="stat-header"><span class="stat-label" data-i18n="telemetry_max_speed">{% if lang == 'es' %}Vel. Máxima{% else %}Max Speed{% endif %}</span></div>
+    <div class="stat-value" id="stat-max-speed">-- <span style="font-size:0.7rem;color:var(--text-muted)">km/h</span></div>
+  </div>
+  <div class="card stat-card" style="padding:12px;">
+    <div class="stat-header"><span class="stat-label" data-i18n="telemetry_avg_speed">{% if lang == 'es' %}Vel. Promedio{% else %}Avg Speed{% endif %}</span></div>
+    <div class="stat-value" id="stat-avg-speed">-- <span style="font-size:0.7rem;color:var(--text-muted)">km/h</span></div>
+  </div>
+  <div class="card stat-card" style="padding:12px;">
+    <div class="stat-header"><span class="stat-label" data-i18n="telemetry_max_rpm">{% if lang == 'es' %}RPM Máx{% else %}Max RPM{% endif %}</span></div>
+    <div class="stat-value" id="stat-max-rpm">--</div>
+  </div>
+  <div class="card stat-card" style="padding:12px;">
+    <div class="stat-header"><span class="stat-label" data-i18n="telemetry_throttle_full">{% if lang == 'es' %}A Fondo{% else %}Full Throttle{% endif %}</span></div>
+    <div class="stat-value" id="stat-throttle-full">-- <span style="font-size:0.7rem;color:var(--text-muted)">%</span></div>
+  </div>
+  <div class="card stat-card" style="padding:12px;">
+    <div class="stat-header"><span class="stat-label" data-i18n="telemetry_brake_time">{% if lang == 'es' %}Frenando{% else %}Braking{% endif %}</span></div>
+    <div class="stat-value" id="stat-brake-pct">-- <span style="font-size:0.7rem;color:var(--text-muted)">%</span></div>
+  </div>
+  <div class="card stat-card" style="padding:12px;">
+    <div class="stat-header"><span class="stat-label" data-i18n="telemetry_drs_time">{% if lang == 'es' %}DRS Activo{% else %}DRS Time{% endif %}</span></div>
+    <div class="stat-value" id="stat-drs-pct">-- <span style="font-size:0.7rem;color:var(--text-muted)">%</span></div>
+  </div>
 </div>
 {% endif %}
 {% endif %}
@@ -317,9 +363,87 @@ if (topSpeedChart && topSpeedChart.data) Plotly.newPlot('top-speed-chart', topSp
 const qualiEvoChart = {{ quali_evo_chart_json|safe }};
 if (qualiEvoChart && qualiEvoChart.data) Plotly.newPlot('quali-evo-chart', qualiEvoChart.data, qualiEvoChart.layout || {}, {responsive: true});
 {% endif %}
-{% if quali_speed_chart_json and quali_speed_chart_json != 'null' %}
-const qualiSpeedChart = {{ quali_speed_chart_json|safe }};
-if (qualiSpeedChart && qualiSpeedChart.data) Plotly.newPlot('quali-speed-chart', qualiSpeedChart.data, qualiSpeedChart.layout || {}, {responsive: true});
+{% if quali_telemetry_raw_json and quali_telemetry_raw_json != 'null' %}
+const telemetryRaw = {{ quali_telemetry_raw_json|safe }};
+const driverStats = {{ quali_driver_stats_json|safe }};
+const telemetryDriverSelect = document.getElementById('telemetry-driver');
+const telemetryCompareSelect = document.getElementById('telemetry-compare');
+
+function buildTelemetryData(dn, cmpDn) {
+  var d = telemetryRaw[String(dn)];
+  if (!d) return null;
+  var sMin = Math.min.apply(null, d.speeds);
+  var sMax = Math.max.apply(null, d.speeds);
+  var y2Max = 110;
+  var data = [];
+  // Speed - main driver
+  data.push({x: d.lap_seconds, y: d.speeds, name: d.full_name + ' Speed', mode: 'lines', line: {color: '#fff', width: 2.5}, yaxis: 'y'});
+  // Throttle fill
+  data.push({x: d.lap_seconds, y: d.throttle, name: d.full_name + ' Throttle', mode: 'lines', line: {color: 'rgba(34,197,94,0.3)', width: 1}, fill: 'tozeroy', fillcolor: 'rgba(34,197,94,0.12)', yaxis: 'y2'});
+  // Brake fill
+  data.push({x: d.lap_seconds, y: d.brake, name: d.full_name + ' Brake', mode: 'lines', line: {color: 'rgba(239,68,68,0.3)', width: 1}, fill: 'tozeroy', fillcolor: 'rgba(239,68,68,0.12)', yaxis: 'y2'});
+  // Gear step
+  data.push({x: d.lap_seconds, y: d.n_gear, name: d.full_name + ' Gear', mode: 'lines', line: {color: '#eab308', width: 2, shape: 'hv'}, yaxis: 'y3'});
+  // DRS highlight
+  var drsX = [], drsY = [];
+  for (var i = 0; i < d.drs.length; i++) {
+    if (d.drs[i] === 1) { drsX.push(d.lap_seconds[i]); drsY.push(sMin - (sMax - sMin) * 0.05); }
+  }
+  if (drsX.length > 0) {
+    data.push({x: drsX, y: drsY, name: 'DRS', mode: 'markers', marker: {color: '#22c55e', size: 3, symbol: 'square'}, yaxis: 'y'});
+  }
+  // Compare driver overlay
+  if (cmpDn) {
+    var cd = telemetryRaw[String(cmpDn)];
+    if (cd) {
+      data.push({x: cd.lap_seconds, y: cd.speeds, name: cd.full_name + ' Speed', mode: 'lines', line: {color: '#ff6b6b', width: 2, dash: 'dash'}, yaxis: 'y'});
+    }
+  }
+  return data;
+}
+
+var telemetryLayout = {
+  template: 'plotly_dark', paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: {color: '#888', size: 10},
+  margin: {l: 50, r: 20, t: 30, b: 50}, hovermode: 'x unified',
+  grid: {rows: 2, columns: 1, pattern: 'independent', roworder: 'top to bottom'},
+  yaxis: {title: 'Speed (km/h)', domain: [0.35, 1]},
+  yaxis2: {title: '', domain: [0.35, 1], overlaying: 'y', side: 'right', showticklabels: false, range: [0, 110]},
+  yaxis3: {title: 'Gear', domain: [0, 0.25], dtick: 1, range: [0, 9]},
+  xaxis: {domain: [0, 1], anchor: 'y3'},
+  xaxis2: {domain: [0, 1], anchor: 'y'},
+  legend: {font: {size: 9}, orientation: 'h', y: 1.12},
+  shapes: [
+    {type: 'line', x0: 0, x1: 1, xref: 'paper', y0: 0.3, y1: 0.3, line: {color: '#1e293b', width: 1}},
+  ],
+};
+
+function renderTelemetry() {
+  var dn = telemetryDriverSelect ? parseInt(telemetryDriverSelect.value) : null;
+  var cmpDn = telemetryCompareSelect ? parseInt(telemetryCompareSelect.value) || null : null;
+  if (!dn) return;
+  var data = buildTelemetryData(dn, cmpDn);
+  if (data) Plotly.react('quali-telemetry-chart', data, telemetryLayout, {responsive: true});
+  // Update stats
+  var stats = driverStats.find(function(s) { return s.driver_number === dn; });
+  ['max-speed', 'avg-speed', 'max-rpm', 'throttle-full', 'brake-pct', 'drs-pct'].forEach(function(k) {
+    var el = document.getElementById('stat-' + k);
+    if (!el) return;
+    if (!stats) { el.innerHTML = '--'; return; }
+    var val = { 'max-speed': stats.max_speed + ' <span style="font-size:0.7rem;color:var(--text-muted)">km/h</span>',
+                'avg-speed': stats.avg_speed + ' <span style="font-size:0.7rem;color:var(--text-muted)">km/h</span>',
+                'max-rpm': stats.max_rpm.toLocaleString(),
+                'throttle-full': stats.throttle_full_pct + ' <span style="font-size:0.7rem;color:var(--text-muted)">%</span>',
+                'brake-pct': stats.brake_pct + ' <span style="font-size:0.7rem;color:var(--text-muted)">%</span>',
+                'drs-pct': stats.drs_pct + ' <span style="font-size:0.7rem;color:var(--text-muted)">%</span>' }[k];
+    el.innerHTML = val || '--';
+  });
+}
+
+if (telemetryDriverSelect) {
+  telemetryDriverSelect.onchange = renderTelemetry;
+  telemetryCompareSelect.onchange = renderTelemetry;
+  renderTelemetry();
+}
 {% endif %}
 </script>
 
