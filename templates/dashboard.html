@@ -51,6 +51,26 @@
   <div class="chart-container" id="top-speed-chart"></div>
 </div>
 {% endif %}
+
+{% if quali_evo_chart_json and quali_evo_chart_json != 'null' %}
+<div class="card chart-card delay-3" style="margin-bottom:16px;">
+  <div class="chart-header">
+    <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+    <span class="chart-title" data-i18n="quali_evo_title">{% if lang == 'es' %}Mejores Vueltas Clasificación{% else %}Qualifying Best Laps{% endif %}</span>
+  </div>
+  <div class="chart-container" id="quali-evo-chart"></div>
+</div>
+{% endif %}
+
+{% if quali_speed_chart_json and quali_speed_chart_json != 'null' %}
+<div class="card chart-card delay-4" style="margin-bottom:16px;">
+  <div class="chart-header">
+    <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <span class="chart-title" data-i18n="quali_speed_title">{% if lang == 'es' %}Trazas de Velocidad{% else %}Qualifying Speed Traces{% endif %}</span>
+  </div>
+  <div class="chart-container" id="quali-speed-chart"></div>
+</div>
+{% endif %}
 {% endif %}
 
 <!-- Section: Next Race Prediction -->
@@ -292,6 +312,14 @@ if (racePaceChart && racePaceChart.data) Plotly.newPlot('race-pace-chart', raceP
 {% if top_speed_chart_json and top_speed_chart_json != 'null' %}
 const topSpeedChart = {{ top_speed_chart_json|safe }};
 if (topSpeedChart && topSpeedChart.data) Plotly.newPlot('top-speed-chart', topSpeedChart.data, topSpeedChart.layout || {}, {responsive: true});
+{% endif %}
+{% if quali_evo_chart_json and quali_evo_chart_json != 'null' %}
+const qualiEvoChart = {{ quali_evo_chart_json|safe }};
+if (qualiEvoChart && qualiEvoChart.data) Plotly.newPlot('quali-evo-chart', qualiEvoChart.data, qualiEvoChart.layout || {}, {responsive: true});
+{% endif %}
+{% if quali_speed_chart_json and quali_speed_chart_json != 'null' %}
+const qualiSpeedChart = {{ quali_speed_chart_json|safe }};
+if (qualiSpeedChart && qualiSpeedChart.data) Plotly.newPlot('quali-speed-chart', qualiSpeedChart.data, qualiSpeedChart.layout || {}, {responsive: true});
 {% endif %}
 </script>
 

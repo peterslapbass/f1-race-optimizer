@@ -259,7 +259,7 @@ def generate_prediction(
                 })
             if fastest_driver:
                 lr["fastest_lap"] = {"driver_number": fastest_driver, "full_name": driver_names.get(fastest_driver, {}).get("full_name", f"#{fastest_driver}"), "lap_time": fastest_lap_time}
-            for pos in sorted(by_position.keys())[:3]:
+            for pos in sorted(by_position.keys())[:5]:
                 dn = by_position[pos]
                 info = driver_names.get(dn, {})
                 try:
@@ -277,6 +277,85 @@ def generate_prediction(
                         })
                 except Exception:
                     continue
+            # Qualifying telemetry for the same meeting
+            quali_telemetry = {"results": [], "speed_traces": []}
+            try:
+                q_sessions = client.get_sessions(meeting_key=mk, session_type="Qualifying")
+                if q_sessions:
+                    q_sk = q_sessions[0].get("session_key")
+                    if q_sk:
+                        q_results = client.get_session_results(session_key=q_sk)
+                        q_laps = client.get_laps(session_key=q_sk)
+                        q_drivers = client.get_drivers(session_key=q_sk)
+                        q_driver_names = {}
+                        for d in q_drivers:
+                            dn = d.get("driver_number")
+                            if dn:
+                                q_driver_names[dn] = {"full_name": d.get("full_name", f"#{dn}"), "team_name": d.get("team_name", "")}
+                        # Q1/Q2/Q3 evolution
+                        for r in sorted(q_results, key=lambda x: x.get("position", 999)):
+                            dn = r.get("driver_number")
+                            pos = r.get("position")
+                            if not dn or not pos:
+                                continue
+                            info = q_driver_names.get(dn, {})
+                            quali_telemetry["results"].append({
+                                "position": pos,
+                                "driver_number": dn,
+                                "full_name": info.get("full_name", f"#{dn}"),
+                                "team_name": info.get("team_name", ""),
+                                "q1": r.get("q1"),
+                                "q2": r.get("q2"),
+                                "q3": r.get("q3"),
+                            })
+                        # Speed traces: best lap car_data per driver
+                        dn_best_lap = {}
+                        for lap in q_laps:
+                            dn = lap.get("driver_number")
+                            ld = lap.get("lap_duration")
+                            ds = lap.get("date_start")
+                            if dn and ld and ds:
+                                if dn not in dn_best_lap or ld < dn_best_lap[dn]["lap_duration"]:
+                                    dn_best_lap[dn] = {"lap_duration": ld, "date_start": ds}
+                        for r in sorted(q_results, key=lambda x: x.get("position", 999)):
+                            dn = r.get("driver_number")
+                            if not dn or dn not in dn_best_lap:
+                                continue
+                            info = q_driver_names.get(dn, {})
+                            bl = dn_best_lap[dn]
+                            try:
+                                cd = client.get_car_data(session_key=q_sk, driver_number=dn)
+                                ds_dt = datetime.fromisoformat(bl["date_start"].replace("Z", "+00:00"))
+                                dur_s = bl["lap_duration"]
+                                speeds = []
+                                times = []
+                                for entry in cd:
+                                    ed = entry.get("date")
+                                    es = entry.get("speed") if isinstance(entry, dict) else getattr(entry, "speed", 0)
+                                    if ed and es and isinstance(es, (int, float)) and es > 0:
+                                        try:
+                                            ed_dt = datetime.fromisoformat(ed.replace("Z", "+00:00"))
+                                            secs = (ed_dt - ds_dt).total_seconds()
+                                            if 0 <= secs <= dur_s:
+                                                speeds.append(es)
+                                                times.append(round(secs, 2))
+                                        except (ValueError, TypeError):
+                                            continue
+                                if speeds:
+                                    quali_telemetry["speed_traces"].append({
+                                        "driver_number": dn,
+                                        "full_name": info.get("full_name", f"#{dn}"),
+                                        "team_name": info.get("team_name", ""),
+                                        "lap_time": bl["lap_duration"],
+                                        "speeds": speeds,
+                                        "lap_seconds": times,
+                                    })
+                            except Exception:
+                                continue
+                        logger.info(f"Qualifying telemetry: {len(quali_telemetry['results'])} drivers, {len(quali_telemetry['speed_traces'])} speed traces")
+            except Exception as e:
+                logger.warning(f"Failed to fetch qualifying telemetry: {e}")
+            lr["quali_telemetry"] = quali_telemetry
             prediction.last_race_data = lr
             logger.info(f"Last race data: {lr['circuit_name']}, {len(lr['results'])} results, {len(lr['top_speeds'])} speeds")
     except Exception as e:

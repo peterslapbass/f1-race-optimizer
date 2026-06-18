@@ -49,6 +49,10 @@ I18N_DATA = {
         "last_race_speed": "Speed",
         "section_next_race": "Next Race Prediction",
         "section_last_race": "Last Race Recap",
+        "quali_evo_title": "Qualifying Best Laps",
+        "quali_evo_desc": "Fastest qualifying lap by driver",
+        "quali_speed_title": "Qualifying Speed Traces",
+        "quali_speed_desc": "Speed over time during fastest lap",
         "quali_improv": "Q1\u2192Q3 Improvement",
         "weather_title": "Historical Weather",
         "rain_prob": "Rain Probability",
@@ -142,6 +146,10 @@ I18N_DATA = {
         "last_race_speed": "Velocidad",
         "section_next_race": "Predicción Próxima Carrera",
         "section_last_race": "Resumen Carrera Anterior",
+        "quali_evo_title": "Mejores Vueltas Clasificación",
+        "quali_evo_desc": "Mejor vuelta de clasificación por piloto",
+        "quali_speed_title": "Trazas de Velocidad",
+        "quali_speed_desc": "Velocidad durante la vuelta rápida",
         "quali_improv": "Mejora Q1→Q3",
         "weather_title": "Clima Histórico",
         "rain_prob": "Probabilidad de lluvia",
@@ -617,12 +625,13 @@ def build_top_speed_chart(top_speeds: list) -> dict:
         return {}
     drivers = [s["full_name"] for s in top_speeds]
     speeds = [s["top_speed"] for s in top_speeds]
-    colors = ["#ff6b6b", "#ffd93d", "#6bcb77"]  # win, podium
+    podium_colors = ["#ffd700", "#c0c0c0", "#cd7f32", "#4fc3f7", "#81c784"]
+    colors = podium_colors[:len(drivers)]
     fig = go.Figure()
     fig.add_trace(go.Bar(
         x=drivers,
         y=speeds,
-        marker_color=colors[:len(drivers)],
+        marker_color=colors,
         text=[f"{s:.1f} km/h" for s in speeds],
         textposition="outside",
         textfont_color="#ccc",
@@ -635,6 +644,79 @@ def build_top_speed_chart(top_speeds: list) -> dict:
         margin=dict(l=20, r=20, t=20, b=40),
         yaxis_title="Speed (km/h)",
         yaxis_range=[min(speeds) - 10, max(speeds) + 15],
+    )
+    return json.loads(fig.to_json())
+
+
+def build_quali_evolution_chart(quali_results: list, speed_traces: list) -> dict:
+    if not quali_results or not speed_traces:
+        return {}
+    # Build lap_time lookup from speed_traces
+    lap_times = {}
+    for st in speed_traces:
+        dn = st.get("driver_number")
+        lt = st.get("lap_time")
+        if dn and lt:
+            lap_times[dn] = lt
+    names = []
+    times = []
+    for r in quali_results:
+        dn = r.get("driver_number")
+        lt = lap_times.get(dn)
+        names.append(r.get("full_name", f"#{dn}"))
+        times.append(lt)
+    fig = go.Figure()
+    pos_colors = ["#ffd700", "#c0c0c0", "#cd7f32", "#4fc3f7", "#81c784", "#90a4ae"]
+    colors = []
+    for i in range(len(names)):
+        colors.append(pos_colors[i] if i < len(pos_colors) else "#90a4ae")
+    fig.add_trace(go.Bar(
+        x=names, y=times,
+        marker_color=colors,
+        text=[f"{t:.3f}s" if t else "" for t in times],
+        textposition="outside",
+        textfont_size=9,
+        hovertemplate="%{x}<br>Best: %{y:.3f}s",
+    ))
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font_color="#888",
+        margin=dict(l=40, r=20, t=20, b=80),
+        xaxis_tickangle=-45,
+        yaxis_title="Lap Time (s)",
+    )
+    return json.loads(fig.to_json())
+
+
+def build_quali_speed_chart(speed_traces: list) -> dict:
+    if not speed_traces:
+        return {}
+    fig = go.Figure()
+    pos_colors = ["#ffd700", "#c0c0c0", "#cd7f32", "#4fc3f7", "#81c784", "#90a4ae", "#90a4ae", "#90a4ae", "#90a4ae", "#90a4ae",
+                  "#90a4ae", "#90a4ae", "#90a4ae", "#90a4ae", "#90a4ae", "#90a4ae", "#90a4ae", "#90a4ae", "#90a4ae", "#90a4ae"]
+    for i, st in enumerate(speed_traces):
+        label = f"P{i+1} {st['full_name']}"
+        color = pos_colors[i] if i < len(pos_colors) else "#90a4ae"
+        fig.add_trace(go.Scatter(
+            x=st["lap_seconds"],
+            y=st["speeds"],
+            mode="lines",
+            name=label,
+            line=dict(width=2 if i < 3 else 1.5, color=color),
+            hovertemplate=f"<b>{st['full_name']}</b><br>Time: %{{x:.1f}}s<br>Speed: %{{y:.0f}} km/h",
+        ))
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font_color="#888",
+        margin=dict(l=40, r=20, t=20, b=40),
+        xaxis_title="Time (s)",
+        yaxis_title="Speed (km/h)",
+        legend=dict(font_size=9, itemsizing="constant"),
+        hovermode="x unified",
     )
     return json.loads(fig.to_json())
 
@@ -672,6 +754,9 @@ def build_dashboard(
     quali_consistency_chart = build_quali_consistency_chart(prediction.quali_consistency_data if prediction else [], driver_lookup) if prediction else None
     race_pace_chart = build_race_pace_chart(prediction.race_pace_data if prediction else []) if prediction else None
     top_speed_chart = build_top_speed_chart(prediction.last_race_data.get("top_speeds", []) if prediction and prediction.last_race_data else []) if prediction else None
+    quali_telemetry = prediction.last_race_data.get("quali_telemetry", {}) if prediction and prediction.last_race_data else {}
+    quali_evo_chart = build_quali_evolution_chart(quali_telemetry.get("results", []), quali_telemetry.get("speed_traces", [])) if quali_telemetry else None
+    quali_speed_chart = build_quali_speed_chart(quali_telemetry.get("speed_traces", [])) if quali_telemetry else None
 
     pages = {
         "index.html": ("dashboard.html", {
@@ -683,6 +768,8 @@ def build_dashboard(
             "season_consistency_chart_json": json.dumps(season_consistency_chart) if season_consistency_chart else "null",
             "race_pace_chart_json": json.dumps(race_pace_chart) if race_pace_chart else "null",
             "top_speed_chart_json": json.dumps(top_speed_chart) if top_speed_chart else "null",
+            "quali_evo_chart_json": json.dumps(quali_evo_chart) if quali_evo_chart else "null",
+            "quali_speed_chart_json": json.dumps(quali_speed_chart) if quali_speed_chart else "null",
             "overtake_data": prediction.overtake_data if prediction else [],
             "grid_finish_data": prediction.grid_finish_data if prediction else [],
             "consistency_data": prediction.consistency_data if prediction else [],
