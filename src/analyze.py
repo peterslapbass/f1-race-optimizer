@@ -345,3 +345,57 @@ def calc_quali_consistency(historical: list[CircuitHistoricalData]) -> list[dict
         })
     stats.sort(key=lambda x: x["avg_position"])
     return stats
+
+
+def calc_race_pace_data(historical: list[CircuitHistoricalData], driver_lookup: dict, top_n: int = 6) -> list[dict]:
+    last_race = None
+    last_race_year = 0
+    for h in historical:
+        for s in h.sessions:
+            if s.session_type != "Race":
+                continue
+            if h.year > last_race_year or (h.year == last_race_year and s.date_start > (last_race.date_start if last_race else "")):
+                last_race = s
+                last_race_year = h.year
+    if not last_race:
+        return []
+    sk = last_race.session_key
+    results_sk = sorted([r for r in sum((h.results for h in historical), []) if r.session_key == sk], key=lambda r: r.position)
+    top_drivers = results_sk[:top_n]
+    stints_sk = [st for h in historical for st in h.stints if st.session_key == sk]
+    pits_sk = [p for h in historical for p in h.pit_stops if p.session_key == sk]
+    compound_map = {}
+    for st in stints_sk:
+        for lap_num in range(st.lap_start, st.lap_end + 1):
+            compound_map[(st.driver_number, lap_num)] = st.compound
+    pit_laps = set()
+    for p in pits_sk:
+        if p.tyre_change:
+            pit_laps.add((p.driver_number, p.lap_number))
+    drivers_data = []
+    for r in top_drivers:
+        dn = r.driver_number
+        laps_driver = sorted(
+            [l for h in historical for l in h.laps if l.session_key == sk and l.driver_number == dn and l.lap_duration and not l.is_pit_out_lap and not l.is_pit_in_lap],
+            key=lambda x: x.lap_number,
+        )
+        if not laps_driver:
+            continue
+        info = driver_lookup.get(dn, {})
+        laps_out = []
+        for lap in laps_driver:
+            compound = compound_map.get((dn, lap.lap_number), "")
+            laps_out.append({
+                "lap": lap.lap_number,
+                "time": lap.lap_duration,
+                "compound": compound,
+                "pit": (dn, lap.lap_number) in pit_laps,
+            })
+        drivers_data.append({
+            "driver_number": dn,
+            "full_name": info.get("full_name", f"#{dn}"),
+            "team_name": info.get("team_name", ""),
+            "position": r.position,
+            "laps": laps_out,
+        })
+    return drivers_data

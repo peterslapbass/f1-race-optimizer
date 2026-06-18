@@ -13,6 +13,7 @@ from src.analyze import (
     calc_tire_stats, calc_race_stats, calc_weather_pattern, calc_quali_stats,
     calc_grid_finish_stats, calc_driver_overtakes, calc_consistency,
     calc_quali_pole_stats, calc_quali_gap_stats, calc_quali_consistency,
+    calc_race_pace_data,
 )
 from src.strategy import recommend_strategy
 
@@ -107,6 +108,12 @@ def generate_prediction(
         prediction.quali_consistency_data = quali_consistency
     except Exception as e:
         logger.warning(f"Failed to compute quali consistency: {e}")
+    # Race pace data
+    try:
+        race_pace = calc_race_pace_data(historical, prediction.driver_map, top_n=6)
+        prediction.race_pace_data = race_pace
+    except Exception as e:
+        logger.warning(f"Failed to compute race pace data: {e}")
     # Grid vs finish
     prediction.grid_finish_data = calc_grid_finish_stats(historical)
     # Overtakes by driver

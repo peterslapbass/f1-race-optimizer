@@ -50,6 +50,7 @@ I18N_DATA = {
         "overtakes_title": "Overtakes by Driver",
         "consistency_title": "Race Consistency (Circuit)",
         "season_consistency_title": "Race Consistency (2026 Season)",
+        "race_pace_title": "Race Pace Evolution",
         "tire_stats_title": "Tire Statistics",
         "compound": "Compound",
         "avg_stint": "Avg Stint",
@@ -131,6 +132,7 @@ I18N_DATA = {
         "overtakes_title": "Adelantamientos por Piloto",
         "consistency_title": "Consistencia (Circuito)",
         "season_consistency_title": "Consistencia (Temp. 2026)",
+        "race_pace_title": "Evolución de Ritmo de Carrera",
         "tire_stats_title": "Estadísticas de Neumáticos",
         "compound": "Compuesto",
         "avg_stint": "Stint Promedio",
@@ -506,6 +508,57 @@ def build_quali_consistency_chart(consistency_data: list, driver_lookup: dict) -
     return json.loads(fig.to_json())
 
 
+def build_race_pace_chart(pace_data: list) -> Optional[dict]:
+    if not pace_data:
+        return None
+    compound_colors = {"SOFT": "#ff6b35", "MEDIUM": "#ffd700", "HARD": "#6b7280", "INTERMEDIATE": "#22c55e", "WET": "#3b82f6"}
+    fig = go.Figure()
+    team_colors = ["#e10600", "#1e41ff", "#ff8700", "#00d2be", "#2293d1", "#fff"]
+    for i, d in enumerate(pace_data):
+        laps = d["laps"]
+        x = [l["lap"] for l in laps]
+        y = [l["time"] for l in laps]
+        colors = [compound_colors.get(l["compound"], "#888") for l in laps]
+        fig.add_trace(go.Scatter(
+            x=x, y=y, mode="markers",
+            name=d["full_name"],
+            marker=dict(size=5, color=colors, symbol="circle"),
+            legendgroup=f"driver_{i}",
+            hovertemplate="<b>%{text}</b><br>Lap %{x}<br>%{y:.3f}s<br>%{customdata}<extra></extra>",
+            text=[d["full_name"]] * len(laps),
+            customdata=[l["compound"] for l in laps],
+            showlegend=True,
+        ))
+        n = 15
+        if len(y) >= n:
+            ma_x, ma_y = [], []
+            for j in range(len(y) - n + 1):
+                ma_x.append(x[j + n // 2])
+                ma_y.append(sum(y[j:j + n]) / n)
+            fig.add_trace(go.Scatter(
+                x=ma_x, y=ma_y, mode="lines",
+                name=f"{d['full_name']} (avg)",
+                line=dict(color=team_colors[i % len(team_colors)], width=2),
+                legendgroup=f"driver_{i}",
+                showlegend=False,
+                hovertemplate="<b>%{text}</b><br>Lap %{x}<br>MA: %{y:.3f}s<extra></extra>",
+                text=[d["full_name"]] * len(ma_x),
+            ))
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font_color="#94a3b8",
+        xaxis_title="Lap",
+        yaxis_title="Lap Time (s)",
+        yaxis=dict(autorange="reversed"),
+        hovermode="x unified",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10)),
+        margin=dict(l=40, r=20, t=40, b=40),
+    )
+    return json.loads(fig.to_json())
+
+
 def build_weather_chart(prediction: CircuitPrediction) -> Optional[dict]:
     wp = prediction.weather_pattern
     if not wp:
@@ -568,6 +621,7 @@ def build_dashboard(
     quali_pole_chart = build_quali_pole_chart(prediction.quali_pole_data if prediction else {}, driver_lookup) if prediction else None
     quali_gap_chart = build_quali_gap_chart(prediction.quali_gap_data if prediction else []) if prediction else None
     quali_consistency_chart = build_quali_consistency_chart(prediction.quali_consistency_data if prediction else [], driver_lookup) if prediction else None
+    race_pace_chart = build_race_pace_chart(prediction.race_pace_data if prediction else []) if prediction else None
 
     pages = {
         "index.html": ("dashboard.html", {
@@ -577,6 +631,7 @@ def build_dashboard(
             "overtakes_chart_json": json.dumps(overtakes_chart) if overtakes_chart else "null",
             "consistency_chart_json": json.dumps(consistency_chart) if consistency_chart else "null",
             "season_consistency_chart_json": json.dumps(season_consistency_chart) if season_consistency_chart else "null",
+            "race_pace_chart_json": json.dumps(race_pace_chart) if race_pace_chart else "null",
             "overtake_data": prediction.overtake_data if prediction else [],
             "grid_finish_data": prediction.grid_finish_data if prediction else [],
             "consistency_data": prediction.consistency_data if prediction else [],

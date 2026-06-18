@@ -181,6 +181,17 @@
   {% endif %}
 </div>
 
+<!-- Race Pace -->
+{% if race_pace_chart_json and race_pace_chart_json != 'null' %}
+<div class="card chart-card delay-6">
+  <div class="chart-header">
+    <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <span class="chart-title" data-i18n="race_pace_title">{% if lang == 'es' %}Evolución de Ritmo de Carrera{% else %}Race Pace Evolution{% endif %}</span>
+  </div>
+  <div class="chart-container" id="race-pace-chart"></div>
+</div>
+{% endif %}
+
 <!-- Strategy comparison -->
 <div class="card chart-card delay-6">
   <div class="chart-header">
@@ -216,6 +227,10 @@ if (consistencyChart && consistencyChart.data) Plotly.newPlot('consistency-chart
 {% if season_consistency_chart_json and season_consistency_chart_json != 'null' %}
 const seasonConsistencyChart = {{ season_consistency_chart_json|safe }};
 if (seasonConsistencyChart && seasonConsistencyChart.data) Plotly.newPlot('season-consistency-chart', seasonConsistencyChart.data, seasonConsistencyChart.layout || {}, {responsive: true});
+{% endif %}
+{% if race_pace_chart_json and race_pace_chart_json != 'null' %}
+const racePaceChart = {{ race_pace_chart_json|safe }};
+if (racePaceChart && racePaceChart.data) Plotly.newPlot('race-pace-chart', racePaceChart.data, racePaceChart.layout || {}, {responsive: true});
 {% endif %}
 </script>
 
