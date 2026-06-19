@@ -563,39 +563,28 @@ def build_quali_consistency_chart(consistency_data: list, driver_lookup: dict) -
 def build_race_pace_chart(pace_data: list) -> Optional[dict]:
     if not pace_data:
         return None
-    compound_colors = {"SOFT": "#ff6b35", "MEDIUM": "#ffd700", "HARD": "#6b7280", "INTERMEDIATE": "#22c55e", "WET": "#3b82f6"}
     fig = go.Figure()
     team_colors = ["#e10600", "#1e41ff", "#ff8700", "#00d2be", "#2293d1", "#fff"]
     for i, d in enumerate(pace_data):
         laps = d["laps"]
         x = [l["lap"] for l in laps]
         y = [l["time"] for l in laps]
-        colors = [compound_colors.get(l["compound"], "#888") for l in laps]
-        fig.add_trace(go.Scatter(
-            x=x, y=y, mode="markers",
-            name=d["full_name"],
-            marker=dict(size=5, color=colors, symbol="circle"),
-            legendgroup=f"driver_{i}",
-            hovertemplate="<b>%{text}</b><br>Lap %{x}<br>%{y:.3f}s<br>%{customdata}<extra></extra>",
-            text=[d["full_name"]] * len(laps),
-            customdata=[l["compound"] for l in laps],
-            showlegend=True,
-        ))
         n = 15
-        if len(y) >= n:
-            ma_x, ma_y = [], []
-            for j in range(len(y) - n + 1):
-                ma_x.append(x[j + n // 2])
-                ma_y.append(sum(y[j:j + n]) / n)
-            fig.add_trace(go.Scatter(
-                x=ma_x, y=ma_y, mode="lines",
-                name=f"{d['full_name']} (avg)",
-                line=dict(color=team_colors[i % len(team_colors)], width=2),
-                legendgroup=f"driver_{i}",
-                showlegend=False,
-                hovertemplate="<b>%{text}</b><br>Lap %{x}<br>MA: %{y:.3f}s<extra></extra>",
-                text=[d["full_name"]] * len(ma_x),
-            ))
+        if len(y) < n:
+            continue
+        ma_x, ma_y = [], []
+        for j in range(len(y) - n + 1):
+            ma_x.append(x[j + n // 2])
+            ma_y.append(sum(y[j:j + n]) / n)
+        fig.add_trace(go.Scatter(
+            x=ma_x, y=ma_y, mode="lines",
+            name=d["full_name"],
+            line=dict(color=team_colors[i % len(team_colors)], width=2),
+            legendgroup=f"driver_{i}",
+            showlegend=True,
+            hovertemplate="<b>%{text}</b><br>Lap %{x}<br>MA: %{y:.3f}s<extra></extra>",
+            text=[d["full_name"]] * len(ma_x),
+        ))
     fig.update_layout(
         template="plotly_dark",
         paper_bgcolor="rgba(0,0,0,0)",
