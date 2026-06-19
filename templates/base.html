@@ -13,6 +13,8 @@
   --accent: #e10600; --accent-hover: #b80500;
   --green: #22c55e; --red: #ef4444; --yellow: #eab308;
   --radius: 0.75rem;
+  --sidebar-w: 220px;
+  --topbar-h: 44px;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -21,7 +23,6 @@ body {
   background: var(--bg); color: var(--text); line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
-.container { max-width: 1280px; margin: 0 auto; padding: 16px 20px; }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -29,47 +30,73 @@ body {
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
 
-/* Header */
-header {
-  background: var(--card); border-bottom: 1px solid var(--border);
-  padding: 0; position: sticky; top: 0; z-index: 50;
+/* === SIDEBAR === */
+.sidebar {
+  position: fixed; top: 0; left: 0; bottom: 0; width: var(--sidebar-w);
+  background: var(--card); border-right: 1px solid var(--border);
+  z-index: 100; display: flex; flex-direction: column; overflow-y: auto;
+  transition: transform 0.25s ease;
 }
-.header-inner {
-  display: flex; align-items: center; justify-content: space-between;
-  max-width: 1280px; margin: 0 auto; padding: 0 20px; height: 56px;
-}
-.header-left { display: flex; align-items: center; gap: 12px; }
-.logo {
+.sidebar-header { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.sidebar-header .logo {
   width: 32px; height: 32px; background: var(--accent); border-radius: 6px;
   display: flex; align-items: center; justify-content: center;
-  font-weight: 900; font-size: 1rem; color: #fff; flex-shrink: 0;
+  font-weight: 900; font-size: 1rem; color: #fff;
 }
-header h1 { font-size: 1.05rem; font-weight: 600; color: #fff; display: none; }
-@media (min-width: 640px) { header h1 { display: block; } }
+.sidebar-nav { flex: 1; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+.sidebar-link {
+  display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px;
+  color: var(--text-muted); text-decoration: none; font-size: 0.85rem; font-weight: 500;
+  transition: all 0.15s; cursor: pointer;
+}
+.sidebar-link:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+.sidebar-link.active { background: rgba(225,6,0,0.1); color: var(--accent); }
+.sidebar-link svg { width: 18px; height: 18px; flex-shrink: 0; }
+.sidebar-footer { padding: 12px 16px; border-top: 1px solid var(--border); }
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  z-index: 99;
+}
 
-.header-right { display: flex; align-items: center; gap: 12px; }
-.lang-group {
-  display: flex; gap: 2px; background: rgba(255,255,255,0.04);
-  border-radius: 6px; padding: 2px;
+/* === TOP BAR === */
+.topbar {
+  position: sticky; top: 0; z-index: 50; height: var(--topbar-h);
+  background: var(--card); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; margin-left: var(--sidebar-w);
 }
-.lang-btn {
-  background: transparent; border: none; color: var(--text-muted);
-  padding: 4px 10px; border-radius: 4px; cursor: pointer;
-  font-size: 0.75rem; font-weight: 600; transition: all 0.15s;
+.topbar-left { display: flex; align-items: center; gap: 10px; }
+.hamburger {
+  display: none; background: none; border: none; color: var(--text);
+  font-size: 1.3rem; cursor: pointer; padding: 2px 6px; border-radius: 4px;
 }
-.lang-btn.active { background: var(--accent); color: #fff; }
+.hamburger:hover { background: rgba(255,255,255,0.05); }
+.topbar-title { font-size: 0.9rem; font-weight: 600; color: var(--text); }
 
-/* Nav */
-.nav { display: flex; gap: 2px; }
-.nav a {
-  color: var(--text-muted); text-decoration: none; font-size: 0.8rem;
-  font-weight: 500; padding: 8px 14px; border-radius: 8px;
-  transition: all 0.15s; white-space: nowrap;
-}
-.nav a:hover { background: rgba(255,255,255,0.05); color: var(--text); }
-.nav a.active { background: rgba(225,6,0,0.1); color: var(--accent); }
+/* === MAIN CONTENT === */
+.main-content { margin-left: var(--sidebar-w); min-height: calc(100vh - var(--topbar-h)); }
 
-/* Cards */
+/* === PAGE ROUTING === */
+.page { display: none; }
+.page.active { display: block; }
+
+/* === SUB-TABS === */
+.sub-tabs {
+  display: flex; gap: 2px; margin-bottom: 16px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 4px; overflow-x: auto;
+}
+.sub-tab {
+  flex: 1; background: transparent; border: none; color: var(--text-muted);
+  padding: 8px 16px; border-radius: 6px; cursor: pointer;
+  font-size: 0.8rem; font-weight: 500; transition: all 0.15s; white-space: nowrap;
+}
+.sub-tab:hover { color: var(--text); }
+.sub-tab.active { background: rgba(225,6,0,0.1); color: var(--accent); font-weight: 600; }
+.subtab-content { display: none; }
+.subtab-content.active { display: block; }
+
+/* === CARDS (existing) === */
 .card {
   background: var(--card); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 20px;
@@ -84,8 +111,6 @@ header h1 { font-size: 1.05rem; font-weight: 600; color: #fff; display: none; }
   font-size: 0.875rem; font-weight: 600; color: var(--text);
   display: flex; align-items: center; gap: 8px;
 }
-
-/* Stat cards */
 .stat-card { padding: 20px 24px; }
 .stat-card .stat-header {
   display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
@@ -107,19 +132,20 @@ header h1 { font-size: 1.05rem; font-weight: 600; color: #fff; display: none; }
 }
 .stat-card .stat-icon svg { width: 18px; height: 18px; stroke: var(--accent); }
 
-/* Grids */
+/* === GRIDS === */
 .grid { display: grid; gap: 16px; }
 .grid-cols-2 { grid-template-columns: 1fr 1fr; }
 .grid-cols-3 { grid-template-columns: 1fr 1fr 1fr; }
 .grid-cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.grid-cols-6 { grid-template-columns: repeat(6, 1fr); }
 @media (max-width: 768px) {
-  .grid-cols-2, .grid-cols-3, .grid-cols-4 { grid-template-columns: 1fr; }
+  .grid-cols-2, .grid-cols-3, .grid-cols-4, .grid-cols-6 { grid-template-columns: 1fr; }
 }
 @media (min-width: 769px) and (max-width: 1024px) {
-  .grid-cols-4 { grid-template-columns: 1fr 1fr; }
+  .grid-cols-4, .grid-cols-6 { grid-template-columns: 1fr 1fr; }
 }
 
-/* Charts */
+/* === CHARTS === */
 .chart-card { padding: 0; overflow: hidden; }
 .chart-card .chart-header {
   padding: 16px 20px 0; display: flex; align-items: center; gap: 8px;
@@ -129,7 +155,7 @@ header h1 { font-size: 1.05rem; font-weight: 600; color: #fff; display: none; }
 }
 .chart-container { width: 100%; height: 360px; }
 
-/* Strategy */
+/* === STRATEGY === */
 .strategy-card {
   background: linear-gradient(135deg, rgba(225,6,0,0.06), rgba(225,6,0,0.02));
   border: 1px solid rgba(225,6,0,0.15); border-radius: var(--radius);
@@ -144,7 +170,7 @@ header h1 { font-size: 1.05rem; font-weight: 600; color: #fff; display: none; }
 }
 .strategy-arrow { color: var(--text-muted); font-size: 1.1rem; }
 
-/* Compounds */
+/* === COMPOUNDS === */
 .compound-soft { background: #ff6b35; color: #fff; }
 .compound-medium { background: #ffd700; color: #000; }
 .compound-hard { background: #6b7280; color: #fff; }
@@ -152,12 +178,12 @@ header h1 { font-size: 1.05rem; font-weight: 600; color: #fff; display: none; }
 .compound-wet { background: #3b82f6; color: #fff; }
 .compound-unknown { background: #475569; color: #fff; }
 
-/* Tables */
+/* === TABLES === */
 table { width: 100%; border-collapse: collapse; }
 th {
   padding: 8px 12px; text-align: left; font-size: 0.7rem;
   font-weight: 600; color: var(--text-muted); text-transform: uppercase;
-  letter-spacing: 0.08em;   border-bottom: 1px solid rgba(255,255,255,0.06);
+  letter-spacing: 0.08em; border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 td {
   padding: 10px 12px; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.06);
@@ -166,20 +192,20 @@ td {
 tr:last-child td { border-bottom: none; }
 tr:hover td { background: rgba(255,255,255,0.02); }
 
-/* Badge */
+/* === BADGE === */
 .badge {
   display: inline-block; padding: 2px 10px; border-radius: 10px;
   font-size: 0.7rem; font-weight: 700;
 }
 
-/* Icons */
+/* === ICONS === */
 .icon { display: inline-flex; align-items: center; justify-content: center; }
 .icon-sm { width: 16px; height: 16px; }
 .icon-md { width: 20px; height: 20px; }
 .icon-red { stroke: var(--accent); }
 .icon-muted { stroke: var(--text-muted); }
 
-/* Hero */
+/* === HERO === */
 .hero {
   position: relative; overflow: hidden; border-radius: var(--radius);
   padding: 24px 28px; margin-bottom: 20px;
@@ -190,19 +216,14 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
   background: var(--accent);
 }
-.hero-grid { display: grid; gap: 16px; }
 .hero-label {
   font-size: 0.7rem; font-weight: 600; color: var(--accent);
   text-transform: uppercase; letter-spacing: 0.1em;
 }
 .hero-title { font-size: 1.5rem; font-weight: 700; color: #fff; margin: 2px 0; }
 .hero-subtitle { font-size: 0.85rem; color: var(--text-muted); }
-.hero-stats { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 12px; }
-.hero-stat { text-align: center; min-width: 80px; }
-.hero-stat-value { font-size: 1.25rem; font-weight: 700; color: #fff; }
-.hero-stat-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
 
-/* Section dividers */
+/* === SECTION DIVIDERS === */
 .section-divider {
   display: flex; align-items: center; gap: 12px; margin: 24px 0 16px 0;
 }
@@ -210,17 +231,15 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   font-size: 0.8rem; font-weight: 600; color: var(--text-muted);
   white-space: nowrap;
 }
-.section-line {
-  flex: 1; height: 1px; background: rgba(255,255,255,0.06);
-}
+.section-line { flex: 1; height: 1px; background: rgba(255,255,255,0.06); }
 
-/* Footer */
+/* === FOOTER === */
 footer {
   text-align: center; padding: 24px 0; color: var(--text-muted);
   font-size: 0.75rem; border-top: 1px solid var(--border); margin-top: 24px;
 }
 
-/* Animations */
+/* === ANIMATIONS === */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
@@ -233,6 +252,7 @@ footer {
 .delay-5 { animation-delay: 0.25s; }
 .delay-6 { animation-delay: 0.3s; }
 
+/* === UTILITIES === */
 .hidden { display: none !important; }
 .mb-4 { margin-bottom: 16px; }
 .mt-3 { margin-top: 12px; }
@@ -246,38 +266,95 @@ footer {
 .items-center { align-items: center; }
 .justify-between { justify-content: space-between; }
 .justify-center { justify-content: center; }
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-overlay.open { display: block; }
+  .hamburger { display: block; }
+  .topbar { margin-left: 0; }
+  .main-content { margin-left: 0; padding: 12px; }
+}
+@media (min-width: 769px) {
+  .sidebar-overlay { display: none !important; }
+}
+
+/* === LANG GROUP === */
+.lang-group {
+  display: flex; gap: 2px; background: rgba(255,255,255,0.04);
+  border-radius: 6px; padding: 2px;
+}
+.lang-btn {
+  background: transparent; border: none; color: var(--text-muted);
+  padding: 4px 10px; border-radius: 4px; cursor: pointer;
+  font-size: 0.75rem; font-weight: 600; transition: all 0.15s;
+}
+.lang-btn.active { background: var(--accent); color: #fff; }
 </style>
 </head>
 <body>
-<header>
-  <div class="header-inner">
-    <div class="header-left">
-      <div class="logo">F1</div>
-      <h1>Race Optimizer</h1>
+
+<div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<aside id="sidebar" class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">F1</div>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="sidebar-link active" data-page="home" onclick="showPage('home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span data-i18n="nav_home">{% if lang == 'es' %}Inicio{% else %}Home{% endif %}</span>
+    </a>
+    <a class="sidebar-link" data-page="strategy" onclick="showPage('strategy')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span data-i18n="nav_strategy">{% if lang == 'es' %}Estrategia{% else %}Strategy{% endif %}</span>
+    </a>
+    <a class="sidebar-link" data-page="quali" onclick="showPage('quali')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span data-i18n="nav_quali">{% if lang == 'es' %}Clasificación{% else %}Qualifying{% endif %}</span>
+    </a>
+    <a class="sidebar-link" data-page="standings" onclick="showPage('standings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+      <span data-i18n="nav_standings">{% if lang == 'es' %}Campeonato{% else %}Standings{% endif %}</span>
+    </a>
+    <a class="sidebar-link" data-page="historical" onclick="showPage('historical')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H6.5a1 1 0 0 0 0 5H20"/><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17"/></svg>
+      <span data-i18n="nav_historical">{% if lang == 'es' %}Histórico{% else %}Historical{% endif %}</span>
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="lang-group">
+      <button class="lang-btn active" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" onclick="setLang('es')">ES</button>
     </div>
-    <div class="header-right">
-      <nav class="nav">
-        <a href="index.html" class="active" data-i18n="nav_home">{% if lang == 'es' %}Inicio{% else %}Home{% endif %}</a>
-        <a href="strategy.html" data-i18n="nav_strategy">{% if lang == 'es' %}Estrategia{% else %}Strategy{% endif %}</a>
-        <a href="quali.html" data-i18n="nav_quali">{% if lang == 'es' %}Clasificación{% else %}Qualifying{% endif %}</a>
-        <a href="standings.html" data-i18n="nav_standings">{% if lang == 'es' %}Campeonato{% else %}Standings{% endif %}</a>
-        <a href="historical.html" data-i18n="nav_historical">{% if lang == 'es' %}Histórico{% else %}Historical{% endif %}</a>
-      </nav>
-      <div class="lang-group">
-        <button class="lang-btn active" data-lang-btn="en" onclick="setLang('en')">EN</button>
-        <button class="lang-btn" data-lang-btn="es" onclick="setLang('es')">ES</button>
-      </div>
+  </div>
+</aside>
+
+<header class="topbar">
+  <div class="topbar-left">
+    <button class="hamburger" onclick="toggleSidebar()">☰</button>
+    <span class="topbar-title" id="page-title" data-i18n="nav_home">{% if lang == 'es' %}Inicio{% else %}Home{% endif %}</span>
+  </div>
+  <div class="topbar-right">
+    <div class="lang-group">
+      <button class="lang-btn active" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" onclick="setLang('es')">ES</button>
     </div>
   </div>
 </header>
-<main class="container">
+
+<main class="main-content" id="main-content">
 {% block content %}{% endblock %}
 </main>
+
 <footer>
   <p data-i18n="footer">{% if lang == 'es' %}Datos proporcionados por OpenF1. Proyecto de código abierto.{% else %}Data provided by OpenF1. Open source project.{% endif %}</p>
 </footer>
+
 <script>
 const i18n = {{ i18n_json|safe }};
+
 function setLang(lang) {
   document.querySelectorAll('[data-lang-btn]').forEach(b => b.classList.toggle('active', b.dataset.langBtn === lang));
   document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -286,8 +363,87 @@ function setLang(lang) {
   });
   localStorage.setItem('f1-lang', lang);
 }
+
 const saved = localStorage.getItem('f1-lang');
 if (saved) setLang(saved);
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+
+const pageTitles = {{ page_titles_json|safe }};
+
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const page = document.querySelector(`.page[data-page="${pageId}"]`);
+  if (page) page.classList.add('active');
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.toggle('active', l.dataset.page === pageId));
+  const titleEl = document.getElementById('page-title');
+  if (titleEl) {
+    const key = pageTitles[pageId];
+    const lang = document.querySelector('.lang-btn.active')?.dataset?.langBtn || 'en';
+    titleEl.textContent = (i18n[lang] && i18n[lang][key]) ? i18n[lang][key] : pageId.charAt(0).toUpperCase() + pageId.slice(1);
+  }
+  window.location.hash = pageId;
+  if (window.innerWidth <= 768) { toggleSidebar(); }
+  renderPageCharts(pageId);
+}
+
+function showSubtab(parentPage, subtab) {
+  const container = document.querySelector(`.page[data-page="${parentPage}"]`);
+  if (!container) return;
+  container.querySelectorAll('.subtab-content').forEach(s => s.classList.remove('active'));
+  const target = container.querySelector(`.subtab-content[data-subtab="${subtab}"]`);
+  if (target) target.classList.add('active');
+  container.querySelectorAll('.sub-tab').forEach(t => t.classList.toggle('active', t.dataset.subtab === subtab));
+  renderSubtabCharts(parentPage, subtab);
+}
+
+const renderedCharts = {};
+const ALL_CHARTS = {};
+
+function registerChart(id, data) {
+  if (data && data.data) ALL_CHARTS[id] = data;
+}
+
+function renderPageCharts(pageId) {
+  const container = document.querySelector(`.page[data-page="${pageId}"]`) || document;
+  if (!container) return;
+  container.querySelectorAll('.chart-container[id]').forEach(el => {
+    if (!el.offsetParent && el.closest('.subtab-content') && !el.closest('.subtab-content.active')) return;
+    if (renderedCharts[el.id]) { Plotly.Plots.resize(el); return; }
+    const data = ALL_CHARTS[el.id];
+    if (data) {
+      Plotly.newPlot(el, data.data, data.layout || {}, {responsive: true});
+      renderedCharts[el.id] = true;
+    }
+  });
+}
+
+function renderSubtabCharts(parentPage, subtab) {
+  const container = document.querySelector(`.page[data-page="${parentPage}"]`);
+  if (!container) return;
+  const tab = container.querySelector(`.subtab-content[data-subtab="${subtab}"]`);
+  if (!tab) return;
+  tab.querySelectorAll('.chart-container[id]').forEach(el => {
+    if (renderedCharts[el.id]) { Plotly.Plots.resize(el); return; }
+    const data = ALL_CHARTS[el.id];
+    if (data) {
+      Plotly.newPlot(el, data.data, data.layout || {}, {responsive: true});
+      renderedCharts[el.id] = true;
+    }
+  });
+}
+
+// On load: show page from hash
+(function init() {
+  const hash = window.location.hash.replace('#', '') || 'home';
+  showPage(hash);
+  if (hash === 'home') {
+    renderSubtabCharts('home', 'last-race');
+  }
+})();
 </script>
 </body>
 </html>

@@ -123,6 +123,14 @@ I18N_DATA = {
         "years_col": "Years",
         "tire_trends": "Tire Trends",
         "weather_trends": "Weather Trends",
+        "subtab_last_race": "Last Race",
+        "subtab_next_race": "Next Race",
+        "subtab_season": "Season 2026",
+        "no_last_race": "No last race data",
+        "no_last_race_desc": "The 2026 season has no completed races yet.",
+        "season_placeholder": "More season data will be added as races are completed.",
+        "strategy_compare_title": "Comparison Chart",
+        "no_historical": "No historical data available",
     },
     "es": {
         "nav_home": "Inicio",
@@ -231,9 +239,25 @@ I18N_DATA = {
         "years_col": "Años",
         "tire_trends": "Tendencias de Neumáticos",
         "weather_trends": "Tendencias Climáticas",
+        "subtab_last_race": "Últ. Carrera",
+        "subtab_next_race": "Próx. Carrera",
+        "subtab_season": "Temp. 2026",
+        "no_last_race": "Sin datos de carrera anterior",
+        "no_last_race_desc": "La temporada 2026 aún no tiene carreras completadas.",
+        "season_placeholder": "Más datos de temporada se agregarán a medida que avancen las carreras.",
+        "strategy_compare_title": "Gráfico Comparativo",
+        "no_historical": "Sin datos históricos disponibles",
     },
 }
 
+
+PAGE_TITLES = {
+    "home": "nav_home",
+    "strategy": "nav_strategy",
+    "quali": "nav_quali",
+    "standings": "nav_standings",
+    "historical": "nav_historical",
+}
 
 def build_strategy_chart(prediction: CircuitPrediction) -> Optional[dict]:
     if not prediction.strategies:
@@ -771,10 +795,18 @@ def build_dashboard(
     quali_telemetry_raw = quali_telemetry.get("raw_data", {}) if quali_telemetry else {}
     quali_driver_stats = quali_telemetry.get("driver_stats", []) if quali_telemetry else {}
 
-    pages = {
-        "index.html": ("dashboard.html", {
+    standings_data = fetch_standings(client)
+
+    page_titles_json = json.dumps(PAGE_TITLES)
+
+    for lang in ("en", "es"):
+        ctx = {
+            "lang": lang,
+            "i18n_json": i18n_json,
+            "page_titles_json": page_titles_json,
             "prediction": prediction,
             "strategy_chart_json": json.dumps(strategy_chart) if strategy_chart else "null",
+            "strategy_compare_chart": json.dumps(strategy_compare) if strategy_compare else "null",
             "grid_chart_json": json.dumps(grid_chart) if grid_chart else "null",
             "overtakes_chart_json": json.dumps(overtakes_chart) if overtakes_chart else "null",
             "consistency_chart_json": json.dumps(consistency_chart) if consistency_chart else "null",
@@ -791,69 +823,22 @@ def build_dashboard(
             "consistency_data": prediction.consistency_data if prediction else [],
             "driver_map": driver_lookup,
             "last_race_data": prediction.last_race_data if prediction else {},
-        }),
-        "strategy.html": ("strategy.html", {
-            "prediction": prediction,
-            "strategy_compare_chart": json.dumps(strategy_compare) if strategy_compare else "null",
-        }),
-        "quali.html": ("quali.html", {
-            "prediction": prediction,
             "quali_pole_chart_json": json.dumps(quali_pole_chart) if quali_pole_chart else "null",
             "quali_gap_chart_json": json.dumps(quali_gap_chart) if quali_gap_chart else "null",
             "quali_consistency_chart_json": json.dumps(quali_consistency_chart) if quali_consistency_chart else "null",
             "quali_pole_data": prediction.quali_pole_data if prediction else {},
             "quali_gap_data": prediction.quali_gap_data if prediction else [],
             "quali_consistency_data": prediction.quali_consistency_data if prediction else [],
-            "driver_map": driver_lookup,
-        }),
-        "standings.html": ("standings.html", {
-            "drivers_championship": [],
-            "teams_championship": [],
-        }),
-        "historical.html": ("historical.html", {
-            "prediction": prediction,
-            "circuits": {},
             "historical_tire_chart": json.dumps(tire_chart) if tire_chart else "null",
             "historical_weather_chart": json.dumps(weather_chart) if weather_chart else "null",
-        }),
-    }
-
-    for filename, (template_name, extra_ctx) in pages.items():
-        for lang in ("en", "es"):
-            ctx = {
-                "lang": lang,
-                "i18n_json": i18n_json,
-                **extra_ctx,
-            }
-            html = env.get_template(template_name).render(**ctx)
-            if lang == "en":
-                filepath = os.path.join(output_dir, filename)
-            else:
-                name, ext = os.path.splitext(filename)
-                filepath = os.path.join(output_dir, f"{name}.{lang}{ext}")
-            with open(filepath, "w", encoding="utf-8") as f:
-                f.write(html)
-            logger.info(f"Generated {filepath}")
-
-    standings_data = fetch_standings(client)
-    if standings_data:
-        idx_path = os.path.join(output_dir, "standings.html")
-        ctx = {
-            "lang": "en",
-            "i18n_json": i18n_json,
-            "drivers_championship": standings_data.get("drivers", []),
-            "teams_championship": standings_data.get("teams", []),
+            "drivers_championship": standings_data.get("drivers", []) if standings_data else [],
+            "teams_championship": standings_data.get("teams", []) if standings_data else [],
         }
-        html = env.get_template("standings.html").render(**ctx)
-        with open(idx_path, "w", encoding="utf-8") as f:
+        filepath = os.path.join(output_dir, "index.html" if lang == "en" else "index.es.html")
+        html = env.get_template("dashboard.html").render(**ctx)
+        with open(filepath, "w", encoding="utf-8") as f:
             f.write(html)
-        idx_path_es = os.path.join(output_dir, "standings.es.html")
-        ctx["lang"] = "es"
-        html = env.get_template("standings.html").render(**ctx)
-        with open(idx_path_es, "w", encoding="utf-8") as f:
-            f.write(html)
-
-    logger.info(f"Dashboard generated in {output_dir}/")
+        logger.info(f"Generated {filepath}")
 
 
 def _build_driver_map(client: OpenF1Client, session_keys: list) -> dict:
