@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F1 Race Optimizer</title>
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<style>
+:root {
+  --bg: #020617; --card: #0f172a; --card-hover: #1e293b;
+  --border: #1e293b; --text: #f8fafc; --text-muted: #94a3b8;
+  --accent: #e10600; --accent-hover: #b80500;
+  --green: #22c55e; --red: #ef4444; --yellow: #eab308;
+  --radius: 0.5rem;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg); color: var(--text); line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+.container { max-width: 1280px; margin: 0 auto; padding: 16px 20px; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+
+/* F1 stripe */
+.flag-stripe {
+  height: 4px;
+  background: repeating-linear-gradient(90deg, var(--accent) 0px, var(--accent) 20px, #fff 20px, #fff 40px);
+}
+
+/* Header */
+header {
+  background: var(--card); border-bottom: 1px solid var(--border);
+  padding: 0; position: sticky; top: 0; z-index: 50;
+}
+.header-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  max-width: 1280px; margin: 0 auto; padding: 0 20px; height: 56px;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.logo {
+  width: 32px; height: 32px; background: var(--accent); border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 1rem; color: #fff; flex-shrink: 0;
+}
+header h1 { font-size: 1.1rem; font-weight: 700; color: #fff; display: none; }
+@media (min-width: 640px) { header h1 { display: block; } }
+header h1 span { color: var(--accent); }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.lang-group {
+  display: flex; gap: 2px; background: rgba(255,255,255,0.04);
+  border-radius: 6px; padding: 2px;
+}
+.lang-btn {
+  background: transparent; border: none; color: var(--text-muted);
+  padding: 4px 10px; border-radius: 4px; cursor: pointer;
+  font-size: 0.75rem; font-weight: 600; transition: all 0.15s;
+}
+.lang-btn.active { background: var(--accent); color: #fff; }
+
+/* Nav */
+.nav { display: flex; gap: 2px; }
+.nav a {
+  color: var(--text-muted); text-decoration: none; font-size: 0.8rem;
+  font-weight: 500; padding: 6px 10px; border-radius: 6px;
+  transition: all 0.15s; white-space: nowrap;
+}
+.nav a:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+.nav a.active { background: rgba(225,6,0,0.1); color: var(--accent); }
+
+/* Cards */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px;
+  transition: all 0.2s ease;
+}
+.card:hover { border-color: rgba(255,255,255,0.12); }
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-size: 0.875rem; font-weight: 600; color: var(--text);
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* Stat cards (shadcn style) */
+.stat-card { padding: 16px 20px; }
+.stat-card .stat-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
+}
+.stat-card .stat-label {
+  font-size: 0.8rem; font-weight: 500; color: var(--text-muted);
+  letter-spacing: -0.01em;
+}
+.stat-card .stat-value {
+  font-size: 1.75rem; font-weight: 700; color: var(--text); line-height: 1.2;
+}
+.stat-card .stat-footer {
+  font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;
+}
+.stat-card .stat-icon {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(225,6,0,0.1);
+}
+.stat-card .stat-icon svg { width: 18px; height: 18px; stroke: var(--accent); }
+
+/* Grids */
+.grid { display: grid; gap: 16px; }
+.grid-cols-2 { grid-template-columns: 1fr 1fr; }
+.grid-cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.grid-cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+@media (max-width: 768px) {
+  .grid-cols-2, .grid-cols-3, .grid-cols-4 { grid-template-columns: 1fr; }
+}
+@media (min-width: 769px) and (max-width: 1024px) {
+  .grid-cols-4 { grid-template-columns: 1fr 1fr; }
+}
+
+/* Charts */
+.chart-card { padding: 0; overflow: hidden; }
+.chart-card .chart-header {
+  padding: 16px 20px 0; display: flex; align-items: center; gap: 8px;
+}
+.chart-card .chart-title {
+  font-size: 0.875rem; font-weight: 600; color: var(--text);
+}
+.chart-container { width: 100%; height: 360px; }
+
+/* Strategy */
+.strategy-card {
+  background: linear-gradient(135deg, rgba(225,6,0,0.06), rgba(225,6,0,0.02));
+  border: 1px solid rgba(225,6,0,0.15); border-radius: var(--radius);
+  padding: 16px 20px;
+}
+.strategy-steps {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 8px 0;
+}
+.strategy-step {
+  padding: 6px 16px; border-radius: 20px; font-size: 0.8rem;
+  font-weight: 700; letter-spacing: 0.2px;
+}
+.strategy-arrow { color: var(--text-muted); font-size: 1.1rem; }
+
+/* Compounds */
+.compound-soft { background: #ff6b35; color: #fff; }
+.compound-medium { background: #ffd700; color: #000; }
+.compound-hard { background: #6b7280; color: #fff; }
+.compound-intermediate { background: #22c55e; color: #fff; }
+.compound-wet { background: #3b82f6; color: #fff; }
+.compound-unknown { background: #475569; color: #fff; }
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; }
+th {
+  padding: 8px 12px; text-align: left; font-size: 0.7rem;
+  font-weight: 600; color: var(--text-muted); text-transform: uppercase;
+  letter-spacing: 0.08em; border-bottom: 1px solid var(--border);
+}
+td {
+  padding: 10px 12px; font-size: 0.85rem; border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,0.02); }
+
+/* Badge */
+.badge {
+  display: inline-block; padding: 2px 10px; border-radius: 10px;
+  font-size: 0.7rem; font-weight: 700;
+}
+
+/* Icons */
+.icon { display: inline-flex; align-items: center; justify-content: center; }
+.icon-sm { width: 16px; height: 16px; }
+.icon-md { width: 20px; height: 20px; }
+.icon-red { stroke: var(--accent); }
+.icon-muted { stroke: var(--text-muted); }
+
+/* Hero */
+.hero {
+  position: relative; overflow: hidden; border-radius: var(--radius);
+  padding: 24px 28px; margin-bottom: 20px;
+  background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+  border: 1px solid var(--border);
+}
+.hero::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--accent), #ff6b35, var(--accent));
+}
+.hero-grid { display: grid; gap: 16px; }
+.hero-label {
+  font-size: 0.7rem; font-weight: 600; color: var(--accent);
+  text-transform: uppercase; letter-spacing: 0.1em;
+}
+.hero-title { font-size: 1.5rem; font-weight: 700; color: #fff; margin: 2px 0; }
+.hero-subtitle { font-size: 0.85rem; color: var(--text-muted); }
+.hero-stats { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 12px; }
+.hero-stat { text-align: center; min-width: 80px; }
+.hero-stat-value { font-size: 1.25rem; font-weight: 700; color: #fff; }
+.hero-stat-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+
+/* Section dividers */
+.section-divider {
+  display: flex; align-items: center; gap: 12px; margin: 24px 0 16px 0;
+}
+.section-label {
+  font-size: 0.75rem; font-weight: 700; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.12em; white-space: nowrap;
+}
+.section-line {
+  flex: 1; height: 1px; background: var(--border);
+}
+
+/* Footer */
+footer {
+  text-align: center; padding: 24px 0; color: var(--text-muted);
+  font-size: 0.75rem; border-top: 1px solid var(--border); margin-top: 24px;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.card, .hero, .stat-card { animation: fadeInUp 0.4s ease-out both; }
+.delay-1 { animation-delay: 0.05s; }
+.delay-2 { animation-delay: 0.1s; }
+.delay-3 { animation-delay: 0.15s; }
+.delay-4 { animation-delay: 0.2s; }
+.delay-5 { animation-delay: 0.25s; }
+.delay-6 { animation-delay: 0.3s; }
+
+.hidden { display: none !important; }
+.mb-4 { margin-bottom: 16px; }
+.mt-3 { margin-top: 12px; }
+.gap-4 { gap: 16px; }
+.text-center { text-align: center; }
+.text-muted { color: var(--text-muted); }
+.text-accent { color: var(--accent); }
+.text-green { color: var(--green); }
+.text-red { color: var(--red); }
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.justify-center { justify-content: center; }
+</style>
+</head>
+<body>
+<div class="flag-stripe"></div>
+<header>
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="logo">F1</div>
+      <h1><span>F1</span> Race Optimizer</h1>
+    </div>
+    <div class="header-right">
+      <nav class="nav">
+        <a href="index.html" class="active" data-i18n="nav_home">Home</a>
+        <a href="strategy.html" data-i18n="nav_strategy">Strategy</a>
+        <a href="quali.html" data-i18n="nav_quali">Qualifying</a>
+        <a href="standings.html" data-i18n="nav_standings">Standings</a>
+        <a href="historical.html" data-i18n="nav_historical">Historical</a>
+      </nav>
+      <div class="lang-group">
+        <button class="lang-btn active" data-lang-btn="en" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" data-lang-btn="es" onclick="setLang('es')">ES</button>
+      </div>
+    </div>
+  </div>
+</header>
+<main class="container">
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">
+      <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span data-i18n="strategy_detail_title">Strategy Optimizer</span>
+    </span>
+  </div>
+  <p class="text-muted" data-i18n="strategy_detail_desc" style="font-size:0.9rem;">
+    Race strategy simulation based on historical tire data, degradation, and lap times.
+  </p>
+</div>
+
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">
+      <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      <span data-i18n="strategy_comparison">Top Strategies</span>
+    </span>
+  </div>
+  <table>
+    <tr>
+      <th>#</th>
+      <th data-i18n="strategy_col">Strategy</th>
+      <th data-i18n="pit_stops_col">Pit Stops</th>
+      <th data-i18n="est_time_col">Est. Time</th>
+    </tr>
+    
+    <tr>
+      <td>
+        
+        <span style="color:var(--yellow);font-weight:700;">&#9733;</span>
+        
+      </td>
+      <td>
+        <div class="strategy-steps" style="gap:4px;margin:0;">
+          
+          
+          
+          <span class="strategy-step compound-intermediate" style="font-size:0.7rem;padding:2px 8px;">INTERMEDIATE(17)</span>
+          <span class="strategy-arrow" style="font-size:0.8rem;">→</span>
+          
+          
+          <span class="strategy-step compound-medium" style="font-size:0.7rem;padding:2px 8px;">MEDIUM(7)</span>
+          
+          
+        </div>
+      </td>
+      <td>1</td>
+      <td><strong>2014.2s</strong></td>
+    </tr>
+    
+    <tr>
+      <td>
+        
+        2
+        
+      </td>
+      <td>
+        <div class="strategy-steps" style="gap:4px;margin:0;">
+          
+          
+          
+          <span class="strategy-step compound-intermediate" style="font-size:0.7rem;padding:2px 8px;">INTERMEDIATE(17)</span>
+          <span class="strategy-arrow" style="font-size:0.8rem;">→</span>
+          
+          
+          <span class="strategy-step compound-soft" style="font-size:0.7rem;padding:2px 8px;">SOFT(7)</span>
+          
+          
+        </div>
+      </td>
+      <td>1</td>
+      <td><strong>2016.8s</strong></td>
+    </tr>
+    
+    <tr>
+      <td>
+        
+        3
+        
+      </td>
+      <td>
+        <div class="strategy-steps" style="gap:4px;margin:0;">
+          
+          
+          
+          <span class="strategy-step compound-soft" style="font-size:0.7rem;padding:2px 8px;">SOFT(4)</span>
+          <span class="strategy-arrow" style="font-size:0.8rem;">→</span>
+          
+          
+          <span class="strategy-step compound-intermediate" style="font-size:0.7rem;padding:2px 8px;">INTERMEDIATE(20)</span>
+          
+          
+        </div>
+      </td>
+      <td>1</td>
+      <td><strong>2017.1s</strong></td>
+    </tr>
+    
+    <tr>
+      <td>
+        
+        4
+        
+      </td>
+      <td>
+        <div class="strategy-steps" style="gap:4px;margin:0;">
+          
+          
+          
+          <span class="strategy-step compound-intermediate" style="font-size:0.7rem;padding:2px 8px;">INTERMEDIATE(17)</span>
+          <span class="strategy-arrow" style="font-size:0.8rem;">→</span>
+          
+          
+          <span class="strategy-step compound-hard" style="font-size:0.7rem;padding:2px 8px;">HARD(7)</span>
+          
+          
+        </div>
+      </td>
+      <td>1</td>
+      <td><strong>2021.3s</strong></td>
+    </tr>
+    
+    <tr>
+      <td>
+        
+        5
+        
+      </td>
+      <td>
+        <div class="strategy-steps" style="gap:4px;margin:0;">
+          
+          
+          
+          <span class="strategy-step compound-medium" style="font-size:0.7rem;padding:2px 8px;">MEDIUM(10)</span>
+          <span class="strategy-arrow" style="font-size:0.8rem;">→</span>
+          
+          
+          <span class="strategy-step compound-intermediate" style="font-size:0.7rem;padding:2px 8px;">INTERMEDIATE(14)</span>
+          
+          
+        </div>
+      </td>
+      <td>1</td>
+      <td><strong>2022.2s</strong></td>
+    </tr>
+    
+  </table>
+</div>
+
+<div class="card chart-card">
+  <div class="chart-header">
+    <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <span class="chart-title" data-i18n="strategy_chart_title">Comparison Chart</span>
+  </div>
+  <div class="chart-container" id="strategy-compare-chart"></div>
+</div>
+
+<script>
+const stratChart = {"data": [{"hovertemplate": "<b>INTERMEDIATE(17) \u2192 MEDIUM(7)</b><br>Time: 2014.2s<br>Pit Stops: 1<extra></extra>", "marker": {"color": "#e10600"}, "name": "INTERMEDIATE(17) \u2192 MEDIUM(7)", "x": ["S1"], "y": [2014.2191654944584], "type": "bar"}, {"hovertemplate": "<b>INTERMEDIATE(17) \u2192 SOFT(7)</b><br>Time: 2016.8s<br>Pit Stops: 1<extra></extra>", "marker": {"color": "#ff6b35"}, "name": "INTERMEDIATE(17) \u2192 SOFT(7)", "x": ["S2"], "y": [2016.8481206222077], "type": "bar"}, {"hovertemplate": "<b>SOFT(4) \u2192 INTERMEDIATE(20)</b><br>Time: 2017.1s<br>Pit Stops: 1<extra></extra>", "marker": {"color": "#ffd700"}, "name": "SOFT(4) \u2192 INTERMEDIATE(20)", "x": ["S3"], "y": [2017.1230510666053], "type": "bar"}, {"hovertemplate": "<b>INTERMEDIATE(17) \u2192 HARD(7)</b><br>Time: 2021.3s<br>Pit Stops: 1<extra></extra>", "marker": {"color": "#4caf50"}, "name": "INTERMEDIATE(17) \u2192 HARD(7)", "x": ["S4"], "y": [2021.343845713783], "type": "bar"}, {"hovertemplate": "<b>MEDIUM(10) \u2192 INTERMEDIATE(14)</b><br>Time: 2022.2s<br>Pit Stops: 1<extra></extra>", "marker": {"color": "#2196f3"}, "name": "MEDIUM(10) \u2192 INTERMEDIATE(14)", "x": ["S5"], "y": [2022.2010733763752], "type": "bar"}], "layout": {"template": {"data": {"barpolar": [{"marker": {"line": {"color": "rgb(17,17,17)", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "barpolar"}], "bar": [{"error_x": {"color": "#f2f5fa"}, "error_y": {"color": "#f2f5fa"}, "marker": {"line": {"color": "rgb(17,17,17)", "width": 0.5}, "pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "bar"}], "carpet": [{"aaxis": {"endlinecolor": "#A2B1C6", "gridcolor": "#506784", "linecolor": "#506784", "minorgridcolor": "#506784", "startlinecolor": "#A2B1C6"}, "baxis": {"endlinecolor": "#A2B1C6", "gridcolor": "#506784", "linecolor": "#506784", "minorgridcolor": "#506784", "startlinecolor": "#A2B1C6"}, "type": "carpet"}], "choropleth": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "type": "choropleth"}], "contourcarpet": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "type": "contourcarpet"}], "contour": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "contour"}], "heatmap": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "heatmap"}], "histogram2dcontour": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "histogram2dcontour"}], "histogram2d": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "histogram2d"}], "histogram": [{"marker": {"pattern": {"fillmode": "overlay", "size": 10, "solidity": 0.2}}, "type": "histogram"}], "mesh3d": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "type": "mesh3d"}], "parcoords": [{"line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "parcoords"}], "pie": [{"automargin": true, "type": "pie"}], "scatter3d": [{"line": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatter3d"}], "scattercarpet": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattercarpet"}], "scattergeo": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattergeo"}], "scattergl": [{"marker": {"line": {"color": "#283442"}}, "type": "scattergl"}], "scattermapbox": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattermapbox"}], "scattermap": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scattermap"}], "scatterpolargl": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatterpolargl"}], "scatterpolar": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatterpolar"}], "scatter": [{"marker": {"line": {"color": "#283442"}}, "type": "scatter"}], "scatterternary": [{"marker": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "type": "scatterternary"}], "surface": [{"colorbar": {"outlinewidth": 0, "ticks": ""}, "colorscale": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "type": "surface"}], "table": [{"cells": {"fill": {"color": "#506784"}, "line": {"color": "rgb(17,17,17)"}}, "header": {"fill": {"color": "#2a3f5f"}, "line": {"color": "rgb(17,17,17)"}}, "type": "table"}]}, "layout": {"annotationdefaults": {"arrowcolor": "#f2f5fa", "arrowhead": 0, "arrowwidth": 1}, "autotypenumbers": "strict", "coloraxis": {"colorbar": {"outlinewidth": 0, "ticks": ""}}, "colorscale": {"diverging": [[0, "#8e0152"], [0.1, "#c51b7d"], [0.2, "#de77ae"], [0.3, "#f1b6da"], [0.4, "#fde0ef"], [0.5, "#f7f7f7"], [0.6, "#e6f5d0"], [0.7, "#b8e186"], [0.8, "#7fbc41"], [0.9, "#4d9221"], [1, "#276419"]], "sequential": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]], "sequentialminus": [[0.0, "#0d0887"], [0.1111111111111111, "#46039f"], [0.2222222222222222, "#7201a8"], [0.3333333333333333, "#9c179e"], [0.4444444444444444, "#bd3786"], [0.5555555555555556, "#d8576b"], [0.6666666666666666, "#ed7953"], [0.7777777777777778, "#fb9f3a"], [0.8888888888888888, "#fdca26"], [1.0, "#f0f921"]]}, "colorway": ["#636efa", "#EF553B", "#00cc96", "#ab63fa", "#FFA15A", "#19d3f3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52"], "font": {"color": "#f2f5fa"}, "geo": {"bgcolor": "rgb(17,17,17)", "lakecolor": "rgb(17,17,17)", "landcolor": "rgb(17,17,17)", "showlakes": true, "showland": true, "subunitcolor": "#506784"}, "hoverlabel": {"align": "left"}, "hovermode": "closest", "mapbox": {"style": "dark"}, "paper_bgcolor": "rgb(17,17,17)", "plot_bgcolor": "rgb(17,17,17)", "polar": {"angularaxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}, "bgcolor": "rgb(17,17,17)", "radialaxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}}, "scene": {"xaxis": {"backgroundcolor": "rgb(17,17,17)", "gridcolor": "#506784", "gridwidth": 2, "linecolor": "#506784", "showbackground": true, "ticks": "", "zerolinecolor": "#C8D4E3"}, "yaxis": {"backgroundcolor": "rgb(17,17,17)", "gridcolor": "#506784", "gridwidth": 2, "linecolor": "#506784", "showbackground": true, "ticks": "", "zerolinecolor": "#C8D4E3"}, "zaxis": {"backgroundcolor": "rgb(17,17,17)", "gridcolor": "#506784", "gridwidth": 2, "linecolor": "#506784", "showbackground": true, "ticks": "", "zerolinecolor": "#C8D4E3"}}, "shapedefaults": {"line": {"color": "#f2f5fa"}}, "sliderdefaults": {"bgcolor": "#C8D4E3", "bordercolor": "rgb(17,17,17)", "borderwidth": 1, "tickwidth": 0}, "ternary": {"aaxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}, "baxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}, "bgcolor": "rgb(17,17,17)", "caxis": {"gridcolor": "#506784", "linecolor": "#506784", "ticks": ""}}, "title": {"x": 0.05}, "updatemenudefaults": {"bgcolor": "#506784", "borderwidth": 0}, "xaxis": {"automargin": true, "gridcolor": "#283442", "linecolor": "#506784", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "#283442", "zerolinewidth": 2}, "yaxis": {"automargin": true, "gridcolor": "#283442", "linecolor": "#506784", "ticks": "", "title": {"standoff": 15}, "zerolinecolor": "#283442", "zerolinewidth": 2}}}, "font": {"color": "#888"}, "legend": {"orientation": "h", "yanchor": "bottom", "y": 1.02, "xanchor": "right", "x": 1}, "margin": {"l": 40, "r": 20, "t": 20, "b": 40}, "paper_bgcolor": "rgba(0,0,0,0)", "plot_bgcolor": "rgba(0,0,0,0)", "yaxis": {"title": {"text": "Total Time (s)"}}, "barmode": "group", "showlegend": true}};
+if (stratChart && stratChart.data) {
+  Plotly.newPlot('strategy-compare-chart', stratChart.data, stratChart.layout || {}, {responsive: true});
+}
+</script>
+
+
+</main>
+<footer>
+  <p data-i18n="footer">Data provided by OpenF1. Open source project.</p>
+</footer>
+<script>
+const i18n = {"en": {"nav_home": "Home", "nav_strategy": "Strategy", "nav_quali": "Qualifying", "nav_standings": "Standings", "nav_historical": "Historical", "footer": "Data provided by OpenF1. Open source project.", "next_race_title": "Next Race", "circuit": "Circuit", "country": "Country", "season": "Season", "strategy_title": "Recommended Strategy", "est_time": "Estimated time:", "pit_stops": "pit stops", "no_strategy": "Insufficient data to generate strategy.", "race_stats_title": "Historical Stats", "avg_winner_lap": "Avg Winner Lap", "avg_winner_lap_label": "historical avg", "rain_label": "probability", "sc_label": "probability", "avg_overtakes_label": "Avg Overtakes", "sc_prob": "Safety Car Probability", "last_race_title": "Last Race", "last_race_results": "Results", "last_race_fastest_lap": "Fastest Lap", "last_race_top_speed": "Top Speed", "last_race_driver": "Driver", "last_race_team": "Team", "last_race_pos": "Pos", "last_race_time": "Best Lap", "last_race_speed": "Speed", "section_next_race": "Next Race Prediction", "section_last_race": "Last Race Recap", "quali_evo_title": "Qualifying Best Laps", "quali_evo_desc": "Fastest qualifying lap by driver", "quali_speed_title": "Qualifying Speed Traces", "quali_speed_desc": "Speed over time during fastest lap", "telemetry_title": "Full Telemetry", "telemetry_select_driver": "Select Driver", "telemetry_compare": "Compare with", "telemetry_none": "None", "telemetry_max_speed": "Max Speed", "telemetry_avg_speed": "Avg Speed", "telemetry_max_rpm": "Max RPM", "telemetry_throttle_full": "Full Throttle", "telemetry_brake_time": "Braking Time", "telemetry_gear_changes": "Gear Changes", "telemetry_drs_time": "DRS Time", "quali_improv": "Q1→Q3 Improvement", "weather_title": "Historical Weather", "rain_prob": "Rain Probability", "avg_temp": "Avg Air Temp", "avg_track_temp": "Avg Track Temp", "avg_humidity": "Avg Humidity", "avg_wind": "Avg Wind", "no_weather": "No weather data", "grid_finish_title": "Grid vs Finish", "overtakes_title": "Overtakes by Driver", "consistency_title": "Race Consistency (Circuit)", "season_consistency_title": "Race Consistency (2026 Season)", "race_pace_title": "Race Pace Evolution", "tire_stats_title": "Tire Statistics", "compound": "Compound", "avg_stint": "Avg Stint", "degradation": "Degradation (s/lap)", "count": "Samples", "no_tire": "No tire data", "strategy_chart_title": "Strategy Comparison", "generated_at": "Generated at", "no_prediction": "No prediction available", "no_prediction_desc": "The pipeline hasn't generated data for the next race yet. Check back later.", "strategy_detail_title": "Strategy Optimizer", "strategy_detail_desc": "Race strategy simulation based on historical tire data, degradation, and lap times.", "strategy_comparison": "Top Strategies", "strategy_col": "Strategy", "pit_stops_col": "Pit Stops", "est_time_col": "Est. Time", "no_strategy_data": "No strategy data", "no_strategy_desc": "Not enough historical data to generate strategies.", "quali_title": "Qualifying Analysis", "quali_desc": "Historical qualifying analysis based on previous sessions at this circuit.", "quali_improvement_rate": "Q1→Q3 Improvement", "quali_improvement_label": "Q1 to Q3 gain", "best_quali_pos": "Best Avg Grid", "avg_quali_lap": "Avg Winner Lap", "quali_sc_prob": "Race SC Probability", "quali_pole_title": "Pole Position History", "quali_gap_title": "Gap to Leader by Position", "quali_consistency_title": "Qualifying Consistency", "tire_quali_title": "Qualifying Tires", "quali_lap_count": "Laps", "no_quali_data": "No qualifying data available", "standings_title": "Championship Standings", "standings_desc": "Current driver and constructor championship standings.", "drivers_title": "Drivers Championship", "teams_title": "Constructors Championship", "driver_col": "Driver", "team_col": "Team", "points_col": "Points", "no_standings": "No championship data available", "historical_title": "Historical Data", "historical_desc": "Aggregated historical data from previous seasons (2023–present).", "circuits_list": "Available Circuits", "circuit_col": "Circuit", "years_col": "Years", "tire_trends": "Tire Trends", "weather_trends": "Weather Trends"}, "es": {"nav_home": "Inicio", "nav_strategy": "Estrategia", "nav_quali": "Clasificación", "nav_standings": "Campeonato", "nav_historical": "Histórico", "footer": "Datos proporcionados por OpenF1. Proyecto de código abierto.", "next_race_title": "Próxima Carrera", "circuit": "Circuito", "country": "País", "season": "Temporada", "strategy_title": "Estrategia Recomendada", "est_time": "Tiempo estimado:", "pit_stops": "paradas", "no_strategy": "No hay datos suficientes para generar estrategia.", "race_stats_title": "Estadísticas Históricas", "avg_winner_lap": "Mejor vuelta promedio", "avg_winner_lap_label": "promedio histórico", "rain_label": "probabilidad", "sc_label": "probabilidad", "avg_overtakes_label": "Adelantamientos promedio", "sc_prob": "Probabilidad de Safety Car", "last_race_title": "Última Carrera", "last_race_results": "Resultados", "last_race_fastest_lap": "Vuelta Rápida", "last_race_top_speed": "Velocidad Máxima", "last_race_driver": "Piloto", "last_race_team": "Equipo", "last_race_pos": "Pos", "last_race_time": "Mejor Vuelta", "last_race_speed": "Velocidad", "section_next_race": "Predicción Próxima Carrera", "section_last_race": "Resumen Carrera Anterior", "quali_evo_title": "Mejores Vueltas Clasificación", "quali_evo_desc": "Mejor vuelta de clasificación por piloto", "quali_speed_title": "Trazas de Velocidad", "quali_speed_desc": "Velocidad durante la vuelta rápida", "telemetry_title": "Telemetría Completa", "telemetry_select_driver": "Seleccionar Piloto", "telemetry_compare": "Comparar con", "telemetry_none": "Ninguno", "telemetry_max_speed": "Vel. Máxima", "telemetry_avg_speed": "Vel. Promedio", "telemetry_max_rpm": "RPM Máx", "telemetry_throttle_full": "A Fondo", "telemetry_brake_time": "Frenando", "telemetry_gear_changes": "Cambios", "telemetry_drs_time": "DRS Activo", "quali_improv": "Mejora Q1→Q3", "weather_title": "Clima Histórico", "rain_prob": "Probabilidad de lluvia", "avg_temp": "Temp. ambiente promedio", "avg_track_temp": "Temp. pista promedio", "avg_humidity": "Humedad promedio", "avg_wind": "Viento promedio", "no_weather": "Sin datos climáticos", "grid_finish_title": "Parrilla vs Resultado", "overtakes_title": "Adelantamientos por Piloto", "consistency_title": "Consistencia (Circuito)", "season_consistency_title": "Consistencia (Temp. 2026)", "race_pace_title": "Evolución de Ritmo de Carrera", "tire_stats_title": "Estadísticas de Neumáticos", "compound": "Compuesto", "avg_stint": "Stint Promedio", "degradation": "Degradación (s/vuelta)", "count": "Muestras", "no_tire": "Sin datos de neumáticos", "strategy_chart_title": "Comparación de Estrategias", "generated_at": "Generado el", "no_prediction": "No hay predicción disponible", "no_prediction_desc": "El pipeline aún no ha generado datos para la próxima carrera. Vuelve más tarde.", "strategy_detail_title": "Optimizador de Estrategia", "strategy_detail_desc": "Simulación de estrategias de carrera basada en datos históricos de neumáticos, degradación y tiempos de vuelta.", "strategy_comparison": "Top Estrategias", "strategy_col": "Estrategia", "pit_stops_col": "Paradas", "est_time_col": "Tiempo Est.", "no_strategy_data": "Sin datos de estrategia", "no_strategy_desc": "No hay datos históricos suficientes para generar estrategias.", "quali_title": "Análisis de Clasificación", "quali_desc": "Análisis histórico de clasificación basado en sesiones anteriores en este circuito.", "quali_improvement_rate": "Mejora Q1→Q3", "quali_improvement_label": "mejora Q1 a Q3", "best_quali_pos": "Mejor Promedio Parrilla", "avg_quali_lap": "Vuelta promedio del ganador", "quali_sc_prob": "Prob. Safety Car en carrera", "quali_pole_title": "Historial de Poles", "quali_gap_title": "Diferencia con el Líder", "quali_consistency_title": "Consistencia en Clasificación", "tire_quali_title": "Neumáticos en Clasificación", "quali_lap_count": "Vueltas", "no_quali_data": "Sin datos de clasificación disponibles", "standings_title": "Campeonato", "standings_desc": "Posiciones actuales del campeonato de pilotos y constructores.", "drivers_title": "Campeonato de Pilotos", "teams_title": "Campeonato de Constructores", "driver_col": "Piloto", "team_col": "Equipo", "points_col": "Puntos", "no_standings": "Sin datos de campeonato disponibles", "historical_title": "Datos Históricos", "historical_desc": "Datos históricos agregados de temporadas anteriores (2023–presente).", "circuits_list": "Circuitos Disponibles", "circuit_col": "Circuito", "years_col": "Años", "tire_trends": "Tendencias de Neumáticos", "weather_trends": "Tendencias Climáticas"}};
+function setLang(lang) {
+  document.querySelectorAll('[data-lang-btn]').forEach(b => b.classList.toggle('active', b.dataset.langBtn === lang));
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    if (i18n[lang] && i18n[lang][key]) el.textContent = i18n[lang][key];
+  });
+  localStorage.setItem('f1-lang', lang);
+}
+const saved = localStorage.getItem('f1-lang');
+if (saved) setLang(saved);
+</script>
+</body>
+</html>

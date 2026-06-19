@@ -796,6 +796,7 @@ def build_dashboard(
             "quali_speed_chart_json": json.dumps(quali_speed_chart) if quali_speed_chart else "null",
             "quali_telemetry_raw_json": json.dumps(quali_telemetry_raw, default=str) if quali_telemetry_raw else "null",
             "quali_driver_stats_json": json.dumps(quali_driver_stats, default=str) if quali_driver_stats else "null",
+            "quali_driver_stats": quali_driver_stats,
             "overtake_data": prediction.overtake_data if prediction else [],
             "grid_finish_data": prediction.grid_finish_data if prediction else [],
             "consistency_data": prediction.consistency_data if prediction else [],
