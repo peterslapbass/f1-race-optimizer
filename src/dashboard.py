@@ -872,13 +872,21 @@ def build_dashboard(
 
     standings_data = fetch_standings(client)
 
-    state = build_state_dict(prediction, standings_data)
-    state_json = json.dumps(state, default=str, ensure_ascii=False)
+    has_any_data = (
+        prediction is not None
+        or (standings_data and (standings_data.get("drivers") or standings_data.get("teams")))
+    )
 
-    state_path = os.path.join(output_dir, "data", "state.json")
-    with open(state_path, "w", encoding="utf-8") as f:
-        f.write(state_json)
-    logger.info(f"Generated {state_path}")
+    if has_any_data:
+        state = build_state_dict(prediction, standings_data)
+        state_json = json.dumps(state, default=str, ensure_ascii=False)
+        state_path = os.path.join(output_dir, "data", "state.json")
+        with open(state_path, "w", encoding="utf-8") as f:
+            f.write(state_json)
+        logger.info(f"Generated {state_path}")
+        generated_at = state["generated_at"]
+    else:
+        generated_at = ""
 
     page_titles_json = json.dumps(PAGE_TITLES)
 
@@ -889,7 +897,7 @@ def build_dashboard(
             "page_titles_json": page_titles_json,
             "has_prediction": prediction is not None,
             "has_standings": bool(standings_data and (standings_data.get("drivers") or standings_data.get("teams"))),
-            "generated_at": state["generated_at"],
+            "generated_at": generated_at,
         }
         filepath = os.path.join(output_dir, "index.html" if lang == "en" else "index.es.html")
         html = env.get_template("dashboard.html").render(**ctx)
