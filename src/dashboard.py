@@ -756,6 +756,102 @@ def build_quali_speed_chart(speed_traces: list) -> dict:
     return json.loads(fig.to_json())
 
 
+def build_state_dict(
+    prediction: Optional[CircuitPrediction] = None,
+    standings_data: Optional[dict] = None,
+) -> dict:
+    """Build a serializable state dict with all data + chart JSONs."""
+    charts = {}
+    data = {}
+
+    if prediction:
+        data["circuit_name"] = prediction.circuit_name
+        data["country"] = prediction.country
+        data["year"] = prediction.year
+        data["avg_winner_lap_time"] = prediction.avg_winner_lap_time
+        data["weather_pattern"] = prediction.weather_pattern
+        data["safety_car_probability"] = prediction.safety_car_probability
+        data["quali_improvement_rate"] = prediction.quali_improvement_rate
+        data["driver_map"] = {str(k): v for k, v in (prediction.driver_map or {}).items()}
+        data["last_race_data"] = prediction.last_race_data or {}
+        data["recommended_strategy"] = (
+            {
+                "stints": prediction.recommended_strategy.stints,
+                "total_time": prediction.recommended_strategy.total_time,
+                "total_pit_stops": prediction.recommended_strategy.total_pit_stops,
+            }
+            if prediction.recommended_strategy
+            else None
+        )
+        data["strategies"] = [
+            {
+                "description": s.description,
+                "stints": s.stints,
+                "total_time": s.total_time,
+                "total_pit_stops": s.total_pit_stops,
+            }
+            for s in (prediction.strategies or [])
+        ]
+        data["tire_stats"] = [
+            {
+                "compound": ts.compound,
+                "avg_stint_length": ts.avg_stint_length,
+                "degradation_per_lap": ts.degradation_per_lap,
+                "count": ts.count,
+            }
+            for ts in (prediction.tire_stats or [])
+        ]
+        data["grid_finish_data"] = prediction.grid_finish_data or []
+        data["overtake_data"] = prediction.overtake_data or []
+        data["consistency_data"] = prediction.consistency_data or []
+        data["race_pace_data"] = prediction.race_pace_data or []
+        data["quali_pole_data"] = prediction.quali_pole_data or {}
+        data["quali_gap_data"] = prediction.quali_gap_data or []
+        data["quali_consistency_data"] = prediction.quali_consistency_data or []
+        data["season_consistency_data"] = prediction.season_consistency_data or []
+
+        driver_lookup = prediction.driver_map or {}
+        chart_builders = {
+            "strategy": lambda: build_strategy_chart(prediction),
+            "strategy_compare": lambda: build_strategy_compare_chart(prediction),
+            "tire": lambda: build_tire_chart(prediction),
+            "weather": lambda: build_weather_chart(prediction),
+            "grid": lambda: build_grid_finish_chart(data["grid_finish_data"], driver_lookup),
+            "overtakes": lambda: build_overtakes_chart(data["overtake_data"], driver_lookup),
+            "consistency": lambda: build_consistency_chart(data["consistency_data"], driver_lookup),
+            "season_consistency": lambda: build_season_consistency_chart(data["season_consistency_data"]),
+            "race_pace": lambda: build_race_pace_chart(data["race_pace_data"]),
+            "top_speed": lambda: build_top_speed_chart(data["last_race_data"].get("top_speeds", [])),
+            "quali_pole": lambda: build_quali_pole_chart(data["quali_pole_data"], driver_lookup),
+            "quali_gap": lambda: build_quali_gap_chart(data["quali_gap_data"]),
+            "quali_consistency": lambda: build_quali_consistency_chart(data["quali_consistency_data"], driver_lookup),
+        }
+        qt = data["last_race_data"].get("quali_telemetry", {})
+        if qt:
+            chart_builders["quali_evo"] = lambda qt=qt: build_quali_evolution_chart(qt.get("results", []), qt.get("speed_traces", []))
+            chart_builders["quali_speed"] = lambda qt=qt: build_quali_speed_chart(qt.get("speed_traces", []))
+            data["quali_telemetry_raw"] = qt.get("raw_data", {})
+            data["quali_driver_stats"] = qt.get("driver_stats", [])
+        for key, builder in chart_builders.items():
+            try:
+                result = builder()
+                if result:
+                    charts[key] = result
+            except Exception:
+                pass
+
+    state = {
+        "data": data,
+        "standings": {
+            "drivers": standings_data.get("drivers", []) if standings_data else [],
+            "teams": standings_data.get("teams", []) if standings_data else [],
+        },
+        "charts": charts,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    return state
+
+
 def build_dashboard(
     client: OpenF1Client,
     output_dir: str = "docs",
@@ -772,30 +868,17 @@ def build_dashboard(
     i18n_json = json.dumps(I18N_DATA, ensure_ascii=False)
 
     os.makedirs(output_dir, exist_ok=True)
-    os.makedirs(os.path.join(output_dir, "assets"), exist_ok=True)
-
-    strategy_chart = build_strategy_chart(prediction) if prediction else None
-    strategy_compare = build_strategy_compare_chart(prediction) if prediction else None
-    tire_chart = build_tire_chart(prediction) if prediction else None
-    weather_chart = build_weather_chart(prediction) if prediction else None
-
-    driver_lookup = prediction.driver_map if prediction else {}
-    grid_chart = build_grid_finish_chart(prediction.grid_finish_data if prediction else [], driver_lookup) if prediction else None
-    overtakes_chart = build_overtakes_chart(prediction.overtake_data if prediction else [], driver_lookup) if prediction else None
-    consistency_chart = build_consistency_chart(prediction.consistency_data if prediction else [], driver_lookup) if prediction else None
-    season_consistency_chart = build_season_consistency_chart(prediction.season_consistency_data if prediction else []) if prediction else None
-    quali_pole_chart = build_quali_pole_chart(prediction.quali_pole_data if prediction else {}, driver_lookup) if prediction else None
-    quali_gap_chart = build_quali_gap_chart(prediction.quali_gap_data if prediction else []) if prediction else None
-    quali_consistency_chart = build_quali_consistency_chart(prediction.quali_consistency_data if prediction else [], driver_lookup) if prediction else None
-    race_pace_chart = build_race_pace_chart(prediction.race_pace_data if prediction else []) if prediction else None
-    top_speed_chart = build_top_speed_chart(prediction.last_race_data.get("top_speeds", []) if prediction and prediction.last_race_data else []) if prediction else None
-    quali_telemetry = prediction.last_race_data.get("quali_telemetry", {}) if prediction and prediction.last_race_data else {}
-    quali_evo_chart = build_quali_evolution_chart(quali_telemetry.get("results", []), quali_telemetry.get("speed_traces", [])) if quali_telemetry else None
-    quali_speed_chart = build_quali_speed_chart(quali_telemetry.get("speed_traces", [])) if quali_telemetry else None
-    quali_telemetry_raw = quali_telemetry.get("raw_data", {}) if quali_telemetry else {}
-    quali_driver_stats = quali_telemetry.get("driver_stats", []) if quali_telemetry else {}
+    os.makedirs(os.path.join(output_dir, "data"), exist_ok=True)
 
     standings_data = fetch_standings(client)
+
+    state = build_state_dict(prediction, standings_data)
+    state_json = json.dumps(state, default=str, ensure_ascii=False)
+
+    state_path = os.path.join(output_dir, "data", "state.json")
+    with open(state_path, "w", encoding="utf-8") as f:
+        f.write(state_json)
+    logger.info(f"Generated {state_path}")
 
     page_titles_json = json.dumps(PAGE_TITLES)
 
@@ -804,35 +887,9 @@ def build_dashboard(
             "lang": lang,
             "i18n_json": i18n_json,
             "page_titles_json": page_titles_json,
-            "prediction": prediction,
-            "strategy_chart_json": json.dumps(strategy_chart) if strategy_chart else "null",
-            "strategy_compare_chart": json.dumps(strategy_compare) if strategy_compare else "null",
-            "grid_chart_json": json.dumps(grid_chart) if grid_chart else "null",
-            "overtakes_chart_json": json.dumps(overtakes_chart) if overtakes_chart else "null",
-            "consistency_chart_json": json.dumps(consistency_chart) if consistency_chart else "null",
-            "season_consistency_chart_json": json.dumps(season_consistency_chart) if season_consistency_chart else "null",
-            "race_pace_chart_json": json.dumps(race_pace_chart) if race_pace_chart else "null",
-            "top_speed_chart_json": json.dumps(top_speed_chart) if top_speed_chart else "null",
-            "quali_evo_chart_json": json.dumps(quali_evo_chart) if quali_evo_chart else "null",
-            "quali_speed_chart_json": json.dumps(quali_speed_chart) if quali_speed_chart else "null",
-            "quali_telemetry_raw_json": json.dumps(quali_telemetry_raw, default=str) if quali_telemetry_raw else "null",
-            "quali_driver_stats_json": json.dumps(quali_driver_stats, default=str) if quali_driver_stats else "null",
-            "quali_driver_stats": quali_driver_stats,
-            "overtake_data": prediction.overtake_data if prediction else [],
-            "grid_finish_data": prediction.grid_finish_data if prediction else [],
-            "consistency_data": prediction.consistency_data if prediction else [],
-            "driver_map": driver_lookup,
-            "last_race_data": prediction.last_race_data if prediction else {},
-            "quali_pole_chart_json": json.dumps(quali_pole_chart) if quali_pole_chart else "null",
-            "quali_gap_chart_json": json.dumps(quali_gap_chart) if quali_gap_chart else "null",
-            "quali_consistency_chart_json": json.dumps(quali_consistency_chart) if quali_consistency_chart else "null",
-            "quali_pole_data": prediction.quali_pole_data if prediction else {},
-            "quali_gap_data": prediction.quali_gap_data if prediction else [],
-            "quali_consistency_data": prediction.quali_consistency_data if prediction else [],
-            "historical_tire_chart": json.dumps(tire_chart) if tire_chart else "null",
-            "historical_weather_chart": json.dumps(weather_chart) if weather_chart else "null",
-            "drivers_championship": standings_data.get("drivers", []) if standings_data else [],
-            "teams_championship": standings_data.get("teams", []) if standings_data else [],
+            "has_prediction": prediction is not None,
+            "has_standings": bool(standings_data and (standings_data.get("drivers") or standings_data.get("teams"))),
+            "generated_at": state["generated_at"],
         }
         filepath = os.path.join(output_dir, "index.html" if lang == "en" else "index.es.html")
         html = env.get_template("dashboard.html").render(**ctx)
