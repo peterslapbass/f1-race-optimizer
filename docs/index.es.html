@@ -1012,18 +1012,6 @@ function renderSubtabCharts(parentPage, subtab) {
 </script>
 
 <script>
-// Chart registry
-const ALL_CHARTS = {};
-
-function renderPageCharts(pageId) {
-  document.querySelectorAll(`.page[data-page="${pageId}"] .chart-container`).forEach(el => {
-    const id = el.id;
-    if (ALL_CHARTS[id] && typeof Plotly !== 'undefined') {
-      Plotly.react(id, ALL_CHARTS[id].data, ALL_CHARTS[id].layout, {responsive: true});
-    }
-  });
-}
-
 function fillTable(name, items, rowFn) {
   const tbody = document.querySelector(`[data-table="${name}"]`);
   if (tbody) tbody.innerHTML = items.map(rowFn).join('');
