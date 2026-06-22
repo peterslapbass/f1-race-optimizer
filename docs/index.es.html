@@ -976,13 +976,15 @@ function renderPageCharts(pageId) {
   const container = document.querySelector(`.page[data-page="${pageId}"]`) || document;
   if (!container) return;
   container.querySelectorAll('.chart-container[id]').forEach(el => {
-    if (!el.offsetParent && el.closest('.subtab-content') && !el.closest('.subtab-content.active')) return;
-    if (renderedCharts[el.id]) { Plotly.Plots.resize(el); return; }
-    const data = ALL_CHARTS[el.id];
-    if (data) {
-      Plotly.newPlot(el, data.data, data.layout || {}, {responsive: true});
-      renderedCharts[el.id] = true;
-    }
+    try {
+      if (!el.offsetParent && el.closest('.subtab-content') && !el.closest('.subtab-content.active')) return;
+      if (renderedCharts[el.id]) { Plotly.Plots.resize(el); return; }
+      const data = ALL_CHARTS[el.id];
+      if (data) {
+        Plotly.newPlot(el, data.data, data.layout || {}, {responsive: true});
+        renderedCharts[el.id] = true;
+      }
+    } catch(e) {}
   });
 }
 
@@ -992,12 +994,14 @@ function renderSubtabCharts(parentPage, subtab) {
   const tab = container.querySelector(`.subtab-content[data-subtab="${subtab}"]`);
   if (!tab) return;
   tab.querySelectorAll('.chart-container[id]').forEach(el => {
-    if (renderedCharts[el.id]) { Plotly.Plots.resize(el); return; }
-    const data = ALL_CHARTS[el.id];
-    if (data) {
-      Plotly.newPlot(el, data.data, data.layout || {}, {responsive: true});
-      renderedCharts[el.id] = true;
-    }
+    try {
+      if (renderedCharts[el.id]) { Plotly.Plots.resize(el); return; }
+      const data = ALL_CHARTS[el.id];
+      if (data) {
+        Plotly.newPlot(el, data.data, data.layout || {}, {responsive: true});
+        renderedCharts[el.id] = true;
+      }
+    } catch(e) {}
   });
 }
 
@@ -1309,7 +1313,7 @@ fetch('data/state.json')
     }
 
     // Render charts for active page
-    renderPageCharts('home');
+    try { renderPageCharts('home'); } catch(e) {}
   })
   .catch(() => {
     // Show all fallbacks if no state.json

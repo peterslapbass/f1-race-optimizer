@@ -866,7 +866,7 @@ fetch('data/state.json')
     }
 
     // Render charts for active page
-    renderPageCharts('home');
+    try { renderPageCharts('home'); } catch(e) {}
   })
   .catch(() => {
     // Show all fallbacks if no state.json
