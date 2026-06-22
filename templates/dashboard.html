@@ -551,6 +551,63 @@
 </div>
 </div>
 
+<div data-section="circuit_browser" style="display:none;">
+  <div class="card mb-4">
+    <div class="card-header">
+      <span class="card-title">
+        <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H6.5a1 1 0 0 0 0 5H20"/><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17"/></svg>
+        <span>Circuit Browser</span>
+      </span>
+    </div>
+    <div style="padding:12px 16px;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+        <select id="circuit-select" style="flex:1;min-width:180px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:0.9rem;"></select>
+        <select id="year-select" style="width:120px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:0.9rem;"></select>
+        <button id="circuit-load-btn" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:10px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;" disabled>Load</button>
+      </div>
+      <div id="circuit-status" style="color:var(--text-muted);font-size:0.85rem;"></div>
+    </div>
+  </div>
+
+  <div id="circuit-results" style="display:none;">
+    <div class="grid grid-cols-3" style="gap:12px;margin-bottom:16px;">
+      <div class="card stat-card" style="padding:12px;">
+        <div class="stat-header"><span class="stat-label">Session</span></div>
+        <div class="stat-value" id="cr-session" style="font-size:1rem;">--</div>
+      </div>
+      <div class="card stat-card" style="padding:12px;">
+        <div class="stat-header"><span class="stat-label">Winner</span></div>
+        <div class="stat-value" id="cr-winner" style="font-size:1rem;">--</div>
+      </div>
+      <div class="card stat-card" style="padding:12px;">
+        <div class="stat-header"><span class="stat-label">Fastest Lap</span></div>
+        <div class="stat-value" id="cr-fastest" style="font-size:1rem;">--</div>
+      </div>
+    </div>
+
+    <div class="card chart-card mb-4">
+      <div class="chart-header">
+        <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span class="chart-title">Race Results</span>
+      </div>
+      <div style="padding:12px 16px;">
+        <table class="data-table" style="width:100%;">
+          <thead><tr><th>Pos</th><th>Driver</th><th>Team</th><th>Time</th><th>Laps</th></tr></thead>
+          <tbody id="cr-results-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card chart-card mb-4">
+      <div class="chart-header">
+        <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16.2A4.5 4.5 0 0 0 17.5 8h-1.8A7 7 0 0 0 4 14.9"/></svg>
+        <span class="chart-title">Weather</span>
+      </div>
+      <div style="padding:12px 16px;color:var(--text-muted);font-size:0.9rem;" id="cr-weather"></div>
+    </div>
+  </div>
+</div>
+
 <div data-fallback="historical" style="display:none;">
   <div class="card text-center" style="padding:60px 20px;">
     <p class="text-muted" data-i18n="no_historical">No historical data available</p>
@@ -558,6 +615,87 @@
 </div>
 
 </div><!-- /page historical -->
+
+<!-- --- PAGE: COMPARE --- -->
+<div class="page" data-page="compare">
+
+<div data-section="compare">
+<div class="page-header">
+  <div class="page-header-left">
+    <div class="page-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10l-5.34-5.34"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+    </div>
+    <div>
+      <span class="page-hero-title" data-i18n="nav_compare">Compare</span>
+      <p class="text-muted" style="font-size:0.9rem;">Compare two drivers' qualifying telemetry side by side</p>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-cols-2" style="gap:16px;margin-bottom:16px;">
+  <div class="card" style="padding:16px;">
+    <label style="color:var(--text-muted);font-size:0.85rem;font-weight:600;display:block;margin-bottom:8px;">Driver A</label>
+    <select id="compare-driver-a" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:1rem;"></select>
+  </div>
+  <div class="card" style="padding:16px;">
+    <label style="color:var(--text-muted);font-size:0.85rem;font-weight:600;display:block;margin-bottom:8px;">Driver B</label>
+    <select id="compare-driver-b" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:1rem;"></select>
+  </div>
+</div>
+
+<div id="compare-stats" style="display:none;">
+  <div class="section-title" style="margin-bottom:12px;">
+    <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/></svg>
+    <span>Side by Side</span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 60px 1fr;gap:8px;margin-bottom:24px;" id="compare-stats-grid">
+    <div class="card" style="padding:12px;text-align:right;" id="cs-a-max-speed"></div>
+    <div style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.75rem;font-weight:600;">SPD</div>
+    <div class="card" style="padding:12px;" id="cs-b-max-speed"></div>
+
+    <div class="card" style="padding:12px;text-align:right;" id="cs-a-avg-speed"></div>
+    <div style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.75rem;font-weight:600;">AVG</div>
+    <div class="card" style="padding:12px;" id="cs-b-avg-speed"></div>
+
+    <div class="card" style="padding:12px;text-align:right;" id="cs-a-max-rpm"></div>
+    <div style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.75rem;font-weight:600;">RPM</div>
+    <div class="card" style="padding:12px;" id="cs-b-max-rpm"></div>
+
+    <div class="card" style="padding:12px;text-align:right;" id="cs-a-throttle"></div>
+    <div style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.75rem;font-weight:600;">THR</div>
+    <div class="card" style="padding:12px;" id="cs-b-throttle"></div>
+
+    <div class="card" style="padding:12px;text-align:right;" id="cs-a-brake"></div>
+    <div style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.75rem;font-weight:600;">BRK</div>
+    <div class="card" style="padding:12px;" id="cs-b-brake"></div>
+
+    <div class="card" style="padding:12px;text-align:right;" id="cs-a-drs"></div>
+    <div style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.75rem;font-weight:600;">DRS</div>
+    <div class="card" style="padding:12px;" id="cs-b-drs"></div>
+
+    <div class="card" style="padding:12px;text-align:right;" id="cs-a-gears"></div>
+    <div style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.75rem;font-weight:600;">GRS</div>
+    <div class="card" style="padding:12px;" id="cs-b-gears"></div>
+  </div>
+
+  <div class="card chart-card">
+    <div class="chart-header">
+      <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span class="chart-title">Telemetry Overlay</span>
+    </div>
+    <div class="chart-container" id="compare-telemetry-chart" style="height:450px;"></div>
+  </div>
+</div>
+
+<div data-fallback="compare" style="display:none;">
+  <div class="card text-center" style="padding:60px 20px;">
+    <p class="text-muted">No qualifying telemetry data available for comparison.</p>
+  </div>
+</div>
+</div>
+
+</div><!-- /page compare -->
 
 <!-- Generated at -->
 <div class="text-center" style="padding:16px;color:var(--text-muted);font-size:0.75rem;">
@@ -771,6 +909,72 @@ fetch('data/state.json')
     showSection('historical_charts', hasHist);
     showFallback('historical', !hasHist);
 
+    // Circuit browser
+    const ci = data.circuit_index || [];
+    const cSel = document.getElementById('circuit-select');
+    const ySel = document.getElementById('year-select');
+    const loadBtn = document.getElementById('circuit-load-btn');
+    if (cSel && ci.length > 0) {
+      showSection('circuit_browser', true);
+      const circuits = [...new Set(ci.map(x => x.circuit))].sort();
+      cSel.innerHTML = '<option value="">Select circuit</option>' + circuits.map(c => `<option value="${c}">${c.charAt(0).toUpperCase() + c.slice(1)}</option>`).join('');
+      function updateYears() {
+        const sel = cSel.value;
+        ySel.innerHTML = '<option value="">Year</option>';
+        if (!sel) { loadBtn.disabled = true; return; }
+        const years = ci.filter(x => x.circuit === sel).map(x => x.year).sort((a,b) => b - a);
+        ySel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+        loadBtn.disabled = true;
+      }
+      cSel.onchange = updateYears;
+      ySel.onchange = function() { loadBtn.disabled = !cSel.value || !ySel.value; };
+      loadBtn.onclick = function() {
+        const circuit = cSel.value;
+        const year = ySel.value;
+        if (!circuit || !year) return;
+        const statusEl = document.getElementById('circuit-status');
+        const resultsEl = document.getElementById('circuit-results');
+        statusEl.innerHTML = 'Loading...';
+        resultsEl.style.display = 'none';
+        fetch('data/circuits/' + circuit + '_' + year + '.json')
+          .then(r => { if (!r.ok) throw new Error('Not found'); return r.json(); })
+          .then(cd => {
+            statusEl.innerHTML = '';
+            resultsEl.style.display = '';
+            const rs = cd.results || [];
+            document.getElementById('cr-session').innerHTML = (cd.sessions && cd.sessions.length > 0) ? cd.sessions[0].session_name || 'Race' : 'Race';
+            const winner = rs.length > 0 ? rs[0] : null;
+            document.getElementById('cr-winner').innerHTML = winner ? winner.full_name || '#' + winner.driver_number : '--';
+            const fl = rs.slice().sort((a,b) => (a.fastest_lap || 999) - (b.fastest_lap || 999))[0];
+            document.getElementById('cr-fastest').innerHTML = fl && fl.fastest_lap ? fl.fastest_lap.toFixed(3) + 's' : '--';
+            const tbody = document.getElementById('cr-results-body');
+            tbody.innerHTML = rs.map(r => {
+              const cls = r.position === 1 ? 'badge-gold' : r.position === 2 ? 'badge-silver' : r.position === 3 ? 'badge-bronze' : 'badge-default';
+              const lt = r.fastest_lap ? r.fastest_lap.toFixed(3) + 's' : '--';
+              const time = r.time || '--';
+              const laps = r.laps || '--';
+              return '<tr><td><span class="badge ' + cls + '">P' + r.position + '</span></td><td>' + (r.full_name || '') + '</td><td style="color:var(--text-muted);font-size:0.8rem;">' + (r.team_name || '') + '</td><td>' + time + '</td><td>' + laps + '</td></tr>';
+            }).join('');
+            const wd = cd.weather || [];
+            const wEl = document.getElementById('cr-weather');
+            if (wd.length > 0) {
+              const avgT = wd.reduce((s,w) => s + (w.air_temperature || 0), 0) / wd.length;
+              const avgTr = wd.reduce((s,w) => s + (w.track_temperature || 0), 0) / wd.length;
+              const avgH = wd.reduce((s,w) => s + (w.humidity || 0), 0) / wd.length;
+              const avgW = wd.reduce((s,w) => s + (w.wind_speed || 0), 0) / wd.length;
+              const rainPct = (wd.filter(w => w.rainfall).length / wd.length * 100).toFixed(0);
+              wEl.innerHTML = 'Avg Air: ' + avgT.toFixed(1) + '°C &middot; Track: ' + avgTr.toFixed(1) + '°C &middot; Humidity: ' + avgH.toFixed(0) + '% &middot; Wind: ' + avgW.toFixed(1) + ' m/s &middot; Rain: ' + rainPct + '%';
+            } else {
+              wEl.innerHTML = 'No weather data';
+            }
+          })
+          .catch(() => {
+            statusEl.innerHTML = 'Failed to load data for ' + circuit + ' ' + year;
+            resultsEl.style.display = 'none';
+          });
+      };
+    }
+
     // --- TELEMETRY ---
     const raw = data.quali_telemetry_raw || {};
     const dStats = data.quali_driver_stats || [];
@@ -863,6 +1067,66 @@ fetch('data/state.json')
           setTimeout(window._renderTelemetry, 100);
         }
       };
+    }
+
+    // Compare page
+    const driverMap = data.driver_map || {};
+    const drvNos = Object.keys(raw);
+    const hasCompare = drvNos.length > 0 && !!document.getElementById('compare-driver-a');
+    showSection('compare', hasCompare);
+    showFallback('compare', !hasCompare);
+    if (hasCompare) {
+      const cSelA = document.getElementById('compare-driver-a');
+      const cSelB = document.getElementById('compare-driver-b');
+      const cStats = document.getElementById('compare-stats');
+      cSelA.innerHTML = drvNos.map(dn => {
+        const nm = driverMap[dn] ? driverMap[dn].full_name : '#' + dn;
+        return `<option value="${dn}">${nm}</option>`;
+      }).join('');
+      cSelB.innerHTML = '<option value="">Select driver</option>' + drvNos.map(dn => {
+        const nm = driverMap[dn] ? driverMap[dn].full_name : '#' + dn;
+        return `<option value="${dn}">${nm}</option>`;
+      }).join('');
+      function renderCompare() {
+        const a = cSelA.value;
+        const b = cSelB.value;
+        if (!a) { cStats.style.display = 'none'; return; }
+        const dA = raw[a];
+        const dB = b ? raw[b] : null;
+        if (!dA) { cStats.style.display = 'none'; return; }
+        cStats.style.display = '';
+        function statVal(driverNo, key) {
+          const s = dStats.find ? dStats.find(x => x.driver_number === parseInt(driverNo)) : null;
+          return s ? s[key] : null;
+        }
+        const stats = [['max-speed','max_speed',' km/h'],['avg-speed','avg_speed',' km/h'],['max-rpm','max_rpm',''],['throttle','throttle_full_pct','%'],['brake','brake_pct','%'],['drs','drs_pct','%'],['gears','gear_changes','']];
+        stats.forEach(([id, key, unit]) => {
+          const vA = statVal(a, key);
+          const vB = b ? statVal(b, key) : null;
+          const elA = document.getElementById('cs-a-' + id);
+          const elB = document.getElementById('cs-b-' + id);
+          if (elA) elA.innerHTML = vA != null ? '<div style="font-size:1.3rem;font-weight:700;">' + vA + '</div><div style="font-size:0.75rem;color:var(--text-muted);">' + unit + '</div>' : '<div style="font-size:0.85rem;color:var(--text-muted);">--</div>';
+          if (elB) elB.innerHTML = vB != null ? '<div style="font-size:1.3rem;font-weight:700;">' + vB + '</div><div style="font-size:0.75rem;color:var(--text-muted);">' + unit + '</div>' : '<div style="font-size:0.85rem;color:var(--text-muted);">--</div>';
+        });
+        const dataTraces = [];
+        dataTraces.push({x: dA.lap_seconds, y: dA.speeds, name: dA.full_name + ' Speed', mode: 'lines', line: {color: '#22c55e', width: 2.5}, yaxis: 'y'});
+        dataTraces.push({x: dA.lap_seconds, y: dA.throttle, name: dA.full_name + ' Throttle', mode: 'lines', line: {color: 'rgba(34,197,94,0.3)', width: 1}, fill: 'tozeroy', fillcolor: 'rgba(34,197,94,0.08)', yaxis: 'y2'});
+        if (dB) {
+          dataTraces.push({x: dB.lap_seconds, y: dB.speeds, name: dB.full_name + ' Speed', mode: 'lines', line: {color: '#ef4444', width: 2.5}, yaxis: 'y'});
+          dataTraces.push({x: dB.lap_seconds, y: dB.throttle, name: dB.full_name + ' Throttle', mode: 'lines', line: {color: 'rgba(239,68,68,0.3)', width: 1}, fill: 'tozeroy', fillcolor: 'rgba(239,68,68,0.08)', yaxis: 'y2'});
+        }
+        const layout = {
+          template: 'plotly_dark', paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: {color: '#888', size: 10},
+          margin: {l: 50, r: 20, t: 30, b: 50}, hovermode: 'x unified',
+          yaxis: {title: 'Speed (km/h)', domain: [0, 1]},
+          yaxis2: {title: '', domain: [0, 1], overlaying: 'y', side: 'right', showticklabels: false, range: [0, 110]},
+          legend: {font: {size: 9}, orientation: 'h', y: 1.12},
+        };
+        if (typeof Plotly !== 'undefined') Plotly.react('compare-telemetry-chart', dataTraces, layout, {responsive: true});
+      }
+      cSelA.onchange = renderCompare;
+      cSelB.onchange = renderCompare;
+      setTimeout(renderCompare, 100);
     }
 
     // Render charts for active page

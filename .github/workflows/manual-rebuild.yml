@@ -1,6 +1,8 @@
 name: Rebuild Dashboard
 
 on:
+  schedule:
+    - cron: "0 14 * * 1,4"
   workflow_dispatch:
     inputs:
       circuit:

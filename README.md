@@ -1,113 +1,135 @@
-# F1 Race Optimizer 🏎️
+# F1 Race Optimizer
 
-**Optimizador de estrategia de carrera de F1** basado en datos históricos de [OpenF1](https://openf1.org/).
+**Strategy simulator + race predictor** for Formula 1, based on historical data from [OpenF1](https://openf1.org/).
 
-**F1 race strategy optimizer** based on historical data from [OpenF1](https://openf1.org/).
+[![Deployment](https://github.com/peterslapbass/f1-race-optimizer/actions/workflows/manual-rebuild.yml/badge.svg)](https://github.com/peterslapbass/f1-race-optimizer/actions/workflows/manual-rebuild.yml)
 
-## Features / Características
+**Live dashboard**: https://peterslapbass.github.io/f1-race-optimizer/
 
-- **Strategy Optimizer**: Simula estrategias de neumáticos para encontrar la óptima según datos históricos del circuito
-- **Race Predictor**: Predice tiempos de vuelta, probabilidad de Safety Car, y clima esperado
-- **Qualifying Analysis**: Estadísticas históricas de clasificación por circuito
-- **Historical Trends**: Datos agregados de temporadas 2023-presente
-- **Bilingual Dashboard**: Interfaz en español e inglés
+---
 
-- **Strategy Optimizer**: Simulates tire strategies to find the optimal one based on circuit historical data
-- **Race Predictor**: Predicts lap times, Safety Car probability, and expected weather
-- **Qualifying Analysis**: Historical qualifying statistics per circuit
-- **Historical Trends**: Aggregated data from 2023-present seasons
-- **Bilingual Dashboard**: Interface in English and Spanish
+## Features
 
-## How it works / Cómo funciona
+| Feature | Description |
+|---------|-------------|
+| **Race Prediction** | Lap time, weather probability, safety car chance, overtakes |
+| **Strategy Optimizer** | Tire strategy simulation (stint length, pit stops, compounds) |
+| **Last Race Recap** | Results, fastest laps, top speeds, qualifying telemetry |
+| **Qualifying Analysis** | Pole history, gap to leader, consistency, evolution |
+| **Driver Comparison** | Side-by-side telemetry, speed, throttle, RPM |
+| **Championship Standings** | Drivers & constructors, live |
+| **Historical Browse** | Past race results, weather, and stats per circuit |
+| **Bilingual** | English / Español toggle |
 
-```
-Daily Cron (06:00 UTC)
-    │
-    ▼
-Check next GP on OpenF1
-    │
-    ├── Race in ≤48h → Pre-race Pipeline
-    │         ├── Fetch historical data for same circuit
-    │         ├── Analyze tire degradation & strategies
-    │         ├── Race strategy simulation
-    │         └── Generate HTML dashboard
-    │
-    └── Race ended ≤24h ago → Post-race Pipeline
-                ├── Fetch actual results
-                └── Update dashboard
-```
+---
 
-## Dashboard
+## Tech Stack
 
-The dashboard is deployed to **GitHub Pages** automatically. Access it at:
-
-```
-https://peterslapbass.github.io/f1-race-optimizer/
-```
-
-### Available pages / Páginas disponibles
-
-| Page | Description / Descripción |
-|------|--------------------------|
-| `index.html` | Next race prediction / Próxima carrera |
-| `strategy.html` | Strategy optimizer / Optimizador de estrategia |
-| `quali.html` | Qualifying analysis / Análisis de clasificación |
-| `standings.html` | Championship standings / Campeonato |
-| `historical.html` | Historical trends / Datos históricos |
-
-Switch between EN/ES using the toggle in the header.
-
-## Tech Stack / Stack Técnico
-
-| Component | Technology |
-|-----------|-----------|
+| Layer | Technology |
+|-------|-----------|
 | Language | Python 3.11 |
-| API | [OpenF1](https://openf1.org/) (free tier, no auth required) |
-| HTTP client | `requests` |
-| Data processing | `pandas`, `numpy` |
-| Charts | `plotly` |
-| Templates | `jinja2` |
-| CI/CD | GitHub Actions (daily cron + manual dispatch) |
-| Hosting | GitHub Pages |
+| Data source | [OpenF1 API](https://openf1.org/) (free, no auth) |
+| Data cache | JSON files, 24h TTL |
+| Charts | Plotly.js (client-side) |
+| Templates | Jinja2 |
+| Frontend | Vanilla JS, SPA with hash routing |
+| CI/CD | GitHub Actions + GitHub Pages |
 
-## Project structure / Estructura
+---
+
+## Architecture
 
 ```
-f1-race-optimizer/
-├── .github/workflows/
-│   ├── daily-pipeline.yml       # Daily cron + manual
-│   └── rebuild-dashboard.yml    # Manual rebuild
-├── src/
-│   ├── client.py                # OpenF1 API client with rate limiter
-│   ├── models.py                # Data models
-│   ├── calendar.py              # Next race detection
-│   ├── fetch.py                 # Historical data fetching
-│   ├── analyze.py               # Statistical analysis
-│   ├── strategy.py              # Strategy optimization algorithm
-│   ├── predict.py               # Race prediction
-│   └── dashboard.py             # HTML dashboard generation
-├── templates/                   # Jinja2 HTML templates
-├── docs/                        # GitHub Pages output
-├── data/                        # Historical data cache
-├── pyproject.toml
-└── requirements.txt
+                         ┌─────────────────┐
+                         │   OpenF1 API     │
+                         └────────┬────────┘
+                                  │ HTTP
+                         ┌────────▼────────┐
+                         │  src/dashboard  │
+                         │  .py pipeline   │
+                         └────────┬────────┘
+                                  │
+              ┌───────────────────┼───────────────────┐
+              ▼                   ▼                   ▼
+     ┌─────────────────┐ ┌──────────────┐ ┌──────────────────┐
+     │ data/circuits/  │ │ docs/data/   │ │ docs/index.html  │
+     │ *.json (cache)  │ │ state.json   │ │ (+ es)           │
+     └─────────────────┘ └──────────────┘ └────────┬─────────┘
+                                                    │ deploy
+                                           ┌────────▼─────────┐
+                                           │   GitHub Pages    │
+                                           └──────────────────┘
 ```
 
-## Run locally / Ejecutar localmente
+### Data flow
+
+1. **Pipeline** (`python -m src.dashboard`) fetches from OpenF1 API
+2. Historical circuit data cached in `data/circuits/` (24h TTL)
+3. Aggregated prediction + charts serialized to `docs/data/state.json`
+4. HTML templates rendered by Jinja2 with minimal server context
+5. **Client-side**: JS fetches `state.json` → populates all sections & charts
+
+### CI/CD
+
+- **`manual-rebuild.yml`**: Triggered manually or by schedule (Mon/Thu 14:00 UTC)
+- Checks out repo → runs `python -m src.dashboard`
+- Commits updated cache → deploys to GitHub Pages
+- If API rate limits are hit, `state.json` is not overwritten (previous data preserved)
+
+---
+
+## Run locally
 
 ```bash
 pip install -r requirements.txt
+
+# Full pipeline (fetches API, may take 3-4 min)
 python -m src.dashboard
+
+# Regen from cached state.json only (fast, no API calls)
+python -m src.dashboard --regen
+
+# Open locally
+python -m http.server 8000
+# → http://localhost:8000/docs/
 ```
 
-## Rate limits / Límites de API
+---
 
-OpenF1 free tier allows **3 req/s and 30 req/min**. The client handles this automatically.
+## Project structure
 
-## Data license / Licencia de datos
+```
+├── .github/workflows/
+│   ├── manual-rebuild.yml      # Deploy dashboard
+│   └── daily-pipeline.yml      # Legacy daily cron
+├── src/
+│   ├── client.py               # OpenF1 HTTP client + rate limiter
+│   ├── models.py               # CircuitPrediction, StrategyOption
+│   ├── calendar.py             # Next race detection
+│   ├── fetch.py                # Historical data fetching + cache
+│   ├── predict.py              # Prediction engine
+│   ├── strategy.py             # Tire strategy optimization
+│   └── dashboard.py            # Pipeline: build_state_dict → render
+├── templates/
+│   ├── base.html               # Layout, sidebar, tab router, CSS
+│   └── dashboard.html          # All pages, JS data binding
+├── docs/                       # Deployed to GitHub Pages
+│   ├── index.html
+│   ├── index.es.html
+│   └── data/state.json
+├── data/circuits/              # Historical cache (git-tracked)
+├── requirements.txt
+└── pyproject.toml
+```
 
-Data provided by [OpenF1](https://openf1.org/). This project is not affiliated with Formula 1, FIA, or FOM.
+---
 
-## Disclaimer
+## API rate limits
 
-OpenF1 is an unofficial, community-driven project. All F1-related trademarks belong to Formula One Licensing B.V.
+OpenF1 free tier: **3 req/s, 30 req/min**. The client handles backoff automatically.
+
+---
+
+## Data license
+
+Data provided by [OpenF1](https://openf1.org/). This project is not affiliated with Formula 1, FIA, or FOM. OpenF1 is an unofficial, community-driven project. All F1-related trademarks belong to Formula One Licensing B.V.

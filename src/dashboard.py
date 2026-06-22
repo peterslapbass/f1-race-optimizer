@@ -23,6 +23,7 @@ I18N_DATA = {
         "nav_quali": "Qualifying",
         "nav_standings": "Standings",
         "nav_historical": "Historical",
+        "nav_compare": "Compare",
         "footer": "Data provided by OpenF1. Open source project.",
         "next_race_title": "Next Race",
         "circuit": "Circuit",
@@ -139,6 +140,7 @@ I18N_DATA = {
         "nav_quali": "Clasificación",
         "nav_standings": "Campeonato",
         "nav_historical": "Histórico",
+        "nav_compare": "Comparar",
         "footer": "Datos proporcionados por OpenF1. Proyecto de código abierto.",
         "next_race_title": "Próxima Carrera",
         "circuit": "Circuito",
@@ -258,6 +260,7 @@ PAGE_TITLES = {
     "quali": "nav_quali",
     "standings": "nav_standings",
     "historical": "nav_historical",
+    "compare": "nav_compare",
 }
 
 def build_strategy_chart(prediction: CircuitPrediction) -> Optional[dict]:
@@ -757,6 +760,21 @@ def build_quali_speed_chart(speed_traces: list) -> dict:
     return json.loads(fig.to_json())
 
 
+def _build_circuit_index() -> list[dict]:
+    import os, re
+    circuits_dir = os.path.join("data", "circuits")
+    if not os.path.isdir(circuits_dir):
+        return []
+    index = []
+    pattern = re.compile(r"^(.+)_(\d{4})\.json$")
+    for fname in os.listdir(circuits_dir):
+        m = pattern.match(fname)
+        if m:
+            index.append({"circuit": m.group(1), "year": int(m.group(2))})
+    index.sort(key=lambda x: (-x["year"], x["circuit"]))
+    return index
+
+
 def build_state_dict(
     prediction: Optional[CircuitPrediction] = None,
     standings_data: Optional[dict] = None,
@@ -840,6 +858,8 @@ def build_state_dict(
                     charts[key] = result
             except Exception:
                 pass
+
+    data["circuit_index"] = _build_circuit_index()
 
     state = {
         "data": data,
@@ -992,6 +1012,10 @@ def regen_dashboard(output_dir: str = "docs") -> bool:
     i18n_json = json.dumps(I18N_DATA, ensure_ascii=False)
     page_titles_json = json.dumps(PAGE_TITLES)
 
+    if state.get("data") and "circuit_index" not in state["data"]:
+        state["data"]["circuit_index"] = _build_circuit_index()
+        with open(state_path, "w", encoding="utf-8") as f:
+            json.dump(state, f, default=str, ensure_ascii=False)
     has_prediction = bool(state.get("data"))
     has_standings = bool(state.get("standings", {}).get("drivers") or state.get("standings", {}).get("teams"))
     generated_at = state.get("generated_at", "")
