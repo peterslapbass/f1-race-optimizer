@@ -1,3 +1,4 @@
+import argparse
 import json
 import logging
 import os
@@ -872,12 +873,7 @@ def build_dashboard(
 
     standings_data = fetch_standings(client)
 
-    has_any_data = (
-        prediction is not None
-        or (standings_data and (standings_data.get("drivers") or standings_data.get("teams")))
-    )
-
-    if has_any_data:
+    if prediction is not None:
         state = build_state_dict(prediction, standings_data)
         state_json = json.dumps(state, default=str, ensure_ascii=False)
         state_path = os.path.join(output_dir, "data", "state.json")
@@ -977,8 +973,54 @@ def fetch_standings(client: OpenF1Client) -> dict:
         return {}
 
 
-def run_pipeline(output_dir: str = "docs"):
+def regen_dashboard(output_dir: str = "docs") -> bool:
+    """Load existing state.json and regenerate HTML without any API calls.
+    Returns True if successful, False if no valid state.json found."""
+    state_path = os.path.join(output_dir, "data", "state.json")
+    if not os.path.isfile(state_path):
+        logger.info("No cached state.json found, skipping regen")
+        return False
+
+    with open(state_path, "r", encoding="utf-8") as f:
+        state = json.load(f)
+
+    if not state.get("data") and not state.get("standings", {}).get("drivers"):
+        logger.info("Cached state.json has no real data, skipping regen")
+        return False
+
+    env = Environment(loader=FileSystemLoader("templates"))
+    i18n_json = json.dumps(I18N_DATA, ensure_ascii=False)
+    page_titles_json = json.dumps(PAGE_TITLES)
+
+    has_prediction = bool(state.get("data"))
+    has_standings = bool(state.get("standings", {}).get("drivers") or state.get("standings", {}).get("teams"))
+    generated_at = state.get("generated_at", "")
+
+    for lang in ("en", "es"):
+        ctx = {
+            "lang": lang,
+            "i18n_json": i18n_json,
+            "page_titles_json": page_titles_json,
+            "has_prediction": has_prediction,
+            "has_standings": has_standings,
+            "generated_at": generated_at,
+        }
+        filepath = os.path.join(output_dir, "index.html" if lang == "en" else "index.es.html")
+        html = env.get_template("dashboard.html").render(**ctx)
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write(html)
+        logger.info(f"Regenerated {filepath} from cached state")
+
+    return True
+
+
+def run_pipeline(output_dir: str = "docs", regen: bool = False):
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    if regen:
+        ok = regen_dashboard(output_dir)
+        if not ok:
+            logger.warning("Regen skipped — no valid cached state. Run full pipeline instead.")
+        return
     client = OpenF1Client()
     try:
         build_dashboard(client, output_dir)
@@ -987,4 +1029,7 @@ def run_pipeline(output_dir: str = "docs"):
 
 
 if __name__ == "__main__":
-    run_pipeline()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--regen", action="store_true", help="Regenerate HTML from cached state.json (no API calls)")
+    args = parser.parse_args()
+    run_pipeline(regen=args.regen)

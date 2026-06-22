@@ -32,13 +32,28 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: pip install -r requirements.txt
-      - name: Run pipeline
+      - name: Check cached state.json
+        id: check-cache
+        run: |
+          if python -c "import json; d=json.load(open('docs/data/state.json')); exit(0 if d.get('data') and d['data'].get('last_race_data') else 1)" 2>/dev/null; then
+            echo "cached=true" >> $GITHUB_OUTPUT
+          else
+            echo "cached=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Run pipeline (full)
+        if: steps.check-cache.outputs.cached == 'false'
         run: python -m src.dashboard
         env:
           PYTHONUNBUFFERED: 1
           F1_CIRCUIT: ${{ inputs.circuit || '' }}
           F1_YEAR: ${{ inputs.year || '2026' }}
+      - name: Run pipeline (regen from cache)
+        if: steps.check-cache.outputs.cached == 'true'
+        run: python -m src.dashboard --regen
+        env:
+          PYTHONUNBUFFERED: 1
       - name: Commit cached data
+        if: steps.check-cache.outputs.cached == 'false'
         run: |
           git config user.name "f1-bot"
           git config user.email "bot@f1-race-optimizer"
