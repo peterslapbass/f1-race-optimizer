@@ -605,6 +605,51 @@
       </div>
       <div style="padding:12px 16px;color:var(--text-muted);font-size:0.9rem;" id="cr-weather"></div>
     </div>
+
+    <div data-section="cr-lap-evolution" style="display:none;" class="card chart-card mb-4">
+      <div class="chart-header">
+        <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span class="chart-title">Lap Evolution</span>
+      </div>
+      <div class="chart-container" id="cr-lap-chart" style="height:400px;"></div>
+    </div>
+
+    <div data-section="cr-pit-ranking" style="display:none;">
+      <div class="card mb-4">
+        <div class="card-header">
+          <span class="card-title">
+            <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <span>Pit Stop Ranking</span>
+          </span>
+        </div>
+        <table><thead><tr><th>Team</th><th>Stops</th><th>Avg Duration</th><th>Fastest</th><th>Slowest</th></tr></thead><tbody id="cr-pit-body"></tbody></table>
+      </div>
+    </div>
+
+    <div data-section="cr-degradation" style="display:none;">
+      <div class="card mb-4">
+        <div class="card-header">
+          <span class="card-title">
+            <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <span>Degradation (s/lap per stint)</span>
+          </span>
+        </div>
+        <table><thead><tr><th>Driver</th><th>Compound</th><th>Stint</th><th>Laps</th><th>Deg (s/lap)</th></tr></thead><tbody id="cr-deg-body"></tbody></table>
+      </div>
+    </div>
+
+    <div data-section="cr-overtakes" style="display:none;">
+      <div class="card mb-4">
+        <div class="card-header">
+          <span class="card-title">
+            <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            <span>Overtakes</span>
+          </span>
+        </div>
+        <table><thead><tr><th>Driver</th><th>Overtakes Made</th><th>Overtaken By</th></tr></thead><tbody id="cr-ovt-body"></tbody></table>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -683,6 +728,58 @@
       <span class="chart-title">Telemetry Overlay</span>
     </div>
     <div class="chart-container" id="compare-telemetry-chart" style="height:450px;"></div>
+  </div>
+
+  <div class="card chart-card" id="compare-radar-section" style="display:none;">
+    <div class="chart-header">
+      <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span class="chart-title">Radar Comparison</span>
+    </div>
+    <div class="chart-container" id="compare-radar-chart" style="height:400px;"></div>
+  </div>
+
+  <div class="section-divider"><span class="section-label">CONSTRUCTOR HEAD-TO-HEAD</span><div class="section-line"></div></div>
+  <div class="grid grid-cols-2" style="gap:16px;margin-bottom:16px;">
+    <div class="card" style="padding:16px;">
+      <label style="color:var(--text-muted);font-size:0.85rem;font-weight:600;display:block;margin-bottom:8px;">Team A</label>
+      <select id="compare-team-a" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:1rem;"></select>
+    </div>
+    <div class="card" style="padding:16px;">
+      <label style="color:var(--text-muted);font-size:0.85rem;font-weight:600;display:block;margin-bottom:8px;">Team B</label>
+      <select id="compare-team-b" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:1rem;"></select>
+    </div>
+  </div>
+  <div id="constructor-stats" style="display:none;">
+    <div style="display:grid;grid-template-columns:1fr 60px 1fr;gap:8px;margin-bottom:16px;" id="constructor-stats-grid">
+      <div class="card" style="padding:12px;text-align:right;" id="ct-a-max-speed"></div>
+      <div style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.75rem;font-weight:600;">SPD</div>
+      <div class="card" style="padding:12px;" id="ct-b-max-speed"></div>
+      <div class="card" style="padding:12px;text-align:right;" id="ct-a-avg-speed"></div>
+      <div style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.75rem;font-weight:600;">AVG</div>
+      <div class="card" style="padding:12px;" id="ct-b-avg-speed"></div>
+      <div class="card" style="padding:12px;text-align:right;" id="ct-a-max-rpm"></div>
+      <div style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.75rem;font-weight:600;">RPM</div>
+      <div class="card" style="padding:12px;" id="ct-b-max-rpm"></div>
+      <div class="card" style="padding:12px;text-align:right;" id="ct-a-throttle"></div>
+      <div style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.75rem;font-weight:600;">THR</div>
+      <div class="card" style="padding:12px;" id="ct-b-throttle"></div>
+      <div class="card" style="padding:12px;text-align:right;" id="ct-a-brake"></div>
+      <div style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.75rem;font-weight:600;">BRK</div>
+      <div class="card" style="padding:12px;" id="ct-b-brake"></div>
+      <div class="card" style="padding:12px;text-align:right;" id="ct-a-drs"></div>
+      <div style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.75rem;font-weight:600;">DRS</div>
+      <div class="card" style="padding:12px;" id="ct-b-drs"></div>
+      <div class="card" style="padding:12px;text-align:right;" id="ct-a-gears"></div>
+      <div style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.75rem;font-weight:600;">GRS</div>
+      <div class="card" style="padding:12px;" id="ct-b-gears"></div>
+    </div>
+    <div class="card chart-card" id="constructor-radar-section" style="display:none;">
+      <div class="chart-header">
+        <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span class="chart-title">Constructor Radar</span>
+      </div>
+      <div class="chart-container" id="constructor-radar-chart" style="height:400px;"></div>
+    </div>
   </div>
 </div>
 
@@ -965,6 +1062,106 @@ fetch('data/state.json')
             } else {
               wEl.innerHTML = 'No weather data';
             }
+
+            // Lap evolution
+            var laps = cd.laps || [];
+            var hasLaps = laps.length > 0;
+            showSection('cr-lap-evolution', hasLaps);
+            if (hasLaps) {
+              var lapByDriver = {};
+              laps.forEach(function(l) {
+                var dn = l.driver_number;
+                if (!lapByDriver[dn]) lapByDriver[dn] = [];
+                if (!l.is_pit_out_lap && l.lap_duration != null && l.lap_duration > 10) {
+                  lapByDriver[dn].push({lap: l.lap_number, time: l.lap_duration});
+                }
+              });
+              var topDrivers = Object.keys(lapByDriver).sort(function(a,b) { return lapByDriver[a].length - lapByDriver[b].length; }).reverse().slice(0, 8);
+              var lapColors = ['#22c55e','#ef4444','#eab308','#3b82f6','#a855f7','#ec4899','#f97316','#06b6d4'];
+              var lapTraces = topDrivers.map(function(dn, i) {
+                var pts = lapByDriver[dn];
+                return {x: pts.map(function(p) { return p.lap; }), y: pts.map(function(p) { return p.time; }), mode: 'lines+markers', name: driverName(String(dn)), line: {color: lapColors[i % lapColors.length], width: 2}, marker: {size: 3}};
+              });
+              var lapLayout = {template: 'plotly_dark', paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: {color: '#888', size: 10}, margin: {l: 50, r: 20, t: 30, b: 50}, hovermode: 'x unified', xaxis: {title: 'Lap'}, yaxis: {title: 'Lap Time (s)', autorange: 'reversed'}, legend: {font: {size: 8}, orientation: 'h', y: 1.12}};
+              if (typeof Plotly !== 'undefined') Plotly.react('cr-lap-chart', lapTraces, lapLayout, {responsive: true});
+            }
+
+            // Pit ranking
+            var pitStops = cd.pit_stops || [];
+            var hasPits = pitStops.length > 0;
+            showSection('cr-pit-ranking', hasPits);
+            if (hasPits) {
+              var pitByDriver = {};
+              pitStops.forEach(function(p) {
+                var dn = p.driver_number;
+                if (!pitByDriver[dn]) pitByDriver[dn] = [];
+                pitByDriver[dn].push(p.pit_duration || 0);
+              });
+              var pitRows = Object.keys(pitByDriver).map(function(dn) {
+                var times = pitByDriver[dn];
+                var avg = times.reduce(function(a,b) { return a+b; }, 0) / times.length;
+                var fast = Math.min.apply(null, times);
+                var slow = Math.max.apply(null, times);
+                var nm = driverName(String(dn));
+                return {driver: nm, stops: times.length, avg: avg, fast: fast, slow: slow};
+              }).sort(function(a,b) { return a.avg - b.avg; });
+              document.getElementById('cr-pit-body').innerHTML = pitRows.map(function(r) {
+                return '<tr><td>' + r.driver + '</td><td>' + r.stops + '</td><td>' + r.avg.toFixed(2) + 's</td><td>' + r.fast.toFixed(2) + 's</td><td>' + r.slow.toFixed(2) + 's</td></tr>';
+              }).join('');
+            }
+
+            // Degradation
+            var stints = cd.stints || [];
+            var hasStints = stints.length > 0;
+            showSection('cr-degradation', hasStints);
+            if (hasStints && laps.length > 0) {
+              var degRows = [];
+              stints.forEach(function(st) {
+                var dn = st.driver_number;
+                var driverLaps = (lapByDriver[dn] || []).filter(function(l) {
+                  return l.lap >= (st.lap_start || 0) && l.lap <= (st.lap_end || 999);
+                });
+                if (driverLaps.length < 3) return;
+                var n = driverLaps.length;
+                var sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+                driverLaps.forEach(function(l) {
+                  sumX += l.lap;
+                  sumY += l.time;
+                  sumXY += l.lap * l.time;
+                  sumX2 += l.lap * l.lap;
+                });
+                var slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+                degRows.push({driver: driverName(String(dn)), compound: st.compound || 'unknown', stint: st.stint_number || '?', laps: driverLaps.length, deg: slope});
+              });
+              degRows.sort(function(a,b) { return b.deg - a.deg; });
+              document.getElementById('cr-deg-body').innerHTML = degRows.map(function(r) {
+                var comp = (r.compound || 'unknown').toLowerCase();
+                return '<tr><td>' + r.driver + '</td><td><span class="badge compound-' + comp + '">' + r.compound + '</span></td><td>' + r.stint + '</td><td>' + r.laps + '</td><td style="' + (r.deg > 0.1 ? 'color:var(--red);' : 'color:var(--green);') + 'font-weight:600;">' + r.deg.toFixed(3) + '</td></tr>';
+              }).join('');
+            }
+
+            // Overtakes
+            var overtakes = cd.overtakes || [];
+            var hasOvt = overtakes.length > 0;
+            showSection('cr-overtakes', hasOvt);
+            if (hasOvt) {
+              var ovtMade = {}, ovtBy = {};
+              overtakes.forEach(function(o) {
+                var dn = o.driver_number;
+                var od = o.overtaken_driver_number;
+                if (dn) ovtMade[dn] = (ovtMade[dn] || 0) + 1;
+                if (od) ovtBy[od] = (ovtBy[od] || 0) + 1;
+              });
+              var allOvt = new Set(Object.keys(ovtMade).concat(Object.keys(ovtBy)));
+              var ovtRows = [];
+              allOvt.forEach(function(dn) {
+                ovtRows.push({driver: driverName(dn), made: ovtMade[dn] || 0, by: ovtBy[dn] || 0});
+              });
+              ovtRows.sort(function(a,b) { return b.made - a.made; });
+              document.getElementById('cr-ovt-body').innerHTML = ovtRows.map(function(r) {
+                return '<tr><td>' + r.driver + '</td><td style="color:var(--green);font-weight:600;">' + r.made + '</td><td style="color:var(--red);font-weight:600;">' + r.by + '</td></tr>';
+              }).join('');
+            }
           })
           .catch(() => {
             statusEl.innerHTML = 'Failed to load data for ' + circuit + ' ' + year;
@@ -1127,10 +1324,102 @@ fetch('data/state.json')
           legend: {font: {size: 9}, orientation: 'h', y: 1.12},
         };
         if (typeof Plotly !== 'undefined') Plotly.react('compare-telemetry-chart', dataTraces, layout, {responsive: true});
+
+        // Radar chart
+        var radarSection = document.getElementById('compare-radar-section');
+        if (b && dA && dB) {
+          radarSection.style.display = '';
+          var radarKeys = ['max_speed','avg_speed','max_rpm','throttle_full_pct','brake_pct','drs_pct','gear_changes'];
+          var radarLabels = ['Max Speed','Avg Speed','Max RPM','Throttle','Brake','DRS','Gears'];
+          var vA = radarKeys.map(function(k) { return statVal(a, k); });
+          var vB = radarKeys.map(function(k) { return statVal(b, k); });
+          var allValid = vA.every(function(v) { return v != null; }) && vB.every(function(v) { return v != null; });
+          if (allValid) {
+            var maxVals = radarKeys.map(function(_, i) { return Math.max(vA[i], vB[i]); });
+            var pA = vA.map(function(v, i) { return maxVals[i] > 0 ? v / maxVals[i] * 100 : 0; });
+            var pB = vB.map(function(v, i) { return maxVals[i] > 0 ? v / maxVals[i] * 100 : 0; });
+            var rTraces = [
+              {type: 'scatterpolar', r: pA, theta: radarLabels, fill: 'toself', name: driverName(a), line: {color: '#22c55e'}, fillcolor: 'rgba(34,197,94,0.2)'},
+              {type: 'scatterpolar', r: pB, theta: radarLabels, fill: 'toself', name: driverName(b), line: {color: '#ef4444'}, fillcolor: 'rgba(239,68,68,0.2)'}
+            ];
+            var rLayout = {template: 'plotly_dark', paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: {color: '#888', size: 10}, margin: {l: 60, r: 60, t: 40, b: 40}, legend: {font: {size: 9}, orientation: 'h', y: 1.08}, polar: {radialaxis: {visible: true, range: [0, 100], tickfont: {size: 8}}}};
+            if (typeof Plotly !== 'undefined') Plotly.react('compare-radar-chart', rTraces, rLayout, {responsive: true});
+          } else {
+            radarSection.style.display = 'none';
+          }
+        } else {
+          radarSection.style.display = 'none';
+        }
       }
       cSelA.onchange = renderCompare;
       cSelB.onchange = renderCompare;
       setTimeout(renderCompare, 100);
+    }
+
+    // Constructor Head-to-Head
+    var teamSet = {};
+    Object.keys(driverMap).forEach(function(dn) {
+      var t = driverMap[dn].team_name;
+      if (t) teamSet[t] = (teamSet[t] || 0) + 1;
+    });
+    var teams = Object.keys(teamSet).sort();
+    var tSelA = document.getElementById('compare-team-a');
+    var tSelB = document.getElementById('compare-team-b');
+    if (tSelA && teams.length > 1) {
+      tSelA.innerHTML = teams.map(function(t) { return '<option value="' + t.replace(/"/g,'&quot;') + '">' + t + '</option>'; }).join('');
+      tSelB.innerHTML = '<option value="">Select team</option>' + teams.map(function(t) { return '<option value="' + t.replace(/"/g,'&quot;') + '">' + t + '</option>'; }).join('');
+      function renderConstructor() {
+        var ta = tSelA.value;
+        var tb = tSelB.value;
+        var ctEl = document.getElementById('constructor-stats');
+        if (!ta) { ctEl.style.display = 'none'; return; }
+        function teamAvg(teamName) {
+          var members = Object.keys(driverMap).filter(function(dn) { return driverMap[dn].team_name === teamName; });
+          var nums = members.map(function(dn) { return parseInt(dn); });
+          var statsList = nums.map(function(n) { return dStats.find ? dStats.find(function(s) { return s.driver_number === n; }) : null; }).filter(Boolean);
+          if (statsList.length === 0) return null;
+          var keys = ['max_speed','avg_speed','max_rpm','throttle_full_pct','brake_pct','drs_pct','gear_changes'];
+          var avg = {};
+          keys.forEach(function(k) { avg[k] = statsList.reduce(function(s, st) { return s + (st[k] || 0); }, 0) / statsList.length; });
+          return avg;
+        }
+        var avgA = teamAvg(ta);
+        var avgB = tb ? teamAvg(tb) : null;
+        if (!avgA) { ctEl.style.display = 'none'; return; }
+        ctEl.style.display = '';
+        var statKeys = [['max-speed','max_speed',' km/h'],['avg-speed','avg_speed',' km/h'],['max-rpm','max_rpm',''],['throttle','throttle_full_pct','%'],['brake','brake_pct','%'],['drs','drs_pct','%'],['gears','gear_changes','']];
+        statKeys.forEach(function(sk) {
+          var id = sk[0], key = sk[1], unit = sk[2];
+          var vA = avgA[key];
+          var vB = avgB ? avgB[key] : null;
+          var elA = document.getElementById('ct-a-' + id);
+          var elB = document.getElementById('ct-b-' + id);
+          if (elA) elA.innerHTML = vA != null ? '<div style="font-size:1.3rem;font-weight:700;">' + vA.toFixed(1) + '</div><div style="font-size:0.75rem;color:var(--text-muted);">' + unit + '</div>' : '<div style="font-size:0.85rem;color:var(--text-muted);">--</div>';
+          if (elB) elB.innerHTML = vB != null ? '<div style="font-size:1.3rem;font-weight:700;">' + vB.toFixed(1) + '</div><div style="font-size:0.75rem;color:var(--text-muted);">' + unit + '</div>' : '<div style="font-size:0.85rem;color:var(--text-muted);">--</div>';
+        });
+        var cRadar = document.getElementById('constructor-radar-section');
+        if (avgB) {
+          cRadar.style.display = '';
+          var rKeys = ['max_speed','avg_speed','max_rpm','throttle_full_pct','brake_pct','drs_pct','gear_changes'];
+          var rLabels = ['Max Speed','Avg Speed','Max RPM','Throttle','Brake','DRS','Gears'];
+          var valsA = rKeys.map(function(k) { return avgA[k] || 0; });
+          var valsB = rKeys.map(function(k) { return avgB[k] || 0; });
+          var maxV = rKeys.map(function(_, i) { return Math.max(valsA[i], valsB[i]); });
+          var pA = valsA.map(function(v, i) { return maxV[i] > 0 ? v / maxV[i] * 100 : 0; });
+          var pB = valsB.map(function(v, i) { return maxV[i] > 0 ? v / maxV[i] * 100 : 0; });
+          var cTraces = [
+            {type: 'scatterpolar', r: pA, theta: rLabels, fill: 'toself', name: ta, line: {color: '#22c55e'}, fillcolor: 'rgba(34,197,94,0.2)'},
+            {type: 'scatterpolar', r: pB, theta: rLabels, fill: 'toself', name: tb, line: {color: '#ef4444'}, fillcolor: 'rgba(239,68,68,0.2)'}
+          ];
+          var cLayout = {template: 'plotly_dark', paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: {color: '#888', size: 10}, margin: {l: 60, r: 60, t: 40, b: 40}, legend: {font: {size: 9}, orientation: 'h', y: 1.08}, polar: {radialaxis: {visible: true, range: [0, 100], tickfont: {size: 8}}}};
+          if (typeof Plotly !== 'undefined') Plotly.react('constructor-radar-chart', cTraces, cLayout, {responsive: true});
+        } else {
+          cRadar.style.display = 'none';
+        }
+      }
+      tSelA.onchange = renderConstructor;
+      tSelB.onchange = renderConstructor;
+      setTimeout(renderConstructor, 100);
     }
 
     // Render charts for active page
