@@ -68,10 +68,12 @@ body {
 .page.active { display: block; opacity: 1; transform: translateY(0); }
 
 /* === HOME GRID === */
-.home-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; align-items: start; }
+.home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+@media (max-width: 1000px) { .home-grid { grid-template-columns: 1fr; } }
 .home-grid > * { min-width: 0; }
-@media (max-width: 1200px) { .home-grid { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 768px) { .home-grid { grid-template-columns: 1fr; } }
+.section-heading { display: flex; align-items: center; gap: 12px; margin: 28px 0 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.section-heading h2 { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.02em; }
+.section-heading .sub { color: var(--text-muted); font-size: 0.85rem; font-weight: 400; }
 
 /* === CARDS === */
 .card {
@@ -309,19 +311,21 @@ footer {
 <!-- PAGE: HOME -->
 <!-- ============================================================ -->
 <div class="page active" data-page="home">
-<div class="home-grid">
 
-<!-- ============ COLUMN 1: LAST RACE ============ -->
-<div class="home-col">
-
+<!-- ===================== SECTION: LAST RACE ===================== -->
 <div data-section="last-race">
+<div class="section-heading">
+  <h2><span data-i18n="last_race_title">Last Race</span></h2>
+  <span class="sub" data-bind="last_race.circuit_name"></span>
+</div>
 
-<div class="card mb-4">
+<div class="home-grid">
+<div class="home-col">
+<div class="card">
   <div class="card-header">
     <span class="card-title">
       <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><path d="M6 6h.01M6 18h.01"/></svg>
-      <span data-i18n="last_race_title">Last Race</span>
-      <span data-bind="last_race.circuit_name" style="color:var(--text-muted);font-size:0.8rem;font-weight:400;margin-left:8px;"></span>
+      <span data-i18n="last_race_results">Results</span>
     </span>
   </div>
   <table>
@@ -339,32 +343,40 @@ footer {
     <span style="margin-left:6px;">(<span data-bind="last_race.fastest_lap.time"></span>)</span>
   </div>
 </div>
-
-<div data-section="top_speed_chart" class="card chart-card mb-4">
+</div>
+<div class="home-col">
+<div data-section="top_speed_chart" class="card chart-card">
   <div class="chart-header">
     <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
     <span class="chart-title" data-i18n="last_race_top_speed">Top Speed</span>
   </div>
   <div class="chart-container" id="top-speed-chart"></div>
 </div>
+</div>
+</div><!-- /home-grid row1 -->
 
-<div data-section="quali_evo_chart" class="card chart-card mb-4">
+<div class="home-grid" style="margin-top:16px;">
+<div class="home-col">
+<div data-section="quali_evo_chart" class="card chart-card">
   <div class="chart-header">
     <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
     <span class="chart-title" data-i18n="quali_evo_title">Qualifying Best Laps</span>
   </div>
   <div class="chart-container" id="quali-evo-chart"></div>
 </div>
-
-<div data-section="quali_speed_chart" class="card chart-card mb-4">
+</div>
+<div class="home-col">
+<div data-section="quali_speed_chart" class="card chart-card">
   <div class="chart-header">
     <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
     <span class="chart-title" data-i18n="quali_speed_title">Qualifying Speed Traces</span>
   </div>
   <div class="chart-container" id="quali-speed-chart"></div>
 </div>
+</div>
+</div><!-- /home-grid row2 -->
 
-<div data-section="telemetry" class="card mb-4">
+<div data-section="telemetry" class="card" style="margin-top:16px;">
   <div class="card-header">
     <span class="card-title">
       <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -382,7 +394,7 @@ footer {
   <div class="chart-container" id="quali-telemetry-chart" style="height:500px;"></div>
 </div>
 
-<div data-section="telemetry_stats" class="grid grid-cols-6" id="telemetry-stats">
+<div data-section="telemetry_stats" class="grid grid-cols-6" id="telemetry-stats" style="margin-top:16px;">
   <div class="card stat-card" style="padding:12px;">
     <div class="stat-header"><span class="stat-label" data-i18n="telemetry_max_speed">Max Speed</span></div>
     <div class="stat-value" id="stat-max-speed">-- <span style="font-size:0.7rem;color:var(--text-muted)">km/h</span></div>
@@ -408,7 +420,6 @@ footer {
     <div class="stat-value" id="stat-drs-pct">-- <span style="font-size:0.7rem;color:var(--text-muted)">%</span></div>
   </div>
 </div>
-
 </div><!-- /last-race section -->
 
 <div data-fallback="last-race" style="display:none;">
@@ -418,14 +429,15 @@ footer {
   </div>
 </div>
 
-</div><!-- /home-col col1 -->
-
-<!-- ============ COLUMN 2: NEXT RACE ============ -->
-<div class="home-col">
-
+<!-- ===================== SECTION: NEXT RACE ===================== -->
 <div data-section="next-race">
 
-<div class="grid grid-cols-4">
+<div class="section-heading" style="margin-top:40px;">
+  <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z"/></svg>
+  <h2 data-i18n="prediction_title">Next Race Predictions</h2>
+</div>
+
+<div class="grid grid-cols-4" style="gap:16px;">
   <div class="card stat-card">
     <div class="stat-header">
       <span class="stat-label" data-i18n="next_race_title">Next Race</span>
@@ -468,7 +480,7 @@ footer {
   </div>
 </div>
 
-<div class="hero">
+<div class="hero" style="margin-top:16px;">
   <div class="hero-label" data-i18n="strategy_title">Recommended Strategy</div>
   <div data-section="recommended_strategy">
     <div class="strategy-card" style="margin-top:12px;background:rgba(225,6,0,0.08);border:1px solid rgba(225,6,0,0.3);border-radius:8px;padding:16px;">
@@ -485,44 +497,48 @@ footer {
   </div>
 </div>
 
-<div class="grid grid-cols-2">
-  <div class="card">
-    <div class="card-header">
-      <span class="card-title">
-        <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        <span data-i18n="race_stats_title">Historical Stats</span>
-      </span>
-    </div>
+<div class="home-grid" style="margin-top:16px;">
+<div class="home-col">
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">
+      <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span data-i18n="race_stats_title">Historical Stats</span>
+    </span>
+  </div>
+  <table>
+    <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="avg_winner_lap">Avg Winner Lap</span></td><td style="text-align:right;font-weight:600;" data-bind="prediction.avg_winner_lap_time"></td></tr>
+    <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="quali_improv">Q1→Q3 Improvement</span></td><td style="text-align:right;font-weight:600;" data-bind="prediction.quali_improvement"></td></tr>
+    <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="avg_overtakes_label">Avg Overtakes</span></td><td style="text-align:right;font-weight:600;" data-bind="prediction.avg_overtakes"></td></tr>
+    <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="sc_prob">Safety Car Probability</span></td><td style="text-align:right;font-weight:600;" data-bind="prediction.sc_prob_stat"></td></tr>
+  </table>
+</div>
+</div>
+<div class="home-col">
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">
+      <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16.2A4.5 4.5 0 0 0 17.5 8h-1.8A7 7 0 0 0 4 14.9"/></svg>
+      <span data-i18n="weather_title">Historical Weather</span>
+    </span>
+  </div>
+  <div data-section="weather_data">
     <table>
-      <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="avg_winner_lap">Avg Winner Lap</span></td><td style="text-align:right;font-weight:600;" data-bind="prediction.avg_winner_lap_time"></td></tr>
-      <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="quali_improv">Q1→Q3 Improvement</span></td><td style="text-align:right;font-weight:600;" data-bind="prediction.quali_improvement"></td></tr>
-      <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="avg_overtakes_label">Avg Overtakes</span></td><td style="text-align:right;font-weight:600;" data-bind="prediction.avg_overtakes"></td></tr>
-      <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="sc_prob">Safety Car Probability</span></td><td style="text-align:right;font-weight:600;" data-bind="prediction.sc_prob_stat"></td></tr>
+      <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="avg_temp">Avg Air Temp</span></td><td style="text-align:right;font-weight:600;" data-bind="prediction.weather.avg_air_temp"></td></tr>
+      <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="avg_track_temp">Avg Track Temp</span></td><td style="text-align:right;font-weight:600;" data-bind="prediction.weather.avg_track_temp"></td></tr>
+      <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="avg_humidity">Avg Humidity</span></td><td style="text-align:right;font-weight:600;" data-bind="prediction.weather.avg_humidity"></td></tr>
+      <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="avg_wind">Avg Wind</span></td><td style="text-align:right;font-weight:600;" data-bind="prediction.weather.avg_wind"></td></tr>
+      <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="rain_prob">Rain Prob</span></td><td style="text-align:right;font-weight:600;" data-bind="prediction.weather.rain_prob"></td></tr>
     </table>
   </div>
-  <div class="card">
-    <div class="card-header">
-      <span class="card-title">
-        <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16.2A4.5 4.5 0 0 0 17.5 8h-1.8A7 7 0 0 0 4 14.9"/></svg>
-        <span data-i18n="weather_title">Historical Weather</span>
-      </span>
-    </div>
-    <div data-section="weather_data">
-      <table>
-        <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="avg_temp">Avg Air Temp</span></td><td style="text-align:right;font-weight:600;" data-bind="prediction.weather.avg_air_temp"></td></tr>
-        <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="avg_track_temp">Avg Track Temp</span></td><td style="text-align:right;font-weight:600;" data-bind="prediction.weather.avg_track_temp"></td></tr>
-        <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="avg_humidity">Avg Humidity</span></td><td style="text-align:right;font-weight:600;" data-bind="prediction.weather.avg_humidity"></td></tr>
-        <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="avg_wind">Avg Wind</span></td><td style="text-align:right;font-weight:600;" data-bind="prediction.weather.avg_wind"></td></tr>
-        <tr><td><span style="color:var(--text-muted);font-size:0.8rem;" data-i18n="rain_prob">Rain Prob</span></td><td style="text-align:right;font-weight:600;" data-bind="prediction.weather.rain_prob"></td></tr>
-      </table>
-    </div>
-    <div data-section="no_weather_data" style="display:none;">
-      <p class="text-muted" data-i18n="no_weather">No weather data</p>
-    </div>
+  <div data-section="no_weather_data" style="display:none;">
+    <p class="text-muted" data-i18n="no_weather">No weather data</p>
   </div>
 </div>
+</div>
+</div><!-- /home-grid historic -->
 
-<div class="card">
+<div class="card" style="margin-top:16px;">
   <div class="card-header">
     <span class="card-title">
       <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
@@ -545,30 +561,42 @@ footer {
   </div>
 </div>
 
-<div class="grid grid-cols-3">
-  <div data-section="grid_finish_chart" class="card chart-card">
-    <div class="chart-header">
-      <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-      <span class="chart-title" data-i18n="grid_finish_title">Grid vs Finish</span>
-    </div>
-    <div class="chart-container" id="grid-finish-chart"></div>
-  </div>
-  <div data-section="overtakes_chart" class="card chart-card">
-    <div class="chart-header">
-      <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      <span class="chart-title" data-i18n="overtakes_title">Overtakes by Driver</span>
-    </div>
-    <div class="chart-container" id="overtakes-chart"></div>
-  </div>
-  <div data-section="consistency_chart" class="card chart-card">
-    <div class="chart-header">
-      <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
-      <span class="chart-title" data-i18n="consistency_title">Race Consistency (Circuit)</span>
-    </div>
-    <div class="chart-container" id="consistency-chart"></div>
-  </div>
+<div class="section-heading" style="margin-top:32px;">
+  <h2 data-i18n="charts_title">Race Charts</h2>
 </div>
 
+<div class="home-grid">
+<div class="home-col">
+<div data-section="grid_finish_chart" class="card chart-card">
+  <div class="chart-header">
+    <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    <span class="chart-title" data-i18n="grid_finish_title">Grid vs Finish</span>
+  </div>
+  <div class="chart-container" id="grid-finish-chart"></div>
+</div>
+</div>
+<div class="home-col">
+<div data-section="overtakes_chart" class="card chart-card">
+  <div class="chart-header">
+    <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    <span class="chart-title" data-i18n="overtakes_title">Overtakes by Driver</span>
+  </div>
+  <div class="chart-container" id="overtakes-chart"></div>
+</div>
+</div>
+</div><!-- /home-grid charts1 -->
+
+<div class="home-grid" style="margin-top:16px;">
+<div class="home-col">
+<div data-section="consistency_chart" class="card chart-card">
+  <div class="chart-header">
+    <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+    <span class="chart-title" data-i18n="consistency_title">Race Consistency (Circuit)</span>
+  </div>
+  <div class="chart-container" id="consistency-chart"></div>
+</div>
+</div>
+<div class="home-col">
 <div data-section="race_pace_chart" class="card chart-card">
   <div class="chart-header">
     <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
@@ -576,8 +604,10 @@ footer {
   </div>
   <div class="chart-container" id="race-pace-chart"></div>
 </div>
+</div>
+</div><!-- /home-grid charts2 -->
 
-<div class="card chart-card">
+<div class="card chart-card" style="margin-top:16px;">
   <div class="chart-header">
     <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
     <span class="chart-title" data-i18n="strategy_chart_title">Strategy Comparison</span>
@@ -588,32 +618,30 @@ footer {
 </div><!-- /next-race section -->
 
 <div data-fallback="next-race" style="display:none;">
-  <div class="hero text-center" style="padding:60px 20px;">
+  <div class="hero text-center" style="padding:60px 20px;margin-top:32px;">
     <div class="hero-title" data-i18n="no_prediction">No prediction available</div>
     <p class="hero-subtitle" data-i18n="no_prediction_desc" style="margin-top:10px;">The pipeline hasn't generated data for the next race yet. Check back later.</p>
   </div>
 </div>
 
-</div><!-- /home-col col2 -->
-
-<!-- ============ COLUMN 3: SEASON ============ -->
-<div class="home-col">
+<!-- ===================== SECTION: SEASON ===================== -->
+<div class="section-heading" style="margin-top:40px;">
+  <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+  <h2 data-i18n="season_title">Season 2026</h2>
+</div>
 
 <div data-section="season_consistency_chart" class="card chart-card">
   <div class="chart-header">
     <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
-    <span class="chart-title" data-i18n="season_consistency_title">Consistency (2026)</span>
+    <span class="chart-title" data-i18n="season_consistency_title">Driver Consistency (2026)</span>
   </div>
   <div class="chart-container" id="season-consistency-chart"></div>
 </div>
 
-<div class="hero text-center" style="padding:40px 20px;">
+<div class="hero text-center" style="padding:40px 20px;margin-top:16px;">
   <p class="hero-subtitle" data-i18n="season_placeholder">More season data will be added as races are completed.</p>
 </div>
 
-</div><!-- /home-col col3 -->
-
-</div><!-- /home-grid -->
 </div><!-- /page home -->
 
 <!-- ============================================================ -->

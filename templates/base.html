@@ -68,10 +68,12 @@ body {
 .page.active { display: block; opacity: 1; transform: translateY(0); }
 
 /* === HOME GRID === */
-.home-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; align-items: start; }
+.home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+@media (max-width: 1000px) { .home-grid { grid-template-columns: 1fr; } }
 .home-grid > * { min-width: 0; }
-@media (max-width: 1200px) { .home-grid { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 768px) { .home-grid { grid-template-columns: 1fr; } }
+.section-heading { display: flex; align-items: center; gap: 12px; margin: 28px 0 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.section-heading h2 { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.02em; }
+.section-heading .sub { color: var(--text-muted); font-size: 0.85rem; font-weight: 400; }
 
 /* === CARDS === */
 .card {
