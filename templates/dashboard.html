@@ -325,16 +325,66 @@
   <h2 data-i18n="season_title">Season 2026</h2>
 </div>
 
-<div data-section="season_consistency_chart" class="card chart-card">
+<!-- Card 1+2: Team Pace + Performance Table -->
+<div class="home-grid" data-section="season_team_pace">
+  <div class="home-col">
+    <div class="card chart-card">
+      <div class="chart-header">
+        <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span class="chart-title">Team Pace</span>
+      </div>
+      <div class="chart-container" id="season-team-pace-chart"></div>
+    </div>
+  </div>
+  <div class="home-col">
+    <div class="card">
+      <div class="card-header">
+        <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span class="card-title">Team Performance</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <tr>
+            <th>#</th>
+            <th>Team</th>
+            <th style="text-align:right;">Avg Lap</th>
+            <th style="text-align:right;">Gap</th>
+            <th style="text-align:right;">σ</th>
+            <th style="text-align:right;">Pts</th>
+            <th style="text-align:center;">Pace vs Champ</th>
+          </tr>
+          <tbody id="season-team-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Card 3: Teammate Battle -->
+<div class="card" data-section="season_teammate" style="margin-top:16px;display:none;">
+  <div class="card-header">
+    <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <span class="card-title">Teammate Battle</span>
+  </div>
+  <div id="season-teammate-grid" class="home-grid"></div>
+</div>
+
+<!-- Card 4: Pace vs Points -->
+<div class="card chart-card" data-section="season_pace_vs_points" style="margin-top:16px;display:none;">
+  <div class="chart-header">
+    <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+    <span class="chart-title">Pace vs Championship Points</span>
+  </div>
+  <div class="chart-container" id="season-pace-points-chart"></div>
+</div>
+
+<!-- Existing consistency chart -->
+<div data-section="season_consistency_chart" class="card chart-card" style="margin-top:16px;">
   <div class="chart-header">
     <svg class="icon-sm icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
     <span class="chart-title" data-i18n="season_consistency_title">Driver Consistency (2026)</span>
   </div>
   <div class="chart-container" id="season-consistency-chart"></div>
-</div>
-
-<div class="hero text-center" style="padding:40px 20px;margin-top:16px;">
-  <p class="hero-subtitle" data-i18n="season_placeholder">More season data will be added as races are completed.</p>
 </div>
 
 </div><!-- /page home -->
@@ -968,6 +1018,146 @@ fetch('data/state.json')
 
     // --- SEASON ---
     showSection('season_consistency_chart', !!charts.season_consistency);
+
+    // Season team pace + teammate battle + scatter
+    const scd = data.season_consistency_data || [];
+    const teamPts = {};
+    (standings.teams || []).forEach(function(t) { teamPts[t.team_name] = t.points; });
+    const hasSeason = scd.length > 0;
+    showSection('season_team_pace', hasSeason);
+    if (hasSeason) {
+      // Group by team
+      var teamMap = {};
+      scd.forEach(function(d) {
+        var t = d.team_name || 'Unknown';
+        if (!teamMap[t]) teamMap[t] = {times:[], stds:[], drivers:[], laps:0};
+        teamMap[t].times.push(d.avg_lap_time);
+        teamMap[t].stds.push(d.std_lap_time);
+        teamMap[t].drivers.push({name:d.full_name, time:d.avg_lap_time, std:d.std_lap_time, laps:d.count});
+        teamMap[t].laps += d.count;
+      });
+      var teams = Object.keys(teamMap).sort(function(a,b) {
+        var avgA = teamMap[a].times.reduce(function(s,v) { return s+v; },0) / teamMap[a].times.length;
+        var avgB = teamMap[b].times.reduce(function(s,v) { return s+v; },0) / teamMap[b].times.length;
+        return avgA - avgB;
+      });
+
+      // --- Team Pace Bar Chart ---
+      var tLabels = [], tValues = [], tColors = [], tGaps = [];
+      var fastest = teamMap[teams[0]].times.reduce(function(s,v) { return s+v; },0) / teamMap[teams[0]].times.length;
+      teams.forEach(function(t) {
+        var avg = teamMap[t].times.reduce(function(s,v) { return s+v; },0) / teamMap[t].times.length;
+        tLabels.push(t);
+        tValues.push(avg);
+        tColors.push(teamColor[t] || '#888888');
+        tGaps.push(avg - fastest);
+      });
+      var tBar = [{
+        type: 'bar', orientation: 'h', x: tValues, y: tLabels,
+        marker: {color: tColors},
+        text: tValues.map(function(v,i) { return v.toFixed(3) + 's' + (i > 0 ? '  (+' + tGaps[i].toFixed(3) + 's)' : ''); }),
+        textposition: 'outside', textfont: {color: '#94a3b8', size: 10},
+        hovertemplate: '%{y}<br>Avg Lap: %{x:.3f}s<br>Gap: +%{customdata:.3f}s<extra></extra>',
+        customdata: tGaps,
+      }];
+      var tLayout = {
+        template:'plotly_dark', paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)',
+        font:{color:'#888',size:10}, margin:{l:100,r:100,t:20,b:20},
+        xaxis:{title:'Avg Lap Time (s)', tickformat:'.3f'},
+        yaxis:{autorange:'reversed', tickfont:{size:11}},
+        bargap:0.3,
+      };
+      if (typeof Plotly !== 'undefined') Plotly.react('season-team-pace-chart', tBar, tLayout, {responsive:true});
+
+      // --- Team Performance Table ---
+      var teamChampPos = {};
+      (standings.teams || []).forEach(function(t) { teamChampPos[t.team_name] = t.position; });
+      var paceRank = {};
+      teams.forEach(function(t, i) { paceRank[t] = i + 1; });
+      var tbody2 = document.getElementById('season-team-table');
+      if (tbody2) {
+        tbody2.innerHTML = teams.map(function(t, i) {
+          var avg = teamMap[t].times.reduce(function(s,v) { return s+v; },0) / teamMap[t].times.length;
+          var std = teamMap[t].stds.reduce(function(s,v) { return s+v; },0) / teamMap[t].stds.length;
+          var gap = avg - fastest;
+          var gapPct = ((avg / fastest) - 1) * 100;
+          var pts = teamPts[t] || 0;
+          var champPos = teamChampPos[t] || 99;
+          var pacePos = paceRank[t] || 99;
+          var diff = champPos - pacePos;
+          var diffHtml = diff < 0 ? '<span style="color:#ef4444;font-size:0.8rem;">' + diff + '▼</span>' :
+                         diff > 0 ? '<span style="color:#22c55e;font-size:0.8rem;">+' + diff + '▲</span>' :
+                         '<span style="color:#94a3b8;font-size:0.8rem;">0—</span>';
+          var tc = teamColor[t] || '#888888';
+          return '<tr><td style="font-weight:700;">' + (i+1) + '</td>' +
+            '<td><span class="team-dot" style="background:' + tc + ';display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle;"></span>' + t + '</td>' +
+            '<td style="text-align:right;font-weight:600;">' + avg.toFixed(3) + 's</td>' +
+            '<td style="text-align:right;color:var(--text-muted);font-size:0.85rem;">+' + gap.toFixed(3) + 's (' + gapPct.toFixed(2) + '%)</td>' +
+            '<td style="text-align:right;">' + std.toFixed(3) + 's</td>' +
+            '<td style="text-align:right;font-weight:700;">' + pts + '</td>' +
+            '<td style="text-align:center;">' + diffHtml + '</td></tr>';
+        }).join('');
+      }
+
+      // --- Teammate Battle ---
+      var tmGrid = document.getElementById('season-teammate-grid');
+      if (tmGrid) {
+        var tmHtml = teams.map(function(t) {
+          var drv = teamMap[t].drivers;
+          if (drv.length < 2) return '';
+          var sortedDrv = drv.slice().sort(function(a,b) { return a.time - b.time; });
+          var fastDrv = sortedDrv[0], slowDrv = sortedDrv[1];
+          var gap = slowDrv.time - fastDrv.time;
+          var tc = teamColor[t] || '#888888';
+          var pct = Math.min(gap / 5 * 100, 100);
+          return '<div class="home-col">' +
+            '<div class="card" style="padding:12px;">' +
+            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
+            '<span class="team-dot" style="background:' + tc + ';width:10px;height:10px;border-radius:50%;display:inline-block;"></span>' +
+            '<strong style="font-size:0.9rem;">' + t + '</strong></div>' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">' +
+            '<span style="font-size:0.85rem;text-align:left;flex:1;">' + fastDrv.name + '<br><span style="font-size:0.75rem;color:var(--text-muted);">' + fastDrv.time.toFixed(3) + 's</span></span>' +
+            '<div style="text-align:center;flex:0 0 80px;">' +
+            '<div style="font-size:0.9rem;font-weight:700;color:' + tc + ';">' + gap.toFixed(3) + 's</div>' +
+            '<div style="width:100%;height:4px;background:var(--border);border-radius:2px;margin-top:2px;">' +
+            '<div style="width:' + pct + '%;height:100%;background:' + tc + ';border-radius:2px;"></div></div></div>' +
+            '<span style="font-size:0.85rem;text-align:right;flex:1;">' + slowDrv.name + '<br><span style="font-size:0.75rem;color:var(--text-muted);">' + slowDrv.time.toFixed(3) + 's</span></span>' +
+            '</div></div></div>';
+        }).filter(Boolean).join('');
+        if (tmHtml) {
+          showSection('season_teammate', true);
+          tmGrid.innerHTML = '<div class="home-grid" style="gap:12px;">' + tmHtml + '</div>';
+        }
+      }
+
+      // --- Pace vs Points Scatter ---
+      var spTeams = teams.filter(function(t) { return teamPts[t] !== undefined; });
+      var spX = [], spY = [], spLabels = [], spColors = [];
+      spTeams.forEach(function(t) {
+        var avg = teamMap[t].times.reduce(function(s,v) { return s+v; },0) / teamMap[t].times.length;
+        spX.push(avg);
+        spY.push(teamPts[t]);
+        spLabels.push(t);
+        spColors.push(teamColor[t] || '#888888');
+      });
+      if (spTeams.length > 2) {
+        showSection('season_pace_vs_points', true);
+        var spTrace = [{
+          type: 'scatter', mode: 'markers+text',
+          x: spX, y: spY, text: spLabels, textposition: 'top center',
+          textfont: {color:'#94a3b8',size:9},
+          marker: {color: spColors, size: 12, line: {color:'rgba(255,255,255,0.2)',width:1}},
+          hovertemplate: '%{text}<br>Avg Lap: %{x:.3f}s<br>Points: %{y}<extra></extra>',
+        }];
+        var spLayout = {
+          template:'plotly_dark', paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)',
+          font:{color:'#888',size:10}, margin:{l:60,r:30,t:30,b:50},
+          xaxis:{title:'Avg Lap Time (s)', tickformat:'.3f'},
+          yaxis:{title:'Championship Points'},
+        };
+        if (typeof Plotly !== 'undefined') Plotly.react('season-pace-points-chart', spTrace, spLayout, {responsive:true});
+      }
+    }
 
     // --- STRATEGY PAGE ---
     const hasStrategies = data.strategies && data.strategies.length > 0;
