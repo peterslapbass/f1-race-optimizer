@@ -983,6 +983,13 @@ fetch('data/state.json')
             raw[dn].full_name = driverMap[dn].full_name;
         }
     });
+    function driverName(dn) {
+        var fromMap = driverMap[dn] && driverMap[dn].full_name;
+        if (fromMap) return fromMap;
+        var fromRaw = raw[dn] && raw[dn].full_name;
+        if (fromRaw) return fromRaw;
+        return '#' + dn;
+    }
     const hasTelemetry = Object.keys(raw).length > 0;
     showSection('telemetry', hasTelemetry);
     showSection('telemetry_stats', hasTelemetry);
@@ -990,16 +997,15 @@ fetch('data/state.json')
       const tDriver = document.getElementById('telemetry-driver');
       const tCompare = document.getElementById('telemetry-compare');
       const driverNos = Object.keys(raw);
-      tDriver.innerHTML = driverNos.map(dn => {
-        const info = data.driver_map ? data.driver_map[dn] : null;
-        const name = info ? info.full_name : '#' + dn;
-        return `<option value="${dn}">${name}</option>`;
-      }).join('');
-      tCompare.innerHTML = '<option value="">None</option>' + driverNos.map(dn => {
-        const info = data.driver_map ? data.driver_map[dn] : null;
-        const name = info ? info.full_name : '#' + dn;
-        return `<option value="${dn}">${name}</option>`;
-      }).join('');
+      function driverName(dn) {
+        const fromMap = driverMap[dn] && driverMap[dn].full_name;
+        if (fromMap) return fromMap;
+        const fromRaw = raw[dn] && raw[dn].full_name;
+        if (fromRaw) return fromRaw;
+        return '#' + dn;
+      }
+      tDriver.innerHTML = driverNos.map(dn => `<option value="${dn}">${driverName(dn)}</option>`).join('');
+      tCompare.innerHTML = '<option value="">None</option>' + driverNos.map(dn => `<option value="${dn}">${driverName(dn)}</option>`).join('');
 
       function renderTelemetry() {
         const dn = parseInt(tDriver.value);
@@ -1083,14 +1089,8 @@ fetch('data/state.json')
       const cSelA = document.getElementById('compare-driver-a');
       const cSelB = document.getElementById('compare-driver-b');
       const cStats = document.getElementById('compare-stats');
-      cSelA.innerHTML = drvNos.map(dn => {
-        const nm = driverMap[dn] ? driverMap[dn].full_name : '#' + dn;
-        return `<option value="${dn}">${nm}</option>`;
-      }).join('');
-      cSelB.innerHTML = '<option value="">Select driver</option>' + drvNos.map(dn => {
-        const nm = driverMap[dn] ? driverMap[dn].full_name : '#' + dn;
-        return `<option value="${dn}">${nm}</option>`;
-      }).join('');
+      cSelA.innerHTML = drvNos.map(dn => `<option value="${dn}">${driverName(dn)}</option>`).join('');
+      cSelB.innerHTML = '<option value="">Select driver</option>' + drvNos.map(dn => `<option value="${dn}">${driverName(dn)}</option>`).join('');
       function renderCompare() {
         const a = cSelA.value;
         const b = cSelB.value;
