@@ -969,16 +969,14 @@ footer {
 <div class="page" data-page="compare">
 
 <div data-section="compare">
-<div class="page-header">
-  <div class="page-header-left">
-    <div class="page-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10l-5.34-5.34"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-    </div>
-    <div>
-      <span class="page-hero-title" data-i18n="nav_compare">Compare</span>
-      <p class="text-muted" style="font-size:0.9rem;">Compare two drivers' qualifying telemetry side by side</p>
-    </div>
+<div class="card mb-4">
+  <div class="card-header">
+    <span class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;stroke:var(--text-muted);flex-shrink:0;"><path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10l-5.34-5.34"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+      <span data-i18n="nav_compare">Compare</span>
+    </span>
   </div>
+  <p class="text-muted" style="font-size:0.9rem;padding:0 4px;">Compare two drivers' qualifying telemetry side by side</p>
 </div>
 
 <div class="grid grid-cols-2" style="gap:16px;margin-bottom:16px;">
@@ -1429,6 +1427,13 @@ fetch('data/state.json')
     // --- TELEMETRY ---
     const raw = data.quali_telemetry_raw || {};
     const dStats = data.quali_driver_stats || [];
+    const driverMap = data.driver_map || {};
+    // Fix telemetry driver names from driver_map (raw data may have stale names)
+    Object.keys(raw).forEach(function(dn) {
+        if (driverMap[dn] && driverMap[dn].full_name) {
+            raw[dn].full_name = driverMap[dn].full_name;
+        }
+    });
     const hasTelemetry = Object.keys(raw).length > 0;
     showSection('telemetry', hasTelemetry);
     showSection('telemetry_stats', hasTelemetry);
@@ -1521,7 +1526,6 @@ fetch('data/state.json')
     }
 
     // Compare page
-    const driverMap = data.driver_map || {};
     const drvNos = Object.keys(raw);
     const hasCompare = drvNos.length > 0 && !!document.getElementById('compare-driver-a');
     showSection('compare', hasCompare);
