@@ -625,7 +625,7 @@ fetch('data/state.json')
       setBind('last_race.circuit_name', lr.circuit_name || '');
       fillTable('last_race_results', lr.results, r => {
         const cls = r.position === 1 ? 'badge-gold' : r.position === 2 ? 'badge-silver' : r.position === 3 ? 'badge-bronze' : 'badge-default';
-        const lt = r.fastest_lap ? r.lap_time.toFixed(3) + 's' : '';
+        const lt = r.fastest_lap ? r.fastest_lap.toFixed(3) + 's' : '';
         return `<tr><td><span class="badge ${cls}">P${r.position}</span></td><td>${r.full_name}</td><td style="color:var(--text-muted);font-size:0.8rem;">${r.team_name}</td><td style="text-align:right;font-weight:600;">${lt}</td></tr>`;
       });
       const fl = lr.fastest_lap;
