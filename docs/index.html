@@ -1580,12 +1580,20 @@ fetch('data/state.json')
     const raw = data.quali_telemetry_raw || {};
     const dStats = data.quali_driver_stats || [];
     const driverMap = data.driver_map || {};
-    // Fix telemetry driver names from driver_map (raw data may have stale names)
+    // Filter and fix telemetry: only keep drivers in current driver_map (remove retired ones)
     Object.keys(raw).forEach(function(dn) {
         if (driverMap[dn] && driverMap[dn].full_name) {
             raw[dn].full_name = driverMap[dn].full_name;
+        } else {
+            delete raw[dn];
         }
     });
+    // Also filter dStats to only include current drivers
+    if (dStats.length) {
+        var _ds = dStats.filter(function(s) { return driverMap[String(s.driver_number)]; });
+        dStats.length = 0;
+        Array.prototype.push.apply(dStats, _ds);
+    }
     function driverName(dn) {
         var fromMap = driverMap[dn] && driverMap[dn].full_name;
         if (fromMap) return fromMap;
