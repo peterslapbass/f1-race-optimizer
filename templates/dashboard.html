@@ -6,15 +6,10 @@
 <!-- PAGE: HOME -->
 <!-- ============================================================ -->
 <div class="page active" data-page="home">
+<div class="home-grid">
 
-<div class="sub-tabs">
-  <button class="sub-tab active" data-subtab="last-race" data-i18n="subtab_last_race" onclick="showSubtab('home','last-race')">Last Race</button>
-  <button class="sub-tab" data-subtab="next-race" data-i18n="subtab_next_race" onclick="showSubtab('home','next-race')">Next Race</button>
-  <button class="sub-tab" data-subtab="season" data-i18n="subtab_season" onclick="showSubtab('home','season')">Season 2026</button>
-</div>
-
-<!-- --- SUBTAB: LAST RACE --- -->
-<div class="subtab-content active" data-subtab="last-race">
+<!-- ============ COLUMN 1: LAST RACE ============ -->
+<div class="home-col">
 
 <div data-section="last-race">
 
@@ -120,10 +115,10 @@
   </div>
 </div>
 
-</div><!-- /subtab last-race -->
+</div><!-- /home-col col1 -->
 
-<!-- --- SUBTAB: NEXT RACE --- -->
-<div class="subtab-content" data-subtab="next-race">
+<!-- ============ COLUMN 2: NEXT RACE ============ -->
+<div class="home-col">
 
 <div data-section="next-race">
 
@@ -296,10 +291,10 @@
   </div>
 </div>
 
-</div><!-- /subtab next-race -->
+</div><!-- /home-col col2 -->
 
-<!-- --- SUBTAB: SEASON 2026 --- -->
-<div class="subtab-content" data-subtab="season">
+<!-- ============ COLUMN 3: SEASON ============ -->
+<div class="home-col">
 
 <div data-section="season_consistency_chart" class="card chart-card">
   <div class="chart-header">
@@ -313,8 +308,9 @@
   <p class="hero-subtitle" data-i18n="season_placeholder">More season data will be added as races are completed.</p>
 </div>
 
-</div><!-- /subtab season -->
+</div><!-- /home-col col3 -->
 
+</div><!-- /home-grid -->
 </div><!-- /page home -->
 
 <!-- ============================================================ -->
@@ -848,6 +844,11 @@ fetch('data/state.json')
 
     setBind('generated_at', state.generated_at || '');
 
+    // Build team_color lookup from driver_map
+    const dm = data.driver_map || {};
+    const teamColor = {};
+    Object.values(dm).forEach(v => { if (v.team_name) teamColor[v.team_name] = v.team_color || '#888888'; });
+
     // --- LAST RACE ---
     const lr = data.last_race_data || {};
     const hasLastRace = lr.results && lr.results.length > 0;
@@ -859,7 +860,8 @@ fetch('data/state.json')
       fillTable('last_race_results', lr.results, r => {
         const cls = r.position === 1 ? 'badge-gold' : r.position === 2 ? 'badge-silver' : r.position === 3 ? 'badge-bronze' : 'badge-default';
         const lt = r.fastest_lap ? r.fastest_lap.toFixed(3) + 's' : '';
-        return `<tr><td><span class="badge ${cls}">P${r.position}</span></td><td>${r.full_name}</td><td style="color:var(--text-muted);font-size:0.8rem;">${r.team_name}</td><td style="text-align:right;font-weight:600;">${lt}</td></tr>`;
+        const tc = teamColor[r.team_name] || '#888888';
+        return `<tr><td><span class="badge ${cls}">P${r.position}</span></td><td>${r.full_name}</td><td style="color:var(--text-muted);font-size:0.8rem;"><span class="team-dot" style="background:${tc};display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle;"></span>${r.team_name}</td><td style="text-align:right;font-weight:600;">${lt}</td></tr>`;
       });
       const fl = lr.fastest_lap;
       showSection('last_race_fastest', !!fl);
@@ -989,14 +991,16 @@ fetch('data/state.json')
     showSection('teams_standings', hasTeams);
     showFallback('standings', !hasDrivers && !hasTeams);
     if (hasDrivers) {
-      fillTable('drivers_standings', standings.drivers, d =>
-        `<tr><td style="font-weight:700;">${d.position}</td><td><strong>${d.full_name}</strong></td><td class="text-muted">${d.team_name}</td><td style="text-align:right;font-weight:700;">${d.points}</td></tr>`
-      );
+      fillTable('drivers_standings', standings.drivers, d => {
+        const tc = teamColor[d.team_name] || '#888888';
+        return `<tr><td style="font-weight:700;">${d.position}</td><td><strong>${d.full_name}</strong></td><td class="text-muted"><span class="team-dot" style="background:${tc};display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle;"></span>${d.team_name}</td><td style="text-align:right;font-weight:700;">${d.points}</td></tr>`;
+      });
     }
     if (hasTeams) {
-      fillTable('teams_standings', standings.teams, t =>
-        `<tr><td style="font-weight:700;">${t.position}</td><td><strong>${t.team_name}</strong></td><td style="text-align:right;font-weight:700;">${t.points}</td></tr>`
-      );
+      fillTable('teams_standings', standings.teams, t => {
+        const tc = teamColor[t.team_name] || '#888888';
+        return `<tr><td style="font-weight:700;">${t.position}</td><td><strong><span class="team-dot" style="background:${tc};display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:8px;vertical-align:middle;"></span>${t.team_name}</strong></td><td style="text-align:right;font-weight:700;">${t.points}</td></tr>`;
+      });
     }
 
     // --- HISTORICAL ---
@@ -1263,18 +1267,11 @@ fetch('data/state.json')
       tDriver.onchange = renderTelemetry;
       tCompare.onchange = renderTelemetry;
 
-      window._renderTelemetry = renderTelemetry;
       setTimeout(() => {
-        if (document.querySelector('.subtab-content[data-subtab="last-race"].active')) renderTelemetry();
+        if (document.querySelector('.page.active[data-page="home"]')) renderTelemetry();
       }, 200);
 
-      const origShowSubtab = window.showSubtab;
-      window.showSubtab = function(parentPage, subtab) {
-        origShowSubtab(parentPage, subtab);
-        if (parentPage === 'home' && subtab === 'last-race' && window._renderTelemetry) {
-          setTimeout(window._renderTelemetry, 100);
-        }
-      };
+
     }
 
     // Compare page
@@ -1310,11 +1307,13 @@ fetch('data/state.json')
           if (elB) elB.innerHTML = vB != null ? '<div style="font-size:1.3rem;font-weight:700;">' + vB + '</div><div style="font-size:0.75rem;color:var(--text-muted);">' + unit + '</div>' : '<div style="font-size:0.85rem;color:var(--text-muted);">--</div>';
         });
         const dataTraces = [];
-        dataTraces.push({x: dA.lap_seconds, y: dA.speeds, name: dA.full_name + ' Speed', mode: 'lines', line: {color: '#22c55e', width: 2.5}, yaxis: 'y'});
-        dataTraces.push({x: dA.lap_seconds, y: dA.throttle, name: dA.full_name + ' Throttle', mode: 'lines', line: {color: 'rgba(34,197,94,0.3)', width: 1}, fill: 'tozeroy', fillcolor: 'rgba(34,197,94,0.08)', yaxis: 'y2'});
+        var colA = teamColor[driverMap[a] ? driverMap[a].team_name : ''] || '#22c55e';
+        dataTraces.push({x: dA.lap_seconds, y: dA.speeds, name: dA.full_name + ' Speed', mode: 'lines', line: {color: colA, width: 2.5}, yaxis: 'y'});
+        dataTraces.push({x: dA.lap_seconds, y: dA.throttle, name: dA.full_name + ' Throttle', mode: 'lines', line: {color: colA + '55', width: 1}, fill: 'tozeroy', fillcolor: colA + '1a', yaxis: 'y2'});
         if (dB) {
-          dataTraces.push({x: dB.lap_seconds, y: dB.speeds, name: dB.full_name + ' Speed', mode: 'lines', line: {color: '#ef4444', width: 2.5}, yaxis: 'y'});
-          dataTraces.push({x: dB.lap_seconds, y: dB.throttle, name: dB.full_name + ' Throttle', mode: 'lines', line: {color: 'rgba(239,68,68,0.3)', width: 1}, fill: 'tozeroy', fillcolor: 'rgba(239,68,68,0.08)', yaxis: 'y2'});
+          var colB = teamColor[driverMap[b] ? driverMap[b].team_name : ''] || '#ef4444';
+          dataTraces.push({x: dB.lap_seconds, y: dB.speeds, name: dB.full_name + ' Speed', mode: 'lines', line: {color: colB, width: 2.5}, yaxis: 'y'});
+          dataTraces.push({x: dB.lap_seconds, y: dB.throttle, name: dB.full_name + ' Throttle', mode: 'lines', line: {color: colB + '55', width: 1}, fill: 'tozeroy', fillcolor: colB + '1a', yaxis: 'y2'});
         }
         const layout = {
           template: 'plotly_dark', paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: {color: '#888', size: 10},
@@ -1338,9 +1337,11 @@ fetch('data/state.json')
             var maxVals = radarKeys.map(function(_, i) { return Math.max(vA[i], vB[i]); });
             var pA = vA.map(function(v, i) { return maxVals[i] > 0 ? v / maxVals[i] * 100 : 0; });
             var pB = vB.map(function(v, i) { return maxVals[i] > 0 ? v / maxVals[i] * 100 : 0; });
+            var dTcA = teamColor[driverMap[a] ? driverMap[a].team_name : ''] || '#22c55e';
+            var dTcB = teamColor[driverMap[b] ? driverMap[b].team_name : ''] || '#ef4444';
             var rTraces = [
-              {type: 'scatterpolar', r: pA, theta: radarLabels, fill: 'toself', name: driverName(a), line: {color: '#22c55e'}, fillcolor: 'rgba(34,197,94,0.2)'},
-              {type: 'scatterpolar', r: pB, theta: radarLabels, fill: 'toself', name: driverName(b), line: {color: '#ef4444'}, fillcolor: 'rgba(239,68,68,0.2)'}
+              {type: 'scatterpolar', r: pA, theta: radarLabels, fill: 'toself', name: driverName(a), line: {color: dTcA}, fillcolor: dTcA + '33'},
+              {type: 'scatterpolar', r: pB, theta: radarLabels, fill: 'toself', name: driverName(b), line: {color: dTcB}, fillcolor: dTcB + '33'}
             ];
             var rLayout = {template: 'plotly_dark', paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: {color: '#888', size: 10}, margin: {l: 60, r: 60, t: 40, b: 40}, legend: {font: {size: 9}, orientation: 'h', y: 1.08}, polar: {radialaxis: {visible: true, range: [0, 100], tickfont: {size: 8}}}};
             if (typeof Plotly !== 'undefined') Plotly.react('compare-radar-chart', rTraces, rLayout, {responsive: true});
@@ -1407,9 +1408,11 @@ fetch('data/state.json')
           var maxV = rKeys.map(function(_, i) { return Math.max(valsA[i], valsB[i]); });
           var pA = valsA.map(function(v, i) { return maxV[i] > 0 ? v / maxV[i] * 100 : 0; });
           var pB = valsB.map(function(v, i) { return maxV[i] > 0 ? v / maxV[i] * 100 : 0; });
+          var tcA = teamColor[ta] || '#22c55e';
+          var tcB = teamColor[tb] || '#ef4444';
           var cTraces = [
-            {type: 'scatterpolar', r: pA, theta: rLabels, fill: 'toself', name: ta, line: {color: '#22c55e'}, fillcolor: 'rgba(34,197,94,0.2)'},
-            {type: 'scatterpolar', r: pB, theta: rLabels, fill: 'toself', name: tb, line: {color: '#ef4444'}, fillcolor: 'rgba(239,68,68,0.2)'}
+            {type: 'scatterpolar', r: pA, theta: rLabels, fill: 'toself', name: ta, line: {color: tcA}, fillcolor: tcA + '33'},
+            {type: 'scatterpolar', r: pB, theta: rLabels, fill: 'toself', name: tb, line: {color: tcB}, fillcolor: tcB + '33'}
           ];
           var cLayout = {template: 'plotly_dark', paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: {color: '#888', size: 10}, margin: {l: 60, r: 60, t: 40, b: 40}, legend: {font: {size: 9}, orientation: 'h', y: 1.08}, polar: {radialaxis: {visible: true, range: [0, 100], tickfont: {size: 8}}}};
           if (typeof Plotly !== 'undefined') Plotly.react('constructor-radar-chart', cTraces, cLayout, {responsive: true});

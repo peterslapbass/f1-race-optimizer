@@ -791,7 +791,17 @@ def build_state_dict(
         data["weather_pattern"] = prediction.weather_pattern
         data["safety_car_probability"] = prediction.safety_car_probability
         data["quali_improvement_rate"] = prediction.quali_improvement_rate
-        data["driver_map"] = {str(k): v for k, v in (prediction.driver_map or {}).items()}
+        TEAM_COLORS = {
+            "Red Bull Racing": "#3671C6", "Ferrari": "#E8002D", "Mercedes": "#27F4D2",
+            "McLaren": "#FF8000", "Aston Martin": "#22996D", "Alpine": "#FF87BC",
+            "Haas F1 Team": "#B6BABD", "Kick Sauber": "#52E252", "RB": "#6692FF",
+            "Racing Bulls": "#6692FF", "AlphaTauri": "#2B4562", "Williams": "#64C4FF",
+        }
+        raw_map = prediction.driver_map or {}
+        data["driver_map"] = {
+            str(k): {**v, "team_color": TEAM_COLORS.get(v.get("team_name", ""), "#888888")}
+            for k, v in raw_map.items()
+        }
         data["last_race_data"] = prediction.last_race_data or {}
         data["recommended_strategy"] = (
             {
@@ -1012,8 +1022,24 @@ def regen_dashboard(output_dir: str = "docs") -> bool:
     i18n_json = json.dumps(I18N_DATA, ensure_ascii=False)
     page_titles_json = json.dumps(PAGE_TITLES)
 
-    if state.get("data") and "circuit_index" not in state["data"]:
-        state["data"]["circuit_index"] = _build_circuit_index()
+    TEAM_COLORS = {
+        "Red Bull Racing": "#3671C6", "Ferrari": "#E8002D", "Mercedes": "#27F4D2",
+        "McLaren": "#FF8000", "Aston Martin": "#22996D", "Alpine": "#FF87BC",
+        "Haas F1 Team": "#B6BABD", "Kick Sauber": "#52E252", "RB": "#6692FF",
+        "Racing Bulls": "#6692FF", "AlphaTauri": "#2B4562", "Williams": "#64C4FF",
+    }
+    state_data = state.get("data") or {}
+    changed = False
+    if state_data and "circuit_index" not in state_data:
+        state_data["circuit_index"] = _build_circuit_index()
+        changed = True
+    # Inject team_color into driver_map entries if missing
+    dm = state_data.get("driver_map") or {}
+    for entry in dm.values():
+        if "team_color" not in entry:
+            entry["team_color"] = TEAM_COLORS.get(entry.get("team_name", ""), "#888888")
+            changed = True
+    if changed:
         with open(state_path, "w", encoding="utf-8") as f:
             json.dump(state, f, default=str, ensure_ascii=False)
     has_prediction = bool(state.get("data"))

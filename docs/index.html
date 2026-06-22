@@ -13,8 +13,7 @@
   --accent: #e10600; --accent-hover: #b80500;
   --green: #22c55e; --red: #ef4444; --yellow: #eab308;
   --radius: 0.75rem;
-  --sidebar-w: 220px;
-  --topbar-h: 44px;
+  --topbar-h: 48px;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -30,73 +29,51 @@ body {
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
 
-/* === SIDEBAR === */
-.sidebar {
-  position: fixed; top: 0; left: 0; bottom: 0; width: var(--sidebar-w);
-  background: var(--card); border-right: 1px solid var(--border);
-  z-index: 100; display: flex; flex-direction: column; overflow-y: auto;
-  transition: transform 0.25s ease;
-}
-.sidebar-header { padding: 12px 16px; border-bottom: 1px solid var(--border); }
-.sidebar-header .logo {
-  width: 32px; height: 32px; background: var(--accent); border-radius: 6px;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 900; font-size: 1rem; color: #fff;
-}
-.sidebar-nav { flex: 1; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
-.sidebar-link {
-  display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px;
-  color: var(--text-muted); text-decoration: none; font-size: 0.85rem; font-weight: 500;
-  transition: all 0.15s; cursor: pointer;
-}
-.sidebar-link:hover { background: rgba(255,255,255,0.05); color: var(--text); }
-.sidebar-link.active { background: rgba(225,6,0,0.1); color: var(--accent); }
-.sidebar-link svg { width: 18px; height: 18px; flex-shrink: 0; }
-.sidebar-footer { padding: 12px 16px; border-top: 1px solid var(--border); }
-.sidebar-overlay {
-  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-  z-index: 99;
-}
-
 /* === TOP BAR === */
 .topbar {
-  position: sticky; top: 0; z-index: 50; height: var(--topbar-h);
+  position: sticky; top: 0; z-index: 100; height: var(--topbar-h);
   background: var(--card); border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 16px; margin-left: var(--sidebar-w);
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 12px;
 }
-.topbar-left { display: flex; align-items: center; gap: 10px; }
+.topbar-left { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.topbar-logo {
+  width: 28px; height: 28px; background: var(--accent); border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 0.85rem; color: #fff; flex-shrink: 0;
+}
 .hamburger {
   display: none; background: none; border: none; color: var(--text);
   font-size: 1.3rem; cursor: pointer; padding: 2px 6px; border-radius: 4px;
 }
 .hamburger:hover { background: rgba(255,255,255,0.05); }
-.topbar-title { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+.topbar-title { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-left: auto; }
+.topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* === TOP NAV === */
+.top-nav { display: flex; align-items: center; gap: 2px; flex: 1; overflow-x: auto; }
+.top-nav-link {
+  padding: 6px 12px; border-radius: 6px; color: var(--text-muted); text-decoration: none;
+  font-size: 0.8rem; font-weight: 500; cursor: pointer; white-space: nowrap;
+  transition: all 0.15s;
+}
+.top-nav-link:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+.top-nav-link.active { background: rgba(225,6,0,0.1); color: var(--accent); font-weight: 600; }
 
 /* === MAIN CONTENT === */
-.main-content { margin-left: var(--sidebar-w); min-height: calc(100vh - var(--topbar-h)); }
+.main-content { min-height: calc(100vh - var(--topbar-h)); padding: 16px; }
 
-/* === PAGE ROUTING === */
-.page { display: none; }
-.page.active { display: block; }
+/* === PAGE ROUTING + FADE === */
+.page { display: none; opacity: 0; transition: opacity 0.2s ease, transform 0.2s ease; transform: translateY(6px); }
+.page.active { display: block; opacity: 1; transform: translateY(0); }
 
-/* === SUB-TABS === */
-.sub-tabs {
-  display: flex; gap: 2px; margin-bottom: 16px;
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 4px; overflow-x: auto;
-}
-.sub-tab {
-  flex: 1; background: transparent; border: none; color: var(--text-muted);
-  padding: 8px 16px; border-radius: 6px; cursor: pointer;
-  font-size: 0.8rem; font-weight: 500; transition: all 0.15s; white-space: nowrap;
-}
-.sub-tab:hover { color: var(--text); }
-.sub-tab.active { background: rgba(225,6,0,0.1); color: var(--accent); font-weight: 600; }
-.subtab-content { display: none; }
-.subtab-content.active { display: block; }
+/* === HOME GRID === */
+.home-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; align-items: start; }
+.home-grid > * { min-width: 0; }
+@media (max-width: 1200px) { .home-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 768px) { .home-grid { grid-template-columns: 1fr; } }
 
-/* === CARDS (existing) === */
+/* === CARDS === */
 .card {
   background: var(--card); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 20px;
@@ -188,6 +165,7 @@ th {
   padding: 8px 12px; text-align: left; font-size: 0.7rem;
   font-weight: 600; color: var(--text-muted); text-transform: uppercase;
   letter-spacing: 0.08em; border-bottom: 1px solid rgba(255,255,255,0.06);
+  position: sticky; top: var(--topbar-h); background: var(--card); z-index: 3;
 }
 td {
   padding: 10px 12px; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.06);
@@ -195,6 +173,10 @@ td {
 }
 tr:last-child td { border-bottom: none; }
 tr:hover td { background: rgba(255,255,255,0.02); }
+
+/* === TEAM ROW (injected via JS style) === */
+tr.team-row td:first-child { border-left: 3px solid transparent; padding-left: 9px; }
+tr.team-row:hover { background: rgba(255,255,255,0.03); }
 
 /* === BADGE === */
 .badge {
@@ -271,19 +253,6 @@ footer {
 .justify-between { justify-content: space-between; }
 .justify-center { justify-content: center; }
 
-/* === RESPONSIVE === */
-@media (max-width: 768px) {
-  .sidebar { transform: translateX(-100%); }
-  .sidebar.open { transform: translateX(0); }
-  .sidebar-overlay.open { display: block; }
-  .hamburger { display: block; }
-  .topbar { margin-left: 0; }
-  .main-content { margin-left: 0; padding: 12px; }
-}
-@media (min-width: 769px) {
-  .sidebar-overlay { display: none !important; }
-}
-
 /* === LANG GROUP === */
 .lang-group {
   display: flex; gap: 2px; background: rgba(255,255,255,0.04);
@@ -295,55 +264,36 @@ footer {
   font-size: 0.75rem; font-weight: 600; transition: all 0.15s;
 }
 .lang-btn.active { background: var(--accent); color: #fff; }
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .top-nav { display: none; position: absolute; top: var(--topbar-h); left: 0; right: 0; background: var(--card); border-bottom: 1px solid var(--border); flex-direction: column; padding: 8px; z-index: 99; }
+  .top-nav.open { display: flex; }
+  .hamburger { display: block; }
+  .topbar-title { display: none; }
+  .main-content { padding: 12px; }
+}
+@media (min-width: 769px) {
+  .top-nav { display: flex !important; }
+}
 </style>
 </head>
 <body>
 
-<div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
-
-<aside id="sidebar" class="sidebar">
-  <div class="sidebar-header">
-    <div class="logo">F1</div>
-  </div>
-  <nav class="sidebar-nav">
-    <a class="sidebar-link active" data-page="home" onclick="showPage('home')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      <span data-i18n="nav_home">Home</span>
-    </a>
-    <a class="sidebar-link" data-page="strategy" onclick="showPage('strategy')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-      <span data-i18n="nav_strategy">Strategy</span>
-    </a>
-    <a class="sidebar-link" data-page="quali" onclick="showPage('quali')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      <span data-i18n="nav_quali">Qualifying</span>
-    </a>
-    <a class="sidebar-link" data-page="standings" onclick="showPage('standings')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-      <span data-i18n="nav_standings">Standings</span>
-    </a>
-    <a class="sidebar-link" data-page="historical" onclick="showPage('historical')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H6.5a1 1 0 0 0 0 5H20"/><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17"/></svg>
-      <span data-i18n="nav_historical">Historical</span>
-    </a>
-    <a class="sidebar-link" data-page="compare" onclick="showPage('compare')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10l-5.34-5.34"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-      <span data-i18n="nav_compare">Compare</span>
-    </a>
-  </nav>
-  <div class="sidebar-footer">
-    <div class="lang-group">
-      <button class="lang-btn active" onclick="setLang('en')">EN</button>
-      <button class="lang-btn" onclick="setLang('es')">ES</button>
-    </div>
-  </div>
-</aside>
-
 <header class="topbar">
   <div class="topbar-left">
     <button class="hamburger" onclick="toggleSidebar()">☰</button>
-    <span class="topbar-title" id="page-title" data-i18n="nav_home">Home</span>
+    <div class="topbar-logo">F1</div>
   </div>
+  <nav class="top-nav" id="top-nav">
+    <a class="top-nav-link active" data-page="home" onclick="showPage('home')" data-i18n="nav_home">Home</a>
+    <a class="top-nav-link" data-page="strategy" onclick="showPage('strategy')" data-i18n="nav_strategy">Strategy</a>
+    <a class="top-nav-link" data-page="quali" onclick="showPage('quali')" data-i18n="nav_quali">Qualifying</a>
+    <a class="top-nav-link" data-page="standings" onclick="showPage('standings')" data-i18n="nav_standings">Standings</a>
+    <a class="top-nav-link" data-page="historical" onclick="showPage('historical')" data-i18n="nav_historical">Historical</a>
+    <a class="top-nav-link" data-page="compare" onclick="showPage('compare')" data-i18n="nav_compare">Compare</a>
+  </nav>
+  <span class="topbar-title" id="page-title" data-i18n="nav_home">Home</span>
   <div class="topbar-right">
     <div class="lang-group">
       <button class="lang-btn active" onclick="setLang('en')">EN</button>
@@ -359,15 +309,10 @@ footer {
 <!-- PAGE: HOME -->
 <!-- ============================================================ -->
 <div class="page active" data-page="home">
+<div class="home-grid">
 
-<div class="sub-tabs">
-  <button class="sub-tab active" data-subtab="last-race" data-i18n="subtab_last_race" onclick="showSubtab('home','last-race')">Last Race</button>
-  <button class="sub-tab" data-subtab="next-race" data-i18n="subtab_next_race" onclick="showSubtab('home','next-race')">Next Race</button>
-  <button class="sub-tab" data-subtab="season" data-i18n="subtab_season" onclick="showSubtab('home','season')">Season 2026</button>
-</div>
-
-<!-- --- SUBTAB: LAST RACE --- -->
-<div class="subtab-content active" data-subtab="last-race">
+<!-- ============ COLUMN 1: LAST RACE ============ -->
+<div class="home-col">
 
 <div data-section="last-race">
 
@@ -473,10 +418,10 @@ footer {
   </div>
 </div>
 
-</div><!-- /subtab last-race -->
+</div><!-- /home-col col1 -->
 
-<!-- --- SUBTAB: NEXT RACE --- -->
-<div class="subtab-content" data-subtab="next-race">
+<!-- ============ COLUMN 2: NEXT RACE ============ -->
+<div class="home-col">
 
 <div data-section="next-race">
 
@@ -649,10 +594,10 @@ footer {
   </div>
 </div>
 
-</div><!-- /subtab next-race -->
+</div><!-- /home-col col2 -->
 
-<!-- --- SUBTAB: SEASON 2026 --- -->
-<div class="subtab-content" data-subtab="season">
+<!-- ============ COLUMN 3: SEASON ============ -->
+<div class="home-col">
 
 <div data-section="season_consistency_chart" class="card chart-card">
   <div class="chart-header">
@@ -666,8 +611,9 @@ footer {
   <p class="hero-subtitle" data-i18n="season_placeholder">More season data will be added as races are completed.</p>
 </div>
 
-</div><!-- /subtab season -->
+</div><!-- /home-col col3 -->
 
+</div><!-- /home-grid -->
 </div><!-- /page home -->
 
 <!-- ============================================================ -->
@@ -1174,8 +1120,7 @@ const saved = localStorage.getItem('f1-lang');
 if (saved) setLang(saved);
 
 function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('sidebar-overlay').classList.toggle('open');
+  document.getElementById('top-nav').classList.toggle('open');
 }
 
 const pageTitles = {"home": "nav_home", "strategy": "nav_strategy", "quali": "nav_quali", "standings": "nav_standings", "historical": "nav_historical", "compare": "nav_compare"};
@@ -1184,26 +1129,16 @@ function showPage(pageId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const page = document.querySelector(`.page[data-page="${pageId}"]`);
   if (page) page.classList.add('active');
-  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.toggle('active', l.dataset.page === pageId));
+  document.querySelectorAll('.top-nav-link').forEach(l => l.classList.toggle('active', l.dataset.page === pageId));
   const titleEl = document.getElementById('page-title');
   if (titleEl) {
     const key = pageTitles[pageId];
-    const lang = document.querySelector('.lang-btn.active')?.dataset?.langBtn || 'en';
+    const lang = document.querySelector('.lang-btn.active')?.textContent?.toLowerCase() || 'en';
     titleEl.textContent = (i18n[lang] && i18n[lang][key]) ? i18n[lang][key] : pageId.charAt(0).toUpperCase() + pageId.slice(1);
   }
   window.location.hash = pageId;
-  if (window.innerWidth <= 768) { toggleSidebar(); }
+  if (window.innerWidth <= 768) document.getElementById('top-nav').classList.remove('open');
   renderPageCharts(pageId);
-}
-
-function showSubtab(parentPage, subtab) {
-  const container = document.querySelector(`.page[data-page="${parentPage}"]`);
-  if (!container) return;
-  container.querySelectorAll('.subtab-content').forEach(s => s.classList.remove('active'));
-  const target = container.querySelector(`.subtab-content[data-subtab="${subtab}"]`);
-  if (target) target.classList.add('active');
-  container.querySelectorAll('.sub-tab').forEach(t => t.classList.toggle('active', t.dataset.subtab === subtab));
-  renderSubtabCharts(parentPage, subtab);
 }
 
 const renderedCharts = {};
@@ -1217,24 +1152,6 @@ function renderPageCharts(pageId) {
   const container = document.querySelector(`.page[data-page="${pageId}"]`) || document;
   if (!container) return;
   container.querySelectorAll('.chart-container[id]').forEach(el => {
-    try {
-      if (!el.offsetParent && el.closest('.subtab-content') && !el.closest('.subtab-content.active')) return;
-      if (renderedCharts[el.id]) { Plotly.Plots.resize(el); return; }
-      const data = ALL_CHARTS[el.id];
-      if (data) {
-        Plotly.newPlot(el, data.data, data.layout || {}, {responsive: true});
-        renderedCharts[el.id] = true;
-      }
-    } catch(e) {}
-  });
-}
-
-function renderSubtabCharts(parentPage, subtab) {
-  const container = document.querySelector(`.page[data-page="${parentPage}"]`);
-  if (!container) return;
-  const tab = container.querySelector(`.subtab-content[data-subtab="${subtab}"]`);
-  if (!tab) return;
-  tab.querySelectorAll('.chart-container[id]').forEach(el => {
     try {
       if (renderedCharts[el.id]) { Plotly.Plots.resize(el); return; }
       const data = ALL_CHARTS[el.id];
@@ -1250,11 +1167,9 @@ function renderSubtabCharts(parentPage, subtab) {
 (function init() {
   const hash = window.location.hash.replace('#', '') || 'home';
   showPage(hash);
-  if (hash === 'home') {
-    renderSubtabCharts('home', 'last-race');
-  }
 })();
 </script>
+
 
 <script>
 function fillTable(name, items, rowFn) {
@@ -1303,6 +1218,11 @@ fetch('data/state.json')
 
     setBind('generated_at', state.generated_at || '');
 
+    // Build team_color lookup from driver_map
+    const dm = data.driver_map || {};
+    const teamColor = {};
+    Object.values(dm).forEach(v => { if (v.team_name) teamColor[v.team_name] = v.team_color || '#888888'; });
+
     // --- LAST RACE ---
     const lr = data.last_race_data || {};
     const hasLastRace = lr.results && lr.results.length > 0;
@@ -1314,7 +1234,8 @@ fetch('data/state.json')
       fillTable('last_race_results', lr.results, r => {
         const cls = r.position === 1 ? 'badge-gold' : r.position === 2 ? 'badge-silver' : r.position === 3 ? 'badge-bronze' : 'badge-default';
         const lt = r.fastest_lap ? r.fastest_lap.toFixed(3) + 's' : '';
-        return `<tr><td><span class="badge ${cls}">P${r.position}</span></td><td>${r.full_name}</td><td style="color:var(--text-muted);font-size:0.8rem;">${r.team_name}</td><td style="text-align:right;font-weight:600;">${lt}</td></tr>`;
+        const tc = teamColor[r.team_name] || '#888888';
+        return `<tr><td><span class="badge ${cls}">P${r.position}</span></td><td>${r.full_name}</td><td style="color:var(--text-muted);font-size:0.8rem;"><span class="team-dot" style="background:${tc};display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle;"></span>${r.team_name}</td><td style="text-align:right;font-weight:600;">${lt}</td></tr>`;
       });
       const fl = lr.fastest_lap;
       showSection('last_race_fastest', !!fl);
@@ -1444,14 +1365,16 @@ fetch('data/state.json')
     showSection('teams_standings', hasTeams);
     showFallback('standings', !hasDrivers && !hasTeams);
     if (hasDrivers) {
-      fillTable('drivers_standings', standings.drivers, d =>
-        `<tr><td style="font-weight:700;">${d.position}</td><td><strong>${d.full_name}</strong></td><td class="text-muted">${d.team_name}</td><td style="text-align:right;font-weight:700;">${d.points}</td></tr>`
-      );
+      fillTable('drivers_standings', standings.drivers, d => {
+        const tc = teamColor[d.team_name] || '#888888';
+        return `<tr><td style="font-weight:700;">${d.position}</td><td><strong>${d.full_name}</strong></td><td class="text-muted"><span class="team-dot" style="background:${tc};display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle;"></span>${d.team_name}</td><td style="text-align:right;font-weight:700;">${d.points}</td></tr>`;
+      });
     }
     if (hasTeams) {
-      fillTable('teams_standings', standings.teams, t =>
-        `<tr><td style="font-weight:700;">${t.position}</td><td><strong>${t.team_name}</strong></td><td style="text-align:right;font-weight:700;">${t.points}</td></tr>`
-      );
+      fillTable('teams_standings', standings.teams, t => {
+        const tc = teamColor[t.team_name] || '#888888';
+        return `<tr><td style="font-weight:700;">${t.position}</td><td><strong><span class="team-dot" style="background:${tc};display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:8px;vertical-align:middle;"></span>${t.team_name}</strong></td><td style="text-align:right;font-weight:700;">${t.points}</td></tr>`;
+      });
     }
 
     // --- HISTORICAL ---
@@ -1718,18 +1641,11 @@ fetch('data/state.json')
       tDriver.onchange = renderTelemetry;
       tCompare.onchange = renderTelemetry;
 
-      window._renderTelemetry = renderTelemetry;
       setTimeout(() => {
-        if (document.querySelector('.subtab-content[data-subtab="last-race"].active')) renderTelemetry();
+        if (document.querySelector('.page.active[data-page="home"]')) renderTelemetry();
       }, 200);
 
-      const origShowSubtab = window.showSubtab;
-      window.showSubtab = function(parentPage, subtab) {
-        origShowSubtab(parentPage, subtab);
-        if (parentPage === 'home' && subtab === 'last-race' && window._renderTelemetry) {
-          setTimeout(window._renderTelemetry, 100);
-        }
-      };
+
     }
 
     // Compare page
@@ -1765,11 +1681,13 @@ fetch('data/state.json')
           if (elB) elB.innerHTML = vB != null ? '<div style="font-size:1.3rem;font-weight:700;">' + vB + '</div><div style="font-size:0.75rem;color:var(--text-muted);">' + unit + '</div>' : '<div style="font-size:0.85rem;color:var(--text-muted);">--</div>';
         });
         const dataTraces = [];
-        dataTraces.push({x: dA.lap_seconds, y: dA.speeds, name: dA.full_name + ' Speed', mode: 'lines', line: {color: '#22c55e', width: 2.5}, yaxis: 'y'});
-        dataTraces.push({x: dA.lap_seconds, y: dA.throttle, name: dA.full_name + ' Throttle', mode: 'lines', line: {color: 'rgba(34,197,94,0.3)', width: 1}, fill: 'tozeroy', fillcolor: 'rgba(34,197,94,0.08)', yaxis: 'y2'});
+        var colA = teamColor[driverMap[a] ? driverMap[a].team_name : ''] || '#22c55e';
+        dataTraces.push({x: dA.lap_seconds, y: dA.speeds, name: dA.full_name + ' Speed', mode: 'lines', line: {color: colA, width: 2.5}, yaxis: 'y'});
+        dataTraces.push({x: dA.lap_seconds, y: dA.throttle, name: dA.full_name + ' Throttle', mode: 'lines', line: {color: colA + '55', width: 1}, fill: 'tozeroy', fillcolor: colA + '1a', yaxis: 'y2'});
         if (dB) {
-          dataTraces.push({x: dB.lap_seconds, y: dB.speeds, name: dB.full_name + ' Speed', mode: 'lines', line: {color: '#ef4444', width: 2.5}, yaxis: 'y'});
-          dataTraces.push({x: dB.lap_seconds, y: dB.throttle, name: dB.full_name + ' Throttle', mode: 'lines', line: {color: 'rgba(239,68,68,0.3)', width: 1}, fill: 'tozeroy', fillcolor: 'rgba(239,68,68,0.08)', yaxis: 'y2'});
+          var colB = teamColor[driverMap[b] ? driverMap[b].team_name : ''] || '#ef4444';
+          dataTraces.push({x: dB.lap_seconds, y: dB.speeds, name: dB.full_name + ' Speed', mode: 'lines', line: {color: colB, width: 2.5}, yaxis: 'y'});
+          dataTraces.push({x: dB.lap_seconds, y: dB.throttle, name: dB.full_name + ' Throttle', mode: 'lines', line: {color: colB + '55', width: 1}, fill: 'tozeroy', fillcolor: colB + '1a', yaxis: 'y2'});
         }
         const layout = {
           template: 'plotly_dark', paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: {color: '#888', size: 10},
@@ -1793,9 +1711,11 @@ fetch('data/state.json')
             var maxVals = radarKeys.map(function(_, i) { return Math.max(vA[i], vB[i]); });
             var pA = vA.map(function(v, i) { return maxVals[i] > 0 ? v / maxVals[i] * 100 : 0; });
             var pB = vB.map(function(v, i) { return maxVals[i] > 0 ? v / maxVals[i] * 100 : 0; });
+            var dTcA = teamColor[driverMap[a] ? driverMap[a].team_name : ''] || '#22c55e';
+            var dTcB = teamColor[driverMap[b] ? driverMap[b].team_name : ''] || '#ef4444';
             var rTraces = [
-              {type: 'scatterpolar', r: pA, theta: radarLabels, fill: 'toself', name: driverName(a), line: {color: '#22c55e'}, fillcolor: 'rgba(34,197,94,0.2)'},
-              {type: 'scatterpolar', r: pB, theta: radarLabels, fill: 'toself', name: driverName(b), line: {color: '#ef4444'}, fillcolor: 'rgba(239,68,68,0.2)'}
+              {type: 'scatterpolar', r: pA, theta: radarLabels, fill: 'toself', name: driverName(a), line: {color: dTcA}, fillcolor: dTcA + '33'},
+              {type: 'scatterpolar', r: pB, theta: radarLabels, fill: 'toself', name: driverName(b), line: {color: dTcB}, fillcolor: dTcB + '33'}
             ];
             var rLayout = {template: 'plotly_dark', paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: {color: '#888', size: 10}, margin: {l: 60, r: 60, t: 40, b: 40}, legend: {font: {size: 9}, orientation: 'h', y: 1.08}, polar: {radialaxis: {visible: true, range: [0, 100], tickfont: {size: 8}}}};
             if (typeof Plotly !== 'undefined') Plotly.react('compare-radar-chart', rTraces, rLayout, {responsive: true});
@@ -1862,9 +1782,11 @@ fetch('data/state.json')
           var maxV = rKeys.map(function(_, i) { return Math.max(valsA[i], valsB[i]); });
           var pA = valsA.map(function(v, i) { return maxV[i] > 0 ? v / maxV[i] * 100 : 0; });
           var pB = valsB.map(function(v, i) { return maxV[i] > 0 ? v / maxV[i] * 100 : 0; });
+          var tcA = teamColor[ta] || '#22c55e';
+          var tcB = teamColor[tb] || '#ef4444';
           var cTraces = [
-            {type: 'scatterpolar', r: pA, theta: rLabels, fill: 'toself', name: ta, line: {color: '#22c55e'}, fillcolor: 'rgba(34,197,94,0.2)'},
-            {type: 'scatterpolar', r: pB, theta: rLabels, fill: 'toself', name: tb, line: {color: '#ef4444'}, fillcolor: 'rgba(239,68,68,0.2)'}
+            {type: 'scatterpolar', r: pA, theta: rLabels, fill: 'toself', name: ta, line: {color: tcA}, fillcolor: tcA + '33'},
+            {type: 'scatterpolar', r: pB, theta: rLabels, fill: 'toself', name: tb, line: {color: tcB}, fillcolor: tcB + '33'}
           ];
           var cLayout = {template: 'plotly_dark', paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: {color: '#888', size: 10}, margin: {l: 60, r: 60, t: 40, b: 40}, legend: {font: {size: 9}, orientation: 'h', y: 1.08}, polar: {radialaxis: {visible: true, range: [0, 100], tickfont: {size: 8}}}};
           if (typeof Plotly !== 'undefined') Plotly.react('constructor-radar-chart', cTraces, cLayout, {responsive: true});
