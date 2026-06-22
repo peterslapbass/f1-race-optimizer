@@ -1204,25 +1204,21 @@ fetch('data/state.json')
     const raw = data.quali_telemetry_raw || {};
     const dStats = data.quali_driver_stats || [];
     const driverMap = data.driver_map || {};
-    // Filter and fix telemetry: only keep drivers in current driver_map (remove retired ones)
+    // Filter telemetry: remove drivers not in driver_map (retired ones)
     Object.keys(raw).forEach(function(dn) {
-        if (driverMap[dn] && driverMap[dn].full_name) {
-            raw[dn].full_name = driverMap[dn].full_name;
-        } else {
-            delete raw[dn];
-        }
+        if (!driverMap[dn]) delete raw[dn];
     });
-    // Also filter dStats to only include current drivers
+    // dStats filter
     if (dStats.length) {
         var _ds = dStats.filter(function(s) { return driverMap[String(s.driver_number)]; });
         dStats.length = 0;
         Array.prototype.push.apply(dStats, _ds);
     }
     function driverName(dn) {
-        var fromMap = driverMap[dn] && driverMap[dn].full_name;
-        if (fromMap) return fromMap;
         var fromRaw = raw[dn] && raw[dn].full_name;
         if (fromRaw) return fromRaw;
+        var fromMap = driverMap[dn] && driverMap[dn].full_name;
+        if (fromMap) return fromMap;
         return '#' + dn;
     }
     const hasTelemetry = Object.keys(raw).length > 0;
@@ -1233,10 +1229,10 @@ fetch('data/state.json')
       const tCompare = document.getElementById('telemetry-compare');
       const driverNos = Object.keys(raw);
       function driverName(dn) {
-        const fromMap = driverMap[dn] && driverMap[dn].full_name;
-        if (fromMap) return fromMap;
         const fromRaw = raw[dn] && raw[dn].full_name;
         if (fromRaw) return fromRaw;
+        const fromMap = driverMap[dn] && driverMap[dn].full_name;
+        if (fromMap) return fromMap;
         return '#' + dn;
       }
       tDriver.innerHTML = driverNos.map(dn => `<option value="${dn}">${driverName(dn)}</option>`).join('');
